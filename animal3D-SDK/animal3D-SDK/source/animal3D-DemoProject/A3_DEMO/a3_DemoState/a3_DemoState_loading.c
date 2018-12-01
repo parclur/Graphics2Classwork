@@ -1,0 +1,395 @@
+/*
+	Copyright 2011-2019 Daniel S. Buckstein
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
+/*
+	animal3D SDK: Minimal 3D Animation Framework
+	By Daniel S. Buckstein
+	
+	a3_DemoState_loading.c/.cpp
+	Demo state function implementations.
+
+	****************************************************
+	*** THIS IS ONE OF YOUR DEMO'S MAIN SOURCE FILES ***
+	*** Implement your demo logic pertaining to      ***
+	***     LOADING in this file.                    ***
+	****************************************************
+*/
+
+//-----------------------------------------------------------------------------
+
+// uncomment this to link extension library (if available)
+//#define A3_USER_ENABLE_EXTENSION
+
+// **WARNING: FOR TESTING/COMPARISON ONLY, DO NOT USE IN DELIVERABLE BUILDS**
+// uncomment this to allow shader decoding (if available)
+#define A3_USER_ENABLE_SHADER_DECODING
+
+
+//-----------------------------------------------------------------------------
+
+#ifdef A3_USER_ENABLE_SHADER_DECODING
+// override shader loading function name before including
+#define a3shaderCreateFromFileList a3shaderCreateFromFileListEncoded
+#endif	// A3_USER_ENABLE_SHADER_DECODING
+
+
+#ifdef _WIN32
+#ifdef A3_USER_ENABLE_EXTENSION
+// force link extension lib
+#pragma comment(lib,"animal3D-A3DX.lib")
+#endif	// A3_USER_ENABLE_EXTENSION
+#ifdef A3_USER_ENABLE_SHADER_DECODING
+// add lib for shader decoding
+#pragma comment(lib,"animal3D-UtilityLib.lib")
+#endif	// A3_USER_ENABLE_SHADER_DECODING
+#endif	// _WIN32
+
+
+//-----------------------------------------------------------------------------
+
+#include "../a3_DemoState.h"
+
+#include <stdio.h>
+
+
+//-----------------------------------------------------------------------------
+// GENERAL UTILITIES
+
+
+//-----------------------------------------------------------------------------
+// LOADING
+
+// utility to load geometry
+void a3demo_loadGeometry(a3_DemoState *demoState)
+{
+	// static model transformations
+	static const a3mat4 downscale20x = {
+		+0.05f, 0.0f, 0.0f, 0.0f,
+		0.0f, +0.05f, 0.0f, 0.0f,
+		0.0f, 0.0f, +0.05f, 0.0f,
+		0.0f, 0.0f, 0.0f, +1.0f,
+	};
+
+	// pointer to shared vbo/ibo
+	a3_VertexBuffer *vbo_ibo;
+	a3_VertexArrayDescriptor *vao;
+	a3_VertexDrawable *currentDrawable;
+	a3ui32 sharedVertexStorage = 0, sharedIndexStorage = 0;
+	a3ui32 numVerts = 0;
+	a3ui32 i;
+
+
+	// file streaming (if requested)
+	a3_FileStream fileStream[1] = { 0 };
+	const a3byte *const geometryStream = "./data/geom_data_gpro_starter.dat";
+
+	// geometry data
+	a3_GeometryData sceneShapesData[3] = { 0 };
+	a3_GeometryData proceduralShapesData[4] = { 0 };
+	a3_GeometryData loadedModelsData[1] = { 0 };
+	const a3ui32 sceneShapesCount = sizeof(sceneShapesData) / sizeof(a3_GeometryData);
+	const a3ui32 proceduralShapesCount = sizeof(proceduralShapesData) / sizeof(a3_GeometryData);
+	const a3ui32 loadedModelsCount = sizeof(loadedModelsData) / sizeof(a3_GeometryData);
+
+	// common index format
+	a3_IndexFormatDescriptor sceneCommonIndexFormat[1] = { 0 };
+	a3ui32 bufferOffset, *const bufferOffsetPtr = &bufferOffset;
+
+
+	// procedural scene objects
+	// attempt to load stream if requested
+	if (demoState->streaming && a3fileStreamOpenRead(fileStream, geometryStream))
+	{
+		// read from stream
+
+		// static scene objects
+		for (i = 0; i < sceneShapesCount; ++i)
+			a3fileStreamReadObject(fileStream, sceneShapesData + i, (a3_FileStreamReadFunc)a3geometryLoadDataBinary);
+
+		// procedurally-generated objects
+		for (i = 0; i < proceduralShapesCount; ++i)
+			a3fileStreamReadObject(fileStream, proceduralShapesData + i, (a3_FileStreamReadFunc)a3geometryLoadDataBinary);
+
+		// loaded model objects
+		for (i = 0; i < loadedModelsCount; ++i)
+			a3fileStreamReadObject(fileStream, loadedModelsData + i, (a3_FileStreamReadFunc)a3geometryLoadDataBinary);
+
+		// done
+		a3fileStreamClose(fileStream);
+	}
+	// not streaming or stream doesn't exist
+	else if (!demoState->streaming || a3fileStreamOpenWrite(fileStream, geometryStream))
+	{
+		// create new data
+		a3_ProceduralGeometryDescriptor sceneShapes[3] = { a3geomShape_none };
+
+		// static scene procedural objects
+		//	(grid, axes, skybox)
+		a3proceduralCreateDescriptorPlane(sceneShapes + 0, a3geomFlag_wireframe, a3geomAxis_default, 20.0f, 20.0f, 20, 20);
+		a3proceduralCreateDescriptorAxes(sceneShapes + 1, a3geomFlag_wireframe, 0.0f, 1);
+		a3proceduralCreateDescriptorBox(sceneShapes + 2, a3geomFlag_texcoords, 100.0f, 100.0f, 100.0f, 1, 1, 1);
+		for (i = 0; i < sceneShapesCount; ++i)
+		{
+			a3proceduralGenerateGeometryData(sceneShapesData + i, sceneShapes + i, 0);
+			a3fileStreamWriteObject(fileStream, sceneShapesData + i, (a3_FileStreamWriteFunc)a3geometrySaveDataBinary);
+		}
+
+		// done
+		a3fileStreamClose(fileStream);
+	}
+
+
+	// GPU data upload process: 
+	//	- determine storage requirements
+	//	- allocate buffer
+	//	- create vertex arrays using unique formats
+	//	- create drawable and upload data
+
+	// get storage size
+	sharedVertexStorage = numVerts = 0;
+	for (i = 0; i < sceneShapesCount; ++i)
+	{
+		sharedVertexStorage += a3geometryGetVertexBufferSize(sceneShapesData + i);
+		numVerts += sceneShapesData[i].numVertices;
+	}
+
+
+	// common index format required for shapes that share vertex formats
+	a3geometryCreateIndexFormat(sceneCommonIndexFormat, numVerts);
+	sharedIndexStorage = 0;
+	for (i = 0; i < sceneShapesCount; ++i)
+		sharedIndexStorage += a3indexStorageSpaceRequired(sceneCommonIndexFormat, sceneShapesData[i].numIndices);
+
+
+	// create shared buffer
+	vbo_ibo = demoState->vbo_staticSceneObjectDrawBuffer;
+	a3bufferCreateSplit(vbo_ibo, "vbo/ibo:scene", a3buffer_vertex, sharedVertexStorage, sharedIndexStorage, 0, 0);
+	sharedVertexStorage = 0;
+
+
+	// create vertex formats and drawables
+	// grid: position attribute only
+	// overlay objects are also just position
+	vao = demoState->vao_position;
+	a3geometryGenerateVertexArray(vao, "vao:pos", sceneShapesData + 0, vbo_ibo, sharedVertexStorage);
+	currentDrawable = demoState->draw_grid;
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, sceneShapesData + 0, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+
+	// axes: position and color
+	vao = demoState->vao_position_color;
+	a3geometryGenerateVertexArray(vao, "vao:pos+col", sceneShapesData + 1, vbo_ibo, sharedVertexStorage);
+	currentDrawable = demoState->draw_axes;
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, sceneShapesData + 1, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+
+	// skybox: position and texture coordinates
+	vao = demoState->vao_position_texcoord;
+	a3geometryGenerateVertexArray(vao, "vao:pos+tex", sceneShapesData + 2, vbo_ibo, sharedVertexStorage);
+	currentDrawable = demoState->draw_skybox;
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, sceneShapesData + 2, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+
+
+	// release data when done
+	for (i = 0; i < sceneShapesCount; ++i)
+		a3geometryReleaseData(sceneShapesData + i);
+}
+
+
+// utility to load shaders
+void a3demo_loadShaders(a3_DemoState *demoState)
+{
+	// direct to demo programs
+	a3_DemoStateShaderProgram *currentDemoProg;
+	a3i32 *currentUnif, uLocation, flag;
+	a3ui32 i, j;
+
+	// maximum uniform buffer size
+	const a3ui32 uBlockSzMax = a3shaderUniformBlockMaxSize();
+
+	// list of uniform names: align with uniform list in demo struct!
+	const a3byte *uniformNames[demoStateMaxCount_shaderProgramUniform] = {
+		// common vertex
+		"uMVP",
+
+		// common fragment
+		"uColor",
+	};
+
+
+	// some default uniform values
+	const a3f32 defaultColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	const a3i32 defaultTexUnits[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+	const a3f32 defaultFloat[] = { 0.0f };
+	const a3i32 defaultInt[] = { 0 };
+
+
+	// list of all unique shaders
+	// this is a good idea to avoid multi-loading 
+	//	those that are shared between programs
+	union {
+		struct {
+			// vertex shaders
+			// base
+			a3_DemoStateShader passthru_transform_vs[1];
+			a3_DemoStateShader passColor_transform_vs[1];
+
+			// fragment shaders
+			a3_DemoStateShader drawColorUnif_fs[1];
+			a3_DemoStateShader drawColorAttrib_fs[1];
+		};
+	} shaderList = {
+		{
+			// ****REMINDER: 'Encoded' shaders are available for proof-of-concept
+			//	testing ONLY!  Insert /e before file names.
+			// DO NOT SUBMIT WORK USING ENCODED SHADERS OR YOU WILL GET ZERO!!!
+
+			// vs
+			// base
+			{ { { 0 },	"shdr-vs:passthru",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passthru_transform_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-col",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passColor_transform_vs4x.glsl" } } },
+
+			// fs
+			// base
+			{ { { 0 },	"shdr-fs:draw-col-unif",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/e/drawColorUnif_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-col-attr",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/e/drawColorAttrib_fs4x.glsl" } } },
+		}
+	};
+	a3_DemoStateShader *const shaderListPtr = (a3_DemoStateShader *)(&shaderList), *shaderPtr;
+	const a3ui32 numUniqueShaders = sizeof(shaderList) / sizeof(a3_DemoStateShader);
+
+
+	printf("\n\n---------------- LOAD SHADERS STARTED  ---------------- \n");
+
+
+	// load unique shaders: 
+	//	- load file contents
+	//	- create and compile shader object
+	//	- release file contents
+	for (i = 0; i < numUniqueShaders; ++i)
+	{
+		shaderPtr = shaderListPtr + i;
+		flag = a3shaderCreateFromFileList(shaderPtr->shader, 
+			shaderPtr->shaderName, shaderPtr->shaderType,
+			shaderPtr->filePath, shaderPtr->srcCount);
+		if (flag == 0)
+			printf("\n ^^^^ SHADER %u '%s' FAILED TO COMPILE \n\n", i, shaderPtr->shader->handle->name);
+	}
+
+
+	// setup programs: 
+	//	- create program object
+	//	- attach shader objects
+
+	// base programs
+
+	// uniform color program
+	currentDemoProg = demoState->prog_drawColorUnif;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-unif");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passthru_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorUnif_fs->shader);
+	
+	// color attrib program
+	currentDemoProg = demoState->prog_drawColorAttrib;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-attr");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passColor_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorAttrib_fs->shader);
+
+
+	// activate a primitive for validation
+	// makes sure the specified geometry can draw using programs
+	// good idea to activate the drawable with the most attributes
+	a3vertexDrawableActivate(demoState->draw_axes);
+
+	// link and validate all programs
+	for (i = 0; i < demoStateMaxCount_shaderProgram; ++i)
+	{
+		currentDemoProg = demoState->shaderProgram + i;
+		flag = a3shaderProgramLink(currentDemoProg->program);
+		if (flag == 0)
+			printf("\n ^^^^ PROGRAM %u '%s' FAILED TO LINK \n\n", i, currentDemoProg->program->handle->name);
+
+		flag = a3shaderProgramValidate(currentDemoProg->program);
+		if (flag == 0)
+			printf("\n ^^^^ PROGRAM %u '%s' FAILED TO VALIDATE \n\n", i, currentDemoProg->program->handle->name);
+	}
+
+	// if linking fails, contingency plan goes here
+	// otherwise, release shaders
+	for (i = 0; i < numUniqueShaders; ++i)
+	{
+		shaderPtr = shaderListPtr + i;
+		a3shaderRelease(shaderPtr->shader);
+	}
+
+
+	// prepare uniforms algorithmically instead of manually for all programs
+	for (i = 0; i < demoStateMaxCount_shaderProgram; ++i)
+	{
+		// activate program
+		currentDemoProg = demoState->shaderProgram + i;
+		a3shaderProgramActivate(currentDemoProg->program);
+
+		// get uniform and uniform block locations
+		currentUnif = currentDemoProg->uniformLocation;
+		for (j = 0; j < demoStateMaxCount_shaderProgramUniform; ++j)
+			currentUnif[j] = a3shaderUniformGetLocation(currentDemoProg->program, uniformNames[j]);
+
+
+		// set default values for all programs that have a uniform that will 
+		//	either never change or is consistent for all programs
+
+		// common VS
+		if ((uLocation = currentDemoProg->uMVP) >= 0)
+			a3shaderUniformSendFloatMat(a3unif_mat4, 0, uLocation, 1, a3identityMat4.mm);
+
+		// common FS
+		if ((uLocation = currentDemoProg->uColor) >= 0)
+			a3shaderUniformSendFloat(a3unif_vec4, uLocation, 1, defaultColor);
+	}
+
+
+	printf("\n\n---------------- LOAD SHADERS FINISHED ---------------- \n");
+
+	//done
+	a3shaderProgramDeactivate();
+	a3vertexDrawableDeactivate();
+}
+
+
+//-----------------------------------------------------------------------------
+
+// the handle release callbacks are no longer valid; since the library was 
+//	reloaded, old function pointers are out of scope!
+// could reload everything, but that would mean rebuilding GPU data...
+//	...or just set new function pointers!
+void a3demo_refresh(a3_DemoState *demoState)
+{
+	a3_BufferObject *currentBuff = demoState->drawDataBuffer,
+		*const endBuff = currentBuff + demoStateMaxCount_drawDataBuffer;
+	a3_VertexArrayDescriptor *currentVAO = demoState->vertexArray,
+		*const endVAO = currentVAO + demoStateMaxCount_vertexArray;
+	a3_DemoStateShaderProgram *currentProg = demoState->shaderProgram,
+		*const endProg = currentProg + demoStateMaxCount_shaderProgram;
+
+	while (currentBuff < endBuff)
+		a3bufferHandleUpdateReleaseCallback(currentBuff++);
+	while (currentVAO < endVAO)
+		a3vertexArrayHandleUpdateReleaseCallback(currentVAO++);
+	while (currentProg < endProg)
+		a3shaderProgramHandleUpdateReleaseCallback((currentProg++)->program);
+}
+
+
+//-----------------------------------------------------------------------------
