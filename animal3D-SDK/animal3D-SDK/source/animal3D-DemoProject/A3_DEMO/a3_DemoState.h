@@ -62,7 +62,7 @@ extern "C"
 	//	more than enough memory to hold extra objects
 	enum a3_DemoStateObjectMaxCounts
 	{
-		demoStateMaxCount_object = 1,
+		demoStateMaxCount_object = 8,
 		demoStateMaxCount_camera = 1,
 		demoStateMaxCount_light = 1,
 		demoStateMaxCount_sceneObject = demoStateMaxCount_object + demoStateMaxCount_camera + demoStateMaxCount_light,
@@ -70,8 +70,8 @@ extern "C"
 		demoStateMaxCount_timer = 1,
 		demoStateMaxCount_drawDataBuffer = 1,
 		demoStateMaxCount_vertexArray = 4,
-		demoStateMaxCount_drawable = 4,
-		demoStateMaxCount_shaderProgram = 4,
+		demoStateMaxCount_drawable = 8,
+		demoStateMaxCount_shaderProgram = 8,
 	};
 
 	// additional counters for demo modes
@@ -169,8 +169,13 @@ extern "C"
 					mainCamera[1],
 
 					mainLight[1],
-
-					skyboxObject[1];
+					
+					skyboxObject[1],
+					planeObject[1],
+					sphereObject[1],
+					cylinderObject[1],
+					torusObject[1],
+					teapotObject[1];
 			};
 		};
 
@@ -210,7 +215,8 @@ extern "C"
 				a3_VertexArrayDescriptor
 					vao_position[1],							// VAO for vertex format with only position
 					vao_position_color[1],						// VAO for vertex format with position and color
-					vao_position_texcoord[1];					// VAO for vertex format with position and UVs
+					vao_position_texcoord[1],					// VAO for vertex format with position and UVs
+					vao_position_texcoord_normal[1];			// VAO for vertex format with position, UVs and normal
 			};
 		};
 
@@ -221,7 +227,12 @@ extern "C"
 				a3_VertexDrawable
 					draw_grid[1],								// wireframe ground plane to emphasize scaling
 					draw_axes[1],								// coordinate axes at the center of the world
-					draw_skybox[1];								// skybox cube mesh
+					draw_skybox[1],								// skybox cube mesh
+					draw_plane[1],								// procedural plane
+					draw_sphere[1],								// procedural sphere
+					draw_cylinder[1],							// procedural cylinder
+					draw_torus[1],								// procedural torus
+					draw_teapot[1];								// can't not have a Utah teapot
 			};
 		};
 
@@ -232,9 +243,15 @@ extern "C"
 			struct {
 				a3_DemoStateShaderProgram
 					prog_drawColorUnif[1],						// draw uniform color
-					prog_drawColorAttrib[1];					// draw color attribute
+					prog_drawColorAttrib[1],					// draw color attribute
+					prog_drawColorUnif_instanced[1],			// draw uniform color with instancing
+					prog_drawColorAttrib_instanced[1];			// draw color attribute with instancing
 			};
 		};
+
+
+		// managed objects, no touchie
+		a3_VertexDrawable dummyDrawable[1];
 
 
 		//---------------------------------------------------------------------
