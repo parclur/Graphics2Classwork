@@ -119,6 +119,9 @@ void a3demo_render(const a3_DemoState *demoState)
 	const a3_VertexDrawable *currentDrawable;
 	const a3_DemoStateShaderProgram *currentDemoProgram;
 
+	// ****TO-DO: UNCOMMENT THESE IF YOU PLAN ON USING THEM
+//	a3ui32 i, j, k;
+
 	// RGB
 	const a3vec4 rgba4[] = {
 		{ 1.0f, 0.0f, 0.0f, 1.0f },	// red
@@ -149,6 +152,9 @@ void a3demo_render(const a3_DemoState *demoState)
 
 	// final model matrix and full matrix stack
 	a3mat4 modelViewProjectionMat = a3identityMat4;
+	// ****TO-DO: UNCOMMENT THESE IF YOU PLAN ON USING THEM
+//	a3mat4 modelViewMat = a3identityMat4;
+//	a3mat4 modelViewNormalMat = a3identityMat4;
 
 	// camera used for drawing
 	const a3_DemoCamera *camera = demoState->camera + demoState->activeCamera;
@@ -156,6 +162,7 @@ void a3demo_render(const a3_DemoState *demoState)
 
 	// current scene object being rendered, for convenience
 	const a3_DemoSceneObject *currentSceneObject;
+//	const a3_DemoSceneObject *endSceneObject;	// hint: useful 'end' iterator
 
 	// display mode for current pipeline
 	// ensures we don't go through the whole pipeline if not needed
@@ -211,12 +218,14 @@ void a3demo_render(const a3_DemoState *demoState)
 	}
 
 
-	// draw objects: 
-	//	- correct "up" axis if needed
-	//	- calculate proper transformation matrices
-	//	- move lighting objects' positions into object space as needed
-	//	- send uniforms
-	//	- draw
+	// ****TO-DO: RENDER SCENE OBJECTS
+	//	-> locate and read documentation for pertinent code in the framework
+	//	-> use hints around this area to help
+	//	-> activate appropriate shader program
+	//	-> for each scene object: 
+	//		-> calculate and send MVP uniform (must match shaders)
+	//		-> send other uniforms (e.g. color, must match shaders)
+	//		-> activate and render correct drawable
 
 
 	//-------------------------------------------------------------------------
@@ -243,6 +252,12 @@ void a3demo_render(const a3_DemoState *demoState)
 	// individual objects
 	if (demoState->displayObjectAxes)
 	{
+		// ****TO-DO: DRAW OBJECT COORDINATE AXES
+		//	-> for each object: 
+		//		-> calculate and send MVP uniform (must match shaders)
+		//		-> send other uniforms (e.g. color, must match shaders)
+		//		-> activate and render correct drawable
+
 	}
 
 	glEnable(GL_DEPTH_TEST);

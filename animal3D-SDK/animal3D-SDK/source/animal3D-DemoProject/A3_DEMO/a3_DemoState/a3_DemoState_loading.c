@@ -35,7 +35,7 @@
 
 // **WARNING: FOR TESTING/COMPARISON ONLY, DO NOT USE IN DELIVERABLE BUILDS**
 // uncomment this to allow shader decoding (if available)
-#define A3_USER_ENABLE_SHADER_DECODING
+//#define A3_USER_ENABLE_SHADER_DECODING
 
 
 //-----------------------------------------------------------------------------
@@ -135,6 +135,16 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	{
 		// create new data
 		a3_ProceduralGeometryDescriptor sceneShapes[3] = { a3geomShape_none };
+		a3_ProceduralGeometryDescriptor proceduralShapes[4] = { a3geomShape_none };
+		const a3byte *loadedShapesFile[1] = {
+			"../../../../resource/obj/teapot/teapot.obj",
+		};
+		const a3_ModelLoaderFlag loadedShapesFlag[1] = {
+			a3model_calculateVertexNormals_loadTexcoords,
+		};
+		const a3real *loadedShapesTransform[1] = {
+			downscale20x.mm,
+		};
 
 		// static scene procedural objects
 		//	(grid, axes, skybox)
@@ -146,6 +156,26 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 			a3proceduralGenerateGeometryData(sceneShapesData + i, sceneShapes + i, 0);
 			a3fileStreamWriteObject(fileStream, sceneShapesData + i, (a3_FileStreamWriteFunc)a3geometrySaveDataBinary);
 		}
+
+		// other procedurally-generated objects
+		// ****TO-DO: SETUP PROCEDURALLY-GENERATED GEOMETRY
+		//	-> locate and read documentation for pertinent code in the framework
+		//	-> use hints around this area to help
+		//	-> initialize descriptors: plane, sphere, cylinder, torus
+		//		-> attributes include texture coordinates and normals
+		//	-> for each object: 
+		//		-> generate geometry data
+		//		-> optional: for each object, write data to file for streaming
+
+
+		// objects loaded from mesh files
+		// ****TO-DO: SETUP LOADED MODEL GEOMETRY
+		//	-> locate and read documentation for pertinent code in the framework
+		//	-> use hints around this area to help
+		//	-> for each object: 
+		//		-> load model
+		//		-> optional: for each object, write data to file for streaming
+		
 
 		// done
 		a3fileStreamClose(fileStream);
@@ -165,6 +195,16 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		sharedVertexStorage += a3geometryGetVertexBufferSize(sceneShapesData + i);
 		numVerts += sceneShapesData[i].numVertices;
 	}
+	for (i = 0; i < proceduralShapesCount; ++i)
+	{
+		sharedVertexStorage += a3geometryGetVertexBufferSize(proceduralShapesData + i);
+		numVerts += proceduralShapesData[i].numVertices;
+	}
+	for (i = 0; i < loadedModelsCount; ++i)
+	{
+		sharedVertexStorage += a3geometryGetVertexBufferSize(loadedModelsData + i);
+		numVerts += loadedModelsData[i].numVertices;
+	}
 
 
 	// common index format required for shapes that share vertex formats
@@ -172,6 +212,10 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	sharedIndexStorage = 0;
 	for (i = 0; i < sceneShapesCount; ++i)
 		sharedIndexStorage += a3indexStorageSpaceRequired(sceneCommonIndexFormat, sceneShapesData[i].numIndices);
+	for (i = 0; i < proceduralShapesCount; ++i)
+		sharedIndexStorage += a3indexStorageSpaceRequired(sceneCommonIndexFormat, proceduralShapesData[i].numIndices);
+	for (i = 0; i < loadedModelsCount; ++i)
+		sharedIndexStorage += a3indexStorageSpaceRequired(sceneCommonIndexFormat, loadedModelsData[i].numIndices);
 
 
 	// create shared buffer
@@ -200,10 +244,32 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	currentDrawable = demoState->draw_skybox;
 	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, sceneShapesData + 2, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 
+	// ****TO-DO: CREATE VERTEX FORMATS AND DRAWABLES FOR NEW GEOMETRY
+	// TWO WAYS TO DO THIS: 
+	//	EASIER: self-contained drawable for each shape
+	//		-> allocate enough VAOs and VBOs in demo header
+	//		-> create drawables one-by-one (find pertinent drawable creation function)
+	//	HARDER (BONUS): use the shared buffer
+	//		-> create VAO for scene shapes; if all of the geometry has the same attributes 
+	//			(see descriptor creation above), you only need to make one VAO
+	//		-> generate drawable for each shape (see examples above)
+
 
 	// release data when done
 	for (i = 0; i < sceneShapesCount; ++i)
 		a3geometryReleaseData(sceneShapesData + i);
+	for (i = 0; i < proceduralShapesCount; ++i)
+		a3geometryReleaseData(proceduralShapesData + i);
+	for (i = 0; i < loadedModelsCount; ++i)
+		a3geometryReleaseData(loadedModelsData + i);
+
+
+	// dummy drawable for point drawing: copy any of the existing ones, 
+	//	set vertex count to 1 and primitive to points (0x0000)
+	// DO NOT RELEASE THIS DRAWABLE; it is a managed stand-in!!!
+	*demoState->dummyDrawable = *demoState->draw_axes;
+	demoState->dummyDrawable->primitive = 0;
+	demoState->dummyDrawable->count = 1;
 }
 
 
@@ -222,6 +288,9 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	const a3byte *uniformNames[demoStateMaxCount_shaderProgramUniform] = {
 		// common vertex
 		"uMVP",
+		"uMV",
+		"uP",
+		"uMV_nrm",
 
 		// common fragment
 		"uColor",
@@ -244,6 +313,8 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			// base
 			a3_DemoStateShader passthru_transform_vs[1];
 			a3_DemoStateShader passColor_transform_vs[1];
+			a3_DemoStateShader passthru_transform_instanced_vs[1];
+			a3_DemoStateShader passColor_transform_instanced_vs[1];
 
 			// fragment shaders
 			a3_DemoStateShader drawColorUnif_fs[1];
@@ -257,13 +328,15 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 
 			// vs
 			// base
-			{ { { 0 },	"shdr-vs:passthru",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passthru_transform_vs4x.glsl" } } },
-			{ { { 0 },	"shdr-vs:pass-col",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passColor_transform_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:passthru",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/passthru_transform_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-col",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/passColor_transform_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:passthru-inst",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/passthru_transform_instanced_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-col-inst",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/passColor_transform_instanced_vs4x.glsl" } } },
 
 			// fs
 			// base
-			{ { { 0 },	"shdr-fs:draw-col-unif",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/e/drawColorUnif_fs4x.glsl" } } },
-			{ { { 0 },	"shdr-fs:draw-col-attr",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/e/drawColorAttrib_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-col-unif",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/drawColorUnif_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-col-attr",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/drawColorAttrib_fs4x.glsl" } } },
 		}
 	};
 	a3_DemoStateShader *const shaderListPtr = (a3_DemoStateShader *)(&shaderList), *shaderPtr;
@@ -295,16 +368,16 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	// base programs
 
 	// uniform color program
-	currentDemoProg = demoState->prog_drawColorUnif;
-	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-unif");
-	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passthru_transform_vs->shader);
-	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorUnif_fs->shader);
+	// ****TO-DO: SETUP THIS PROGRAM
 	
 	// color attrib program
-	currentDemoProg = demoState->prog_drawColorAttrib;
-	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-attr");
-	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passColor_transform_vs->shader);
-	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorAttrib_fs->shader);
+	// ****TO-DO: SETUP THIS PROGRAM
+
+	// uniform color program with instancing
+	// (optional)
+
+	// color attrib program with instancing
+	// (optional)
 
 
 	// activate a primitive for validation
@@ -352,6 +425,12 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 
 		// common VS
 		if ((uLocation = currentDemoProg->uMVP) >= 0)
+			a3shaderUniformSendFloatMat(a3unif_mat4, 0, uLocation, 1, a3identityMat4.mm);
+		if ((uLocation = currentDemoProg->uMV) >= 0)
+			a3shaderUniformSendFloatMat(a3unif_mat4, 0, uLocation, 1, a3identityMat4.mm);
+		if ((uLocation = currentDemoProg->uP) >= 0)
+			a3shaderUniformSendFloatMat(a3unif_mat4, 0, uLocation, 1, a3identityMat4.mm);
+		if ((uLocation = currentDemoProg->uMV_nrm) >= 0)
 			a3shaderUniformSendFloatMat(a3unif_mat4, 0, uLocation, 1, a3identityMat4.mm);
 
 		// common FS

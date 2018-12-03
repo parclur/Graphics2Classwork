@@ -92,6 +92,9 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 	};
 
 
+	// tmp matrix for scale
+	a3mat4 scaleMat = a3identityMat4;
+
 	// active camera
 	a3_DemoCamera *camera = demoState->camera + demoState->activeCamera;
 	a3_DemoSceneObject *cameraObject = camera->sceneObject;
@@ -144,6 +147,32 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 		// complete by converting to clip space
 		a3real4x4ConcatR(camera->projectionMat.m, lightMVP->m);
 	}
+
+
+	// correct rotations as needed
+	if (useVerticalY)
+	{
+		// plane's axis is Z
+		a3real4x4ConcatL(demoState->planeObject->modelMat.m, convertZ2Y.m);
+
+		// sphere's axis is Z
+		a3real4x4ConcatL(demoState->sphereObject->modelMat.m, convertZ2Y.m);
+	}
+	else
+	{
+		// need to rotate skybox if Z-up
+		a3real4x4ConcatL(demoState->skyboxObject->modelMat.m, convertY2Z.m);
+
+		// teapot's axis is Y
+		a3real4x4ConcatL(demoState->teapotObject->modelMat.m, convertY2Z.m);
+	}
+
+
+	// apply scales
+	a3demo_applyScale_internal(demoState->sphereObject, scaleMat.m);
+	a3demo_applyScale_internal(demoState->cylinderObject, scaleMat.m);
+	a3demo_applyScale_internal(demoState->torusObject, scaleMat.m);
+	a3demo_applyScale_internal(demoState->teapotObject, scaleMat.m);
 }
 
 

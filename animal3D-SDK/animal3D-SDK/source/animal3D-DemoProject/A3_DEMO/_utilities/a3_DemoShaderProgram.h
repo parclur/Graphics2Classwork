@@ -48,7 +48,7 @@ extern "C"
 	// maximum number of uniforms in a program
 	enum a3_DemoShaderProgramMaxCounts
 	{
-		demoStateMaxCount_shaderProgramUniform = 2,
+		demoStateMaxCount_shaderProgramUniform = 8,
 	};
 
 
@@ -76,6 +76,9 @@ extern "C"
 				a3i32
 					// common vertex shader uniforms
 					uMVP,						// model-view-projection transform
+					uMV,						// model-view matrix (object -> view)
+					uP,							// projection matrix (view -> clip)
+					uMV_nrm,					// model-view matrix for normals (object -> view)
 					
 					// common fragment shader uniforms
 					uColor;						// uniform color
