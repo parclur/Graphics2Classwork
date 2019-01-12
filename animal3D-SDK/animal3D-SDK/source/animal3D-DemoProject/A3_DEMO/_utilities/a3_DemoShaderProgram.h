@@ -48,7 +48,7 @@ extern "C"
 	// maximum number of uniforms in a program
 	enum a3_DemoShaderProgramMaxCounts
 	{
-		demoStateMaxCount_shaderProgramUniform = 8,
+		demoStateMaxCount_shaderProgramUniform = 16,
 	};
 
 
@@ -79,8 +79,17 @@ extern "C"
 					uMV,						// model-view matrix (object -> view)
 					uP,							// projection matrix (view -> clip)
 					uMV_nrm,					// model-view matrix for normals (object -> view)
+					uAtlas,						// atlas matrix for texture coordinates
 					
 					// common fragment shader uniforms
+					uLightCt,					// number of lights
+					uLightPos,				// array of light positions in eye-space
+					uLightCol,					// array of light colors
+					uLightSz,					// array of light sizes
+					uTex_dm,					// named texture handle for diffuse map
+					uTex_sm,					// named texture handle for specular map
+					uTex_dm_ramp,				// named texture handle for diffuse ramp
+					uTex_sm_ramp,				// named texture handle for specular ramp
 					uColor;						// uniform color
 			};
 		};

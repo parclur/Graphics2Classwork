@@ -150,7 +150,7 @@ A3DYLIBSYMBOL a3_DemoState *a3demoCB_load(a3_DemoState *demoState, a3boolean hot
 
 
 		// enable asset streaming between loads
-	//	demoState->streaming = 1;
+		demoState->streaming = 1;
 
 
 		// create directory for data
@@ -165,6 +165,9 @@ A3DYLIBSYMBOL a3_DemoState *a3demoCB_load(a3_DemoState *demoState, a3boolean hot
 
 		// shaders
 		a3demo_loadShaders(demoState);
+
+		// textures
+		a3demo_loadTextures(demoState);
 
 		// scene objects
 		a3demo_initScene(demoState);
@@ -194,6 +197,7 @@ A3DYLIBSYMBOL a3_DemoState *a3demoCB_unload(a3_DemoState *demoState, a3boolean h
 		// free graphics objects
 		a3demo_unloadGeometry(demoState);
 		a3demo_unloadShaders(demoState);
+		a3demo_unloadTextures(demoState);
 
 		// validate unload
 		a3demo_validateUnload(demoState);
