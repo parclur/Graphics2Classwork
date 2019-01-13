@@ -119,8 +119,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	const a3_VertexDrawable *currentDrawable;
 	const a3_DemoStateShaderProgram *currentDemoProgram;
 
-	// ****TO-DO: UNCOMMENT THESE IF YOU PLAN ON USING THEM
-//	a3ui32 i, j, k;
+	a3ui32 i, j, k;
 
 	// RGB
 	const a3vec4 rgba4[] = {
@@ -151,24 +150,42 @@ void a3demo_render(const a3_DemoState *demoState)
 	};
 
 	// final model matrix and full matrix stack
-	a3mat4 modelViewProjectionMat = a3identityMat4;
-	// ****TO-DO: UNCOMMENT THESE IF YOU PLAN ON USING THEM
-//	a3mat4 modelViewMat = a3identityMat4;
-//	a3mat4 modelViewNormalMat = a3identityMat4;
+	a3mat4 modelViewProjectionMat = a3identityMat4, modelViewMat = a3identityMat4;
 
 	// camera used for drawing
 	const a3_DemoCamera *camera = demoState->camera + demoState->activeCamera;
 	const a3_DemoSceneObject *cameraObject = camera->sceneObject;
 
 	// current scene object being rendered, for convenience
-	const a3_DemoSceneObject *currentSceneObject;
-//	const a3_DemoSceneObject *endSceneObject;	// hint: useful 'end' iterator
+	const a3_DemoSceneObject *currentSceneObject, *endSceneObject;
 
 	// display mode for current pipeline
 	// ensures we don't go through the whole pipeline if not needed
 	const a3ui32 demoMode = demoState->demoMode, demoPipelineCount = demoState->demoModeCount;
 	const a3ui32 demoSubMode = demoState->demoSubMode[demoMode], demoPassCount = demoState->demoSubModeCount[demoMode];
 	const a3ui32 demoOutput = demoState->demoOutputMode[demoMode][demoSubMode], demoOutputCount = demoState->demoOutputCount[demoMode][demoSubMode];
+
+
+	// temp light data
+	a3vec4 lightPos_eye[demoStateMaxCount_light];
+	a3vec4 lightCol[demoStateMaxCount_light];
+	a3f32 lightSz[demoStateMaxCount_light];
+
+	// temp texture pointers for scene objects
+	const a3_Texture *tex_dm[] = {
+		demoState->tex_stone_dm,
+		demoState->tex_earth_dm, 
+		demoState->tex_stone_dm, 
+		demoState->tex_mars_dm,
+		demoState->tex_checker,
+	};
+	const a3_Texture *tex_sm[] = {
+		demoState->tex_stone_dm,
+		demoState->tex_earth_sm,
+		demoState->tex_stone_dm,
+		demoState->tex_mars_sm,
+		demoState->tex_checker,
+	};
 
 
 	//-------------------------------------------------------------------------
@@ -184,9 +201,16 @@ void a3demo_render(const a3_DemoState *demoState)
 		currentSceneObject = demoState->skyboxObject;
 		a3real4x4Product(modelViewProjectionMat.m, camera->viewProjectionMat.m, currentSceneObject->modelMat.m);
 
+		// dummy draw code: render with solid color
+		// ****TO-DO: activate texturing program
+		//	-> remove dummy draw code (the next 4 lines of code)
+		//	-> select and activate program (2 lines)
+		//	-> send correct MVP matrix as uniform (1 line)
+		//	-> activate skybox texture (1 line)
+		//		(pro tip: sampler uniform already sent, only activate texture)
 		currentDemoProgram = demoState->prog_drawColorUnif;
 		a3shaderProgramActivate(currentDemoProgram->program);
-		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, a3identityMat4.mm);
 		a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, grey);
 
 		glDepthFunc(GL_ALWAYS);
@@ -218,14 +242,82 @@ void a3demo_render(const a3_DemoState *demoState)
 	}
 
 
-	// ****TO-DO: RENDER SCENE OBJECTS
-	//	-> locate and read documentation for pertinent code in the framework
-	//	-> use hints around this area to help
-	//	-> activate appropriate shader program
-	//	-> for each scene object: 
-	//		-> calculate and send MVP uniform (must match shaders)
-	//		-> send other uniforms (e.g. color, must match shaders)
-	//		-> activate and render correct drawable
+	// copy temp light data
+	for (k = 0; k < demoState->lightCount; ++k)
+	{
+		lightPos_eye[k] = demoState->pointLight[k].viewPos;
+		lightCol[k] = demoState->pointLight[k].color;
+		lightSz[k] = demoState->pointLight[k].radiusInvSq;
+	}
+
+
+	// draw objects: 
+	//	- correct "up" axis if needed
+	//	- calculate proper transformation matrices
+	//	- move lighting objects' positions into object space as needed
+	//	- send uniforms
+	//	- draw
+
+	// support multiple geometry passes
+	for (i = 0, j = 1; i < j; ++i)
+	{
+		// select forward algorithm
+		switch (i)
+		{
+			// forward pass
+		case 0:
+			// select depending on mode and/or sub-mode
+			// ****TO-DO: activate program for current mode
+			//	-> complete the switch cases
+			//		(all draw code below is set up correctly for all cases)
+			switch (demoMode)
+			{
+			case 0:
+				currentDemoProgram = demoState->prog_drawColorUnif;
+				break;
+			}
+			a3shaderProgramActivate(currentDemoProgram->program);
+
+			// send shared data: 
+			//	- projection matrix
+			//	- light data
+			//	- activate texture atlases
+			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uP, 1, camera->projectionMat.mm);
+			a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uLightCt, 1, &demoState->lightCount);
+			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uLightPos, demoState->lightCount, lightPos_eye->v);
+			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uLightCol, demoState->lightCount, lightCol->v);
+			a3shaderUniformSendFloat(a3unif_single, currentDemoProgram->uLightSz, demoState->lightCount, lightSz);
+			a3textureActivate(demoState->tex_ramp_dm, a3tex_unit04);
+			a3textureActivate(demoState->tex_ramp_sm, a3tex_unit05);
+
+			// individual object requirements: 
+			//	- modelviewprojection
+			//	- modelview
+			//	- modelview for normals
+			for (k = 0, currentDrawable = demoState->draw_plane,
+				currentSceneObject = demoState->planeObject, endSceneObject = demoState->teapotObject;
+				currentSceneObject <= endSceneObject;
+				++k, ++currentDrawable, ++currentSceneObject)
+			{
+				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, rgba4[(k % 5) + 3].v);
+				a3textureActivate(tex_dm[k], a3tex_unit00);
+				a3textureActivate(tex_sm[k], a3tex_unit01);
+				a3real4x4Product(modelViewMat.m, cameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
+				a3real4x4Product(modelViewProjectionMat.m, camera->projectionMat.m, modelViewMat.m);
+				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
+				a3demo_quickInvertTranspose_internal(modelViewMat.m);
+				modelViewMat.v3 = a3zeroVec4;
+				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV_nrm, 1, modelViewMat.mm);
+				a3vertexDrawableActivateAndRender(currentDrawable);
+			}
+			break;
+
+			// additional geometry passes
+		case 1:
+			break;
+		}
+	}
 
 
 	//-------------------------------------------------------------------------
@@ -252,12 +344,15 @@ void a3demo_render(const a3_DemoState *demoState)
 	// individual objects
 	if (demoState->displayObjectAxes)
 	{
-		// ****TO-DO: DRAW OBJECT COORDINATE AXES
-		//	-> for each object: 
-		//		-> calculate and send MVP uniform (must match shaders)
-		//		-> send other uniforms (e.g. color, must match shaders)
-		//		-> activate and render correct drawable
-
+		for (k = 0, 
+			currentSceneObject = demoState->planeObject, endSceneObject = demoState->teapotObject; 
+			currentSceneObject <= endSceneObject; 
+			++k, ++currentSceneObject)
+		{
+			a3real4x4Product(modelViewProjectionMat.m, camera->viewProjectionMat.m, currentSceneObject->modelMat.m);
+			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+			a3vertexDrawableRenderActive();
+		}
 	}
 
 	glEnable(GL_DEPTH_TEST);
@@ -267,6 +362,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	// deactivate things
 	a3vertexDrawableDeactivate();
 	a3shaderProgramDeactivate();
+	a3textureDeactivate(a3tex_unit00);
 
 
 	// text
@@ -302,13 +398,31 @@ void a3demo_render_controls(const a3_DemoState *demoState)
 	// display mode info
 	const a3byte *modeText[demoStateMaxModes] = {
 		"Shader playground scene",
+		"Scene with Phong shading",
+		"Scene with non-photorealistic shading",
 	};
 	const a3byte *subModeText[demoStateMaxModes][demoStateMaxSubModes] = {
 		{
 			"Draw scene objects",
 		},
+		{
+			"Draw scene objects",
+		},
+		{
+			"Draw scene objects",
+		},
 	};
 	const a3byte *outputText[demoStateMaxModes][demoStateMaxSubModes][demoStateMaxOutputModes] = {
+		{
+			{
+				"Back buffer",
+			},
+		},
+		{
+			{
+				"Back buffer",
+			},
+		},
 		{
 			{
 				"Back buffer",
