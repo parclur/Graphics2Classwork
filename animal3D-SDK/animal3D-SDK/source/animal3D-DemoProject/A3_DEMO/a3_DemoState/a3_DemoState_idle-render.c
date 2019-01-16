@@ -197,6 +197,8 @@ void a3demo_render(const a3_DemoState *demoState)
 	}
 	else
 	{
+		glClearColor(0.1f, 0.1f, 0.8f, 1.0f); 
+		
 		// clearing is expensive!
 		// instead, draw skybox and force depth to farthest possible value in scene
 		// we could call this a "skybox clear" because it serves both purposes
