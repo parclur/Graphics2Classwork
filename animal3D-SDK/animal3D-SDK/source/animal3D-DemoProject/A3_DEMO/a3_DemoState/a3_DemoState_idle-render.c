@@ -273,6 +273,12 @@ void a3demo_render(const a3_DemoState *demoState)
 		//		-> calculate and send MVP uniform (must match shaders)
 		//		-> send other uniforms (e.g. color, must match shaders)
 		//		-> activate and render correct drawable
+		currentSceneObject = demoState->planeObject;
+		a3real4x4Product(modelViewProjectionMat.m,
+			camera->viewProjectionMat.m, currentSceneObject->modelMat.m);
+		a3shaderUniformSendFloatMat(a3unif_mat4, 0,
+			currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+		a3vertexDrawableRenderActive();
 
 	}
 
