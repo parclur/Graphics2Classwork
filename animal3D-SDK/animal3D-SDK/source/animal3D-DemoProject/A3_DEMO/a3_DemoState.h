@@ -68,8 +68,8 @@ extern "C"
 		demoStateMaxCount_sceneObject = demoStateMaxCount_object + demoStateMaxCount_camera + demoStateMaxCount_light,
 
 		demoStateMaxCount_timer = 1,
-		demoStateMaxCount_drawDataBuffer = 1,
-		demoStateMaxCount_vertexArray = 4,
+		demoStateMaxCount_drawDataBuffer = 8,
+		demoStateMaxCount_vertexArray = 12,
 		demoStateMaxCount_drawable = 8,
 		demoStateMaxCount_shaderProgram = 8,
 	};
@@ -205,6 +205,12 @@ extern "C"
 			struct {
 				a3_VertexBuffer
 					vbo_staticSceneObjectDrawBuffer[1];			// buffer to hold all data for static scene objects (e.g. grid)
+				a3_VertexBuffer
+					vbo_planeDrawBuffer[1],
+					vbo_sphereDrawBuffer[1],
+					vbo_cylinderDrawBuffer[1],
+					vbo_torusDrawBuffer[1],
+					vbo_teapotDrawBuffer[1];
 			};
 		};
 
@@ -217,6 +223,12 @@ extern "C"
 					vao_position_color[1],						// VAO for vertex format with position and color
 					vao_position_texcoord[1],					// VAO for vertex format with position and UVs
 					vao_position_texcoord_normal[1];			// VAO for vertex format with position, UVs and normal
+				a3_VertexArrayDescriptor
+					vao_planeFormat[1],
+					vao_sphereFormat[1],
+					vao_cylinderFormat[1],
+					vao_torusFormat[1],
+					vao_teapotFormat[1];
 			};
 		};
 
