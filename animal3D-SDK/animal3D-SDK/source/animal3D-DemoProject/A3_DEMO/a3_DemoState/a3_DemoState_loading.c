@@ -182,6 +182,7 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 				(a3_FileStreamWriteFunc)a3geometrySaveDataBinary);
 		}
 
+
 		// objects loaded from mesh files
 		// ****TO-DO: SETUP LOADED MODEL GEOMETRY
 		//	-> locate and read documentation for pertinent code in the framework
@@ -273,7 +274,9 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	//		-> create VAO for scene shapes; if all of the geometry has the same attributes 
 	//			(see descriptor creation above), you only need to make one VAO
 	//		-> generate drawable for each shape (see examples above)
-
+	a3geometryGenerateDrawableSelfContained(demoState->draw_plane,
+		demoState->vao_planeFormat, demoState->vbo_planeDrawBuffer,
+		proceduralShapesData + 0);
 
 	// release data when done
 	for (i = 0; i < sceneShapesCount; ++i)
@@ -396,6 +399,7 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 		shaderList.passthru_transform_vs->shader);
 	a3shaderProgramAttachShader(currentDemoProg->program,
 		shaderList.drawColorUnif_fs->shader);		
+
 	
 	// color attrib program
 	// ****TO-DO: SETUP THIS PROGRAM
@@ -405,6 +409,7 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 		shaderList.passColor_transform_vs->shader);
 	a3shaderProgramAttachShader(currentDemoProg->program,
 		shaderList.drawColorAttrib_fs->shader);
+
 
 	// uniform color program with instancing
 	// (optional)

@@ -153,7 +153,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	// final model matrix and full matrix stack
 	a3mat4 modelViewProjectionMat = a3identityMat4;
 	// ****TO-DO: UNCOMMENT THESE IF YOU PLAN ON USING THEM
-//	a3mat4 modelViewMat = a3identityMat4;
+	a3mat4 modelViewMat = a3identityMat4;
 //	a3mat4 modelViewNormalMat = a3identityMat4;
 
 	// camera used for drawing
@@ -197,7 +197,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	}
 	else
 	{
-		glClearColor(0.1f, 0.1f, 0.8f, 1.0f); 
+		//glClearColor(0.1f, 0.1f, 0.8f, 1.0f); 
 		
 		// clearing is expensive!
 		// instead, draw skybox and force depth to farthest possible value in scene
@@ -228,6 +228,20 @@ void a3demo_render(const a3_DemoState *demoState)
 	//		-> calculate and send MVP uniform (must match shaders)
 	//		-> send other uniforms (e.g. color, must match shaders)
 	//		-> activate and render correct drawable
+	currentDemoProgram = demoState->prog_drawColorUnif;
+	a3shaderProgramActivate(currentDemoProgram->program);
+
+	currentSceneObject = demoState->planeObject;
+	a3real4x4Product(modelViewMat.m,
+		cameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
+	a3real4x4Product(modelViewProjectionMat.m,
+		camera->projectionMat.m, modelViewMat.m);	a3shaderUniformSendFloatMat(a3unif_mat4, 0,
+		currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+	a3shaderUniformSendFloat(a3unif_vec4,
+		currentDemoProgram->uColor, 1, cyan);
+
+	currentDrawable = demoState->draw_plane;
+	a3vertexDrawableActivateAndRender(currentDrawable);
 
 
 	//-------------------------------------------------------------------------
