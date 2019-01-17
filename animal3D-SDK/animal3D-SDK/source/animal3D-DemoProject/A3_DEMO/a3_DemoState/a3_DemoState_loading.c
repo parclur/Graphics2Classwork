@@ -166,7 +166,21 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		//	-> for each object: 
 		//		-> generate geometry data
 		//		-> optional: for each object, write data to file for streaming
-
+		a3proceduralCreateDescriptorPlane(proceduralShapes + 0,
+			a3geomFlag_texcoords_normals, a3geomAxis_default, 24.0f, 24.0f, 12, 12);
+		a3proceduralCreateDescriptorSphere(proceduralShapes + 1,
+			a3geomFlag_texcoords_normals, a3geomAxis_default, 1.0f, 32, 24);
+		a3proceduralCreateDescriptorCylinder(proceduralShapes + 2,
+			a3geomFlag_texcoords_normals, a3geomAxis_x, 1.0f, 2.0f, 32, 1, 1);
+		a3proceduralCreateDescriptorTorus(proceduralShapes + 3,
+			a3geomFlag_texcoords_normals, a3geomAxis_x, 1.0f, 0.25f, 32, 24);
+		for (i = 0; i < proceduralShapesCount; ++i)
+		{
+			a3proceduralGenerateGeometryData(proceduralShapesData + i,
+				proceduralShapes + i, 0);
+			a3fileStreamWriteObject(fileStream, proceduralShapesData + i,
+				(a3_FileStreamWriteFunc)a3geometrySaveDataBinary);
+		}
 
 		// objects loaded from mesh files
 		// ****TO-DO: SETUP LOADED MODEL GEOMETRY
@@ -175,7 +189,13 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		//	-> for each object: 
 		//		-> load model
 		//		-> optional: for each object, write data to file for streaming
-		
+		for (i = 0; i < loadedModelsCount; ++i)
+		{
+			a3modelLoadOBJ(loadedModelsData + i,
+				loadedShapesFile[i], loadedShapesFlag[i], loadedShapesTransform[i]);
+			a3fileStreamWriteObject(fileStream, loadedModelsData + i,
+				(a3_FileStreamWriteFunc)a3geometrySaveDataBinary);
+		}
 
 		// done
 		a3fileStreamClose(fileStream);
