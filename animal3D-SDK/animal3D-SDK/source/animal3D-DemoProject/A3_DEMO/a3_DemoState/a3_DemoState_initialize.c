@@ -97,15 +97,21 @@ void a3demo_initScene(a3_DemoState *demoState)
 
 
 	// demo modes
-	demoState->demoModeCount = 1;
+	demoState->demoModeCount = 3;
 	demoState->demoMode = 0;
 
 	// modes/pipelines: 
 	// A: shader playground scene mode
 	//	- draw objects sub-mode
 	//		- back buffer output
+	// B: Phong shading mode (same subs and outputs)
+	// C: NPR shading mode (same subs and outputs)
 	demoState->demoSubModeCount[0] = 1;
 	demoState->demoOutputCount[0][0] = 1;
+	demoState->demoSubModeCount[1] = 1;
+	demoState->demoOutputCount[1][0] = 1;
+	demoState->demoSubModeCount[2] = 1;
+	demoState->demoOutputCount[2][0] = 1;
 
 
 	// initialize other objects
@@ -117,7 +123,7 @@ void a3demo_initScene(a3_DemoState *demoState)
 
 
 	// lights
-	demoState->lightCount = 1;
+	demoState->lightCount = demoStateMaxCount_light;
 
 	// first light is hard-coded
 	pointLight = demoState->pointLight;
