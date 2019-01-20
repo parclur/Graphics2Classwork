@@ -32,9 +32,15 @@
 //	5) assign vertex color input to varying
 
 layout (location = 0) in vec4 aPosition;
+layout(location = 3) in vec4 aColor;
+
+uniform mat4 uMVP;
+
+out vec4 vPassColor;
 
 void main()
 {
 	// DUMMY OUTPUT: directly assign input position to output position
-	gl_Position = aPosition;
+	gl_Position = uMVP * aPosition;
+	vPassColor = aColor;
 }
