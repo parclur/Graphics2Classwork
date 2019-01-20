@@ -276,7 +276,24 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	//		-> generate drawable for each shape (see examples above)
 	a3geometryGenerateDrawableSelfContained(demoState->draw_plane,
 		demoState->vao_planeFormat, demoState->vbo_planeDrawBuffer,
-		proceduralShapesData + 0);
+		proceduralShapesData + 0);
+
+	a3geometryGenerateDrawableSelfContained(demoState->draw_sphere,
+		demoState->vao_sphereFormat, demoState->vbo_sphereDrawBuffer,
+		proceduralShapesData + 0);
+
+	a3geometryGenerateDrawableSelfContained(demoState->draw_cylinder,
+		demoState->vao_cylinderFormat, demoState->vbo_cylinderDrawBuffer,
+		proceduralShapesData + 0);
+
+	a3geometryGenerateDrawableSelfContained(demoState->draw_torus,
+		demoState->vao_torusFormat, demoState->vbo_torusDrawBuffer,
+		proceduralShapesData + 0);
+
+	a3geometryGenerateDrawableSelfContained(demoState->draw_teapot,
+		demoState->vao_teapotFormat, demoState->vbo_teapotDrawBuffer,
+		proceduralShapesData + 0);
+
 
 	// release data when done
 	for (i = 0; i < sceneShapesCount; ++i)
