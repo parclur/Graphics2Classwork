@@ -150,7 +150,7 @@ A3DYLIBSYMBOL a3_DemoState *a3demoCB_load(a3_DemoState *demoState, a3boolean hot
 
 
 		// enable asset streaming between loads
-		demoState->streaming = 1;
+	//	demoState->streaming = 1;
 
 
 		// create directory for data
@@ -198,6 +198,7 @@ A3DYLIBSYMBOL a3_DemoState *a3demoCB_unload(a3_DemoState *demoState, a3boolean h
 		a3demo_unloadGeometry(demoState);
 		a3demo_unloadShaders(demoState);
 		a3demo_unloadTextures(demoState);
+		a3demo_unloadFramebuffers(demoState);
 
 		// validate unload
 		a3demo_validateUnload(demoState);
@@ -295,6 +296,11 @@ A3DYLIBSYMBOL void a3demoCB_windowResize(a3_DemoState *demoState, a3i32 newWindo
 	demoState->windowHeight = newWindowHeight;
 	demoState->frameWidth = frameWidth;
 	demoState->frameHeight = frameHeight;
+
+	// framebuffers should be initialized or re-initialized here 
+	//	since they are likely dependent on the window size
+	a3demo_unloadFramebuffers(demoState);
+	a3demo_loadFramebuffers(demoState);
 
 	// use framebuffer deactivate utility to set viewport
 	a3framebufferDeactivateSetViewport(a3fbo_depthDisable, -frameBorder, -frameBorder, demoState->frameWidth, demoState->frameHeight);

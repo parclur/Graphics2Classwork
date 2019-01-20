@@ -70,18 +70,19 @@ extern "C"
 		demoStateMaxCount_timer = 1,
 		demoStateMaxCount_drawDataBuffer = 1,
 		demoStateMaxCount_vertexArray = 4,
-		demoStateMaxCount_drawable = 8,
-		demoStateMaxCount_shaderProgram = 8,
+		demoStateMaxCount_drawable = 16,
+		demoStateMaxCount_shaderProgram = 16,
 
 		demoStateMaxCount_texture = 16,
+		demoStateMaxCount_framebuffer = 1,
 	};
 
 	// additional counters for demo modes
 	enum a3_DemoStateModeCounts
 	{
 		demoStateMaxModes = 3,
-		demoStateMaxSubModes = 1,
-		demoStateMaxOutputModes = 1,
+		demoStateMaxSubModes = 2,
+		demoStateMaxOutputModes = 9,
 	};
 
 
@@ -129,8 +130,8 @@ extern "C"
 
 		// demo mode array: 
 		//	- mode (3): which mode/pipeline is being viewed
-		//	- sub-mode (1): which sub-mode/pass in the pipeline is being viewed
-		//	- output (1): which output from the sub-mode/pass is being viewed
+		//	- sub-mode (2): which sub-mode/pass in the pipeline is being viewed
+		//	- output (9): which output from the sub-mode/pass is being viewed
 		a3ui32 demoMode, demoSubMode[demoStateMaxModes], demoOutputMode[demoStateMaxModes][demoStateMaxSubModes];
 		a3ui32 demoModeCount, demoSubModeCount[demoStateMaxModes], demoOutputCount[demoStateMaxModes][demoStateMaxSubModes];
 
@@ -232,6 +233,7 @@ extern "C"
 					draw_grid[1],								// wireframe ground plane to emphasize scaling
 					draw_axes[1],								// coordinate axes at the center of the world
 					draw_skybox[1],								// skybox cube mesh
+					draw_unitquad[1],							// unit quad (used for fsq)
 					draw_plane[1],								// procedural plane
 					draw_sphere[1],								// procedural sphere
 					draw_cylinder[1],							// procedural cylinder
@@ -254,6 +256,9 @@ extern "C"
 					prog_drawTexture[1],						// draw texture
 					prog_drawPhongMulti[1],						// draw Phong shading model (multiple lights)
 					prog_drawNonPhotoMulti[1];					// draw non-photorealistic shading model
+				a3_DemoStateShaderProgram
+					prog_drawPhongMulti_mrt[1],					// draw Phong to MRT
+					prog_drawCustom_mrt[1];						// draw custom effects to MRT
 			};
 		};
 
@@ -273,6 +278,15 @@ extern "C"
 					tex_ramp_dm[1],
 					tex_ramp_sm[1],
 					tex_checker[1];
+			};
+		};
+
+
+		// framebuffers
+		union {
+			a3_Framebuffer framebuffer[demoStateMaxCount_framebuffer];
+			struct {
+				a3_Framebuffer fbo_scene[1];					// fbo with color and depth
 			};
 		};
 
@@ -298,12 +312,14 @@ extern "C"
 	void a3demo_loadGeometry(a3_DemoState *demoState);
 	void a3demo_loadShaders(a3_DemoState *demoState);
 	void a3demo_loadTextures(a3_DemoState *demoState);
+	void a3demo_loadFramebuffers(a3_DemoState *demoState);
 	void a3demo_refresh(a3_DemoState *demoState);
 
 	// unloading
 	void a3demo_unloadGeometry(a3_DemoState *demoState);
 	void a3demo_unloadShaders(a3_DemoState *demoState);
 	void a3demo_unloadTextures(a3_DemoState *demoState);
+	void a3demo_unloadFramebuffers(a3_DemoState *demoState);
 	void a3demo_validateUnload(const a3_DemoState *demoState);
 
 	// other utils & setup
