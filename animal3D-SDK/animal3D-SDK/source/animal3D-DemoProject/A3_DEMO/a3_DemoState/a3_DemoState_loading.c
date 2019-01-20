@@ -97,7 +97,7 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	const a3byte *const geometryStream = "./data/geom_data_gpro_starter.dat";
 
 	// geometry data
-	a3_GeometryData sceneShapesData[3] = { 0 };
+	a3_GeometryData sceneShapesData[4] = { 0 };
 	a3_GeometryData proceduralShapesData[4] = { 0 };
 	a3_GeometryData loadedModelsData[1] = { 0 };
 	const a3ui32 sceneShapesCount = sizeof(sceneShapesData) / sizeof(a3_GeometryData);
@@ -134,7 +134,7 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	else if (!demoState->streaming || a3fileStreamOpenWrite(fileStream, geometryStream))
 	{
 		// create new data
-		a3_ProceduralGeometryDescriptor sceneShapes[3] = { a3geomShape_none };
+		a3_ProceduralGeometryDescriptor sceneShapes[4] = { a3geomShape_none };
 		a3_ProceduralGeometryDescriptor proceduralShapes[4] = { a3geomShape_none };
 		const a3byte *loadedShapesFile[1] = {
 			"../../../../resource/obj/teapot/teapot.obj",
@@ -147,10 +147,11 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		};
 
 		// static scene procedural objects
-		//	(grid, axes, skybox)
+		//	(grid, axes, skybox, unit quad)
 		a3proceduralCreateDescriptorPlane(sceneShapes + 0, a3geomFlag_wireframe, a3geomAxis_default, 20.0f, 20.0f, 20, 20);
 		a3proceduralCreateDescriptorAxes(sceneShapes + 1, a3geomFlag_wireframe, 0.0f, 1);
 		a3proceduralCreateDescriptorBox(sceneShapes + 2, a3geomFlag_texcoords, 100.0f, 100.0f, 100.0f, 1, 1, 1);
+		a3proceduralCreateDescriptorPlane(sceneShapes + 3, a3geomFlag_texcoords, a3geomAxis_default, 2.0f, 2.0f, 1, 1);
 		for (i = 0; i < sceneShapesCount; ++i)
 		{
 			a3proceduralGenerateGeometryData(sceneShapesData + i, sceneShapes + i, 0);
@@ -158,25 +159,23 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		}
 
 		// other procedurally-generated objects
-		// **TO-DO (lab 1): SETUP PROCEDURALLY-GENERATED GEOMETRY
-		//	-> locate and read documentation for pertinent code in the framework
-		//	-> use hints around this area to help
-		//	-> initialize descriptors: plane, sphere, cylinder, torus
-		//		-> attributes include texture coordinates and normals
-		//	-> for each object: 
-		//		-> generate geometry data
-		//		-> optional: for each object, write data to file for streaming
-
+		a3proceduralCreateDescriptorPlane(proceduralShapes + 0, a3geomFlag_texcoords_normals, a3geomAxis_default, 24.0f, 24.0f, 12, 12);
+		a3proceduralCreateDescriptorSphere(proceduralShapes + 1, a3geomFlag_texcoords_normals, a3geomAxis_default, 1.0f, 32, 24);
+		a3proceduralCreateDescriptorCylinder(proceduralShapes + 2, a3geomFlag_texcoords_normals, a3geomAxis_x, 1.0f, 2.0f, 32, 1, 1);
+		a3proceduralCreateDescriptorTorus(proceduralShapes + 3, a3geomFlag_texcoords_normals, a3geomAxis_x, 1.0f, 0.25f, 32, 24);
+		for (i = 0; i < proceduralShapesCount; ++i)
+		{
+			a3proceduralGenerateGeometryData(proceduralShapesData + i, proceduralShapes + i, 0);
+			a3fileStreamWriteObject(fileStream, proceduralShapesData + i, (a3_FileStreamWriteFunc)a3geometrySaveDataBinary);
+		}
 
 		// objects loaded from mesh files
-		// **TO-DO (lab 1): SETUP LOADED MODEL GEOMETRY
-		//	-> locate and read documentation for pertinent code in the framework
-		//	-> use hints around this area to help
-		//	-> for each object: 
-		//		-> load model
-		//		-> optional: for each object, write data to file for streaming
+		for (i = 0; i < loadedModelsCount; ++i)
+		{
+			a3modelLoadOBJ(loadedModelsData + i, loadedShapesFile[i], loadedShapesFlag[i], loadedShapesTransform[i]);
+			a3fileStreamWriteObject(fileStream, loadedModelsData + i, (a3_FileStreamWriteFunc)a3geometrySaveDataBinary);
+		}
 		
-
 		// done
 		a3fileStreamClose(fileStream);
 	}
@@ -238,21 +237,27 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	currentDrawable = demoState->draw_axes;
 	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, sceneShapesData + 1, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 
-	// skybox: position and texture coordinates
+	// skybox, unit quad: position and texture coordinates
 	vao = demoState->vao_position_texcoord;
 	a3geometryGenerateVertexArray(vao, "vao:pos+tex", sceneShapesData + 2, vbo_ibo, sharedVertexStorage);
 	currentDrawable = demoState->draw_skybox;
 	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, sceneShapesData + 2, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	currentDrawable = demoState->draw_unitquad;
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, sceneShapesData + 3, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 
-	// **TO-DO (lab 1): CREATE VERTEX FORMATS AND DRAWABLES FOR NEW GEOMETRY
-	// TWO WAYS TO DO THIS: 
-	//	EASIER: self-contained drawable for each shape
-	//		-> allocate enough VAOs and VBOs in demo header
-	//		-> create drawables one-by-one (find pertinent drawable creation function)
-	//	HARDER (BONUS): use the shared buffer
-	//		-> create VAO for scene shapes; if all of the geometry has the same attributes 
-	//			(see descriptor creation above), you only need to make one VAO
-	//		-> generate drawable for each shape (see examples above)
+	// scene objects: position, texture coordinates and normal
+	vao = demoState->vao_position_texcoord_normal;
+	a3geometryGenerateVertexArray(vao, "vao:pos+tex+nrm", proceduralShapesData + 0, vbo_ibo, sharedVertexStorage);
+	currentDrawable = demoState->draw_plane;
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, proceduralShapesData + 0, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	currentDrawable = demoState->draw_sphere;
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, proceduralShapesData + 1, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	currentDrawable = demoState->draw_cylinder;
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, proceduralShapesData + 2, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	currentDrawable = demoState->draw_torus;
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, proceduralShapesData + 3, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	currentDrawable = demoState->draw_teapot;
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, loadedModelsData + 0, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 
 
 	// release data when done
@@ -336,6 +341,9 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			a3_DemoStateShader drawTexture_fs[1];
 			a3_DemoStateShader drawPhongMulti_fs[1];
 			a3_DemoStateShader drawNonPhotoMulti_fs[1];
+			// 03-framebuffer
+			a3_DemoStateShader drawPhongMulti_mrt_fs[1];
+			a3_DemoStateShader drawCustom_mrt_fs[1];
 		};
 	} shaderList = {
 		{
@@ -361,6 +369,9 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			{ { { 0 },	"shdr-fs:draw-tex",				a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/drawTexture_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-Phong-multi",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/drawPhongMulti_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-nonphoto-multi",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/drawNonPhotoMulti_fs4x.glsl" } } },
+			// 03-framebuffer
+			{ { { 0 },	"shdr-fs:draw-Phong-multi-mrt",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/03-framebuffer/drawPhongMulti_mrt_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-custom-mrt",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/03-framebuffer/drawCustom_mrt_fs4x.glsl" } } },
 		}
 	};
 	a3_DemoStateShader *const shaderListPtr = (a3_DemoStateShader *)(&shaderList), *shaderPtr;
@@ -407,13 +418,22 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	// 02-shading programs
 
 	// texturing
-	// ****TO-DO: SETUP THIS PROGRAM
+	// **TO-DO (lab 2): SETUP THIS PROGRAM
 
 	// Phong shading
-	// ****TO-DO: SETUP THIS PROGRAM
+	// **TO-DO (lab 2): SETUP THIS PROGRAM
 
 	// non-photorealistic shading
-	// ****TO-DO: SETUP THIS PROGRAM (bonus)
+	// **TO-DO (lab 2): SETUP THIS PROGRAM (bonus)
+
+
+	// 03-framebuffer programs
+
+	// Phong shading MRT
+	// ****TO-DO: SETUP THIS PROGRAM
+
+	// custom effects MRT
+	// ****TO-DO: SETUP THIS PROGRAM
 
 
 	// activate a primitive for validation
@@ -584,6 +604,28 @@ void a3demo_loadTextures(a3_DemoState *demoState)
 }
 
 
+// utility to load framebuffers
+void a3demo_loadFramebuffers(a3_DemoState *demoState)
+{
+	// create framebuffers and change their texture settings if need be
+	// ****TO-DO: uncomment these as needed
+//	a3_Framebuffer *fbo;
+//	a3ui32 i, j;
+
+
+	// ****TO-DO: initialize framebuffers: 
+	//	- scene, with MRT and depth
+
+
+	// ****TO-DO: change texture settings for all framebuffers (bonus)
+	//	- iterate through textures and change settings as needed
+
+
+	// deactivate texture
+	a3textureDeactivate(a3tex_unit00);
+}
+
+
 //-----------------------------------------------------------------------------
 
 // the handle release callbacks are no longer valid; since the library was 
@@ -600,6 +642,8 @@ void a3demo_refresh(a3_DemoState *demoState)
 		*const endProg = currentProg + demoStateMaxCount_shaderProgram;
 	a3_Texture *currentTex = demoState->texture,
 		*const endTex = currentTex + demoStateMaxCount_texture;
+	a3_Framebuffer *currentFBO = demoState->framebuffer,
+		*const endFBO = currentFBO + demoStateMaxCount_framebuffer;
 
 	while (currentBuff < endBuff)
 		a3bufferHandleUpdateReleaseCallback(currentBuff++);
@@ -609,6 +653,8 @@ void a3demo_refresh(a3_DemoState *demoState)
 		a3shaderProgramHandleUpdateReleaseCallback((currentProg++)->program);
 	while (currentTex < endTex)
 		a3textureHandleUpdateReleaseCallback(currentTex++);
+	while (currentFBO < endFBO)
+		a3framebufferHandleUpdateReleaseCallback(currentFBO++);
 }
 
 

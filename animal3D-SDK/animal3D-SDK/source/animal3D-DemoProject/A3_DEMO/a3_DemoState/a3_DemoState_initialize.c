@@ -101,17 +101,33 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->demoMode = 0;
 
 	// modes/pipelines: 
-	// A: shader playground scene mode
+	// A: Phong shading mode
 	//	- draw objects sub-mode
-	//		- back buffer output
-	// B: Phong shading mode (same subs and outputs)
-	// C: NPR shading mode (same subs and outputs)
-	demoState->demoSubModeCount[0] = 1;
-	demoState->demoOutputCount[0][0] = 1;
+	//		- color buffer
+	//		- depth buffer
+	//	- stencil test sub-mode (same outputs)
+	// B: Phong MRT mode
+	//	- draw objects sub-mode
+	//		- position attribute
+	//		- normal attribute
+	//		- texcoord attribute
+	//		- diffuse map
+	//		- specular map
+	//		- diffuse shading
+	//		- specular shading
+	//		- Phong shading
+	//		- depth buffer
+	// C: custom MRT
+	//	- draw objects sub-mode
+	//		- 4x custom outputs
+	//		- depth buffer
+	demoState->demoSubModeCount[0] = 2;
+	demoState->demoOutputCount[0][0] = 2;
+	demoState->demoOutputCount[0][1] = 2;
 	demoState->demoSubModeCount[1] = 1;
-	demoState->demoOutputCount[1][0] = 1;
+	demoState->demoOutputCount[1][0] = 9;
 	demoState->demoSubModeCount[2] = 1;
-	demoState->demoOutputCount[2][0] = 1;
+	demoState->demoOutputCount[2][0] = 5;
 
 
 	// initialize other objects
