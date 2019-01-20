@@ -210,6 +210,8 @@
     <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawNonPhotoMulti_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawPhongMulti_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawTexture_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\fs\03-framebuffer\drawCustom_mrt_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\fs\03-framebuffer\drawPhongMulti_mrt_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\drawColorAttrib_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\drawColorUnif_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passPhongAttribs_transform_vs4x.glsl" />

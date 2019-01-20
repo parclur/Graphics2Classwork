@@ -58,6 +58,9 @@
     <Filter Include="Resource Files\A3_DEMO\glsl\4x\vs\02-shading">
       <UniqueIdentifier>{c998ff83-8d7a-4124-9ec2-c98a5cde1ca2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\03-framebuffer">
+      <UniqueIdentifier>{c57fe210-324c-4b98-81c3-f1794a825211}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_src_win\main_dll.c">
@@ -135,6 +138,12 @@
     </None>
     <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawTexture_fs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\fs\02-shading</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\03-framebuffer\drawCustom_mrt_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\03-framebuffer</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\03-framebuffer\drawPhongMulti_mrt_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\03-framebuffer</Filter>
     </None>
   </ItemGroup>
 </Project>
