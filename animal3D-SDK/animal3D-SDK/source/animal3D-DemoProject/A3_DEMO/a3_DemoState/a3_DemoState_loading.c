@@ -1,3 +1,5 @@
+//This file was modified by Claire Yeash with permission of the author.
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -166,6 +168,8 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		//	-> for each object: 
 		//		-> generate geometry data
 		//		-> optional: for each object, write data to file for streaming
+		
+		//copied from assignment
 		a3proceduralCreateDescriptorPlane(proceduralShapes + 0,
 			a3geomFlag_texcoords_normals, a3geomAxis_default, 24.0f, 24.0f, 12, 12);
 		a3proceduralCreateDescriptorSphere(proceduralShapes + 1,
@@ -190,6 +194,8 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		//	-> for each object: 
 		//		-> load model
 		//		-> optional: for each object, write data to file for streaming
+		
+		//copied from assignment
 		for (i = 0; i < loadedModelsCount; ++i)
 		{
 			a3modelLoadOBJ(loadedModelsData + i,
@@ -274,25 +280,31 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	//		-> create VAO for scene shapes; if all of the geometry has the same attributes 
 	//			(see descriptor creation above), you only need to make one VAO
 	//		-> generate drawable for each shape (see examples above)
+	
+	//plane; copied from assignment
 	a3geometryGenerateDrawableSelfContained(demoState->draw_plane,
 		demoState->vao_planeFormat, demoState->vbo_planeDrawBuffer,
-		proceduralShapesData + 0);
+		proceduralShapesData + 0); //plus 0 for the first shape
 
+	//sphere; plane code edited for sphere
 	a3geometryGenerateDrawableSelfContained(demoState->draw_sphere,
 		demoState->vao_sphereFormat, demoState->vbo_sphereDrawBuffer,
-		proceduralShapesData + 1);
+		proceduralShapesData + 1); //plus 1 for the second shape
 
+	//cylinder; plane code edited for cylinder
 	a3geometryGenerateDrawableSelfContained(demoState->draw_cylinder,
 		demoState->vao_cylinderFormat, demoState->vbo_cylinderDrawBuffer,
-		proceduralShapesData + 2);
+		proceduralShapesData + 2); //plus 2 for the third shape
 
+	//torus; plane code edited for torus
 	a3geometryGenerateDrawableSelfContained(demoState->draw_torus,
 		demoState->vao_torusFormat, demoState->vbo_torusDrawBuffer,
-		proceduralShapesData + 3);
+		proceduralShapesData + 3); //plus 3 for the fourth shape
 
+	//teapot; plane code edited for teapot
 	a3geometryGenerateDrawableSelfContained(demoState->draw_teapot,
 		demoState->vao_teapotFormat, demoState->vbo_teapotDrawBuffer,
-		proceduralShapesData + 4);
+		loadedModelsData + 0); //loadedModelsData because the teapot is not a procedural shape
 
 
 	// release data when done

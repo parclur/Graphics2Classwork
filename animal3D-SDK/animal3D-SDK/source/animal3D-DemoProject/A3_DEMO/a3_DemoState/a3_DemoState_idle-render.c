@@ -1,3 +1,5 @@
+//This file was modified by Claire Yeash with permission of the author.
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -228,10 +230,12 @@ void a3demo_render(const a3_DemoState *demoState)
 	//		-> calculate and send MVP uniform (must match shaders)
 	//		-> send other uniforms (e.g. color, must match shaders)
 	//		-> activate and render correct drawable
+	
+	//uniform color program; only needs to be done once
 	currentDemoProgram = demoState->prog_drawColorUnif;
 	a3shaderProgramActivate(currentDemoProgram->program);
 
-	//plane
+	//plane; copied from assignment
 	currentSceneObject = demoState->planeObject;
 	a3real4x4Product(modelViewMat.m,
 		cameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
@@ -245,7 +249,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	currentDrawable = demoState->draw_plane;
 	a3vertexDrawableActivateAndRender(currentDrawable);
 
-	//sphere
+	//sphere; plane code edited for sphere
 	currentSceneObject = demoState->sphereObject;
 	a3real4x4Product(modelViewMat.m,
 		cameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
@@ -254,12 +258,12 @@ void a3demo_render(const a3_DemoState *demoState)
 	a3shaderUniformSendFloatMat(a3unif_mat4, 0,
 		currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
 	a3shaderUniformSendFloat(a3unif_vec4,
-		currentDemoProgram->uColor, 1, magenta);
+		currentDemoProgram->uColor, 1, magenta); //change the color to match the demo
 
 	currentDrawable = demoState->draw_sphere;
 	a3vertexDrawableActivateAndRender(currentDrawable);
 
-	//cylinder
+	//cylinder; plane code edited for cylinder
 	currentSceneObject = demoState->cylinderObject;
 	a3real4x4Product(modelViewMat.m,
 		cameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
@@ -268,12 +272,12 @@ void a3demo_render(const a3_DemoState *demoState)
 	a3shaderUniformSendFloatMat(a3unif_mat4, 0,
 		currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
 	a3shaderUniformSendFloat(a3unif_vec4,
-		currentDemoProgram->uColor, 1, yellow);
+		currentDemoProgram->uColor, 1, yellow); //change the color to match the demo
 
 	currentDrawable = demoState->draw_cylinder;
 	a3vertexDrawableActivateAndRender(currentDrawable);
 
-	//torus
+	//torus; plane code edited for torus
 	currentSceneObject = demoState->torusObject;
 	a3real4x4Product(modelViewMat.m,
 		cameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
@@ -282,12 +286,12 @@ void a3demo_render(const a3_DemoState *demoState)
 	a3shaderUniformSendFloatMat(a3unif_mat4, 0,
 		currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
 	a3shaderUniformSendFloat(a3unif_vec4,
-		currentDemoProgram->uColor, 1, orange);
+		currentDemoProgram->uColor, 1, orange); //change the color to match the demo
 
 	currentDrawable = demoState->draw_torus;
 	a3vertexDrawableActivateAndRender(currentDrawable);
 	
-	//teapot
+	//teapot; plane code edited for teapot
 	currentSceneObject = demoState->teapotObject;
 	a3real4x4Product(modelViewMat.m,
 		cameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
@@ -296,7 +300,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	a3shaderUniformSendFloatMat(a3unif_mat4, 0,
 		currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
 	a3shaderUniformSendFloat(a3unif_vec4,
-		currentDemoProgram->uColor, 1, skyblue);
+		currentDemoProgram->uColor, 1, skyblue); //change the color to match the demo
 
 	currentDrawable = demoState->draw_teapot;
 	a3vertexDrawableActivateAndRender(currentDrawable);
@@ -331,6 +335,8 @@ void a3demo_render(const a3_DemoState *demoState)
 		//		-> calculate and send MVP uniform (must match shaders)
 		//		-> send other uniforms (e.g. color, must match shaders)
 		//		-> activate and render correct drawable
+
+		//plane; copied from assignment
 		currentSceneObject = demoState->planeObject;
 		a3real4x4Product(modelViewProjectionMat.m,
 			camera->viewProjectionMat.m, currentSceneObject->modelMat.m);
