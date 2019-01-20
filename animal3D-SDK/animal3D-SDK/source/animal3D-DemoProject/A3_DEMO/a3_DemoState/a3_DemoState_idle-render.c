@@ -45,6 +45,14 @@
 //-----------------------------------------------------------------------------
 // SETUP UTILITIES
 
+// blending state for composition
+inline void a3demo_enableCompositeBlending()
+{
+	// result = ( new*[new alpha] ) + ( old*[1 - new alpha] )
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
 // set default GL state
 void a3demo_setDefaultGraphicsState()
 {
@@ -59,16 +67,14 @@ void a3demo_setDefaultGraphicsState()
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
-	// alpha blending
-	// result = ( new*[new alpha] ) + ( old*[1 - new alpha] )
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	// textures
 	glEnable(GL_TEXTURE_2D);
 
 	// background
 	glClearColor(0.0f, 0.0f, 0.0, 0.0f);
+
+	// alpha blending
+	a3demo_enableCompositeBlending();
 }
 
 
@@ -112,12 +118,59 @@ void a3demo_render_data(const a3_DemoState *demoState);
 
 
 //-----------------------------------------------------------------------------
+// RENDER SUB-ROUTINES
+
+void a3demo_stencilTest(const a3_DemoState *demoState)
+{
+	const a3_DemoStateShaderProgram *currentDemoProgram;
+	const a3_VertexDrawable *currentDrawable;
+	const float testColor[4] = { 1.0f, 0.5f, 0.0f, 1.0f };
+	const a3mat4 testMmat = {
+		4.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 4.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 4.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	};
+	a3mat4 testMVPmat;
+	
+	// inverted small sphere in solid transparent color
+	// used as our "lens" for the depth and stencil tests
+	currentDemoProgram = demoState->prog_drawColorUnif;
+	a3shaderProgramActivate(demoState->prog_drawColorUnif->program);
+
+	currentDrawable = demoState->draw_sphere;
+	a3real4x4Product(testMVPmat.m, demoState->camera->viewProjectionMat.m, testMmat.m);
+	a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, testMVPmat.mm);
+
+
+	// ****TO-DO (week 3 class): 
+	// 1. depth buffer hax: 
+	//	- see what happens with depth test disabled for all shapes
+	//	- draw sphere, see where it ends up (still no depth test)
+	//	- change color of sphere to fully transparent (using depth test)
+	//	- switch to using color mask to the same effect (using depth test)
+
+
+/*
+	// ****TO-DO (week 3 class): 
+	// 2. draw to stencil buffer: 
+	//	- render first sphere to the stencil buffer to set drawable area
+	//		- don't want values for the shape to actually be drawn to 
+	//			color or depth buffers, so apply a MASK for this object
+	//	- enable stencil test for everything else
+
+*/
+}
+
+
+//-----------------------------------------------------------------------------
 // RENDER
 
 void a3demo_render(const a3_DemoState *demoState)
 {
 	const a3_VertexDrawable *currentDrawable;
 	const a3_DemoStateShaderProgram *currentDemoProgram;
+	const a3_Framebuffer *currentFBO;
 
 	a3ui32 i, j, k;
 
@@ -190,47 +243,29 @@ void a3demo_render(const a3_DemoState *demoState)
 
 	//-------------------------------------------------------------------------
 	// 1) SCENE PASS: render scene with desired shader
-	//	- render shapes using appropriate shaders
-	//	- capture color and depth
+	//	- activate scene framebuffer
+	//	- draw scene
+	//		- clear buffers
+	//		- render shapes using appropriate shaders
+	//		- capture color and depth
 
-	// display skybox or clear
-	if (demoState->displaySkybox)
-	{
-		// draw solid color box, inverted
-		currentDrawable = demoState->draw_skybox;
-		currentSceneObject = demoState->skyboxObject;
-		a3real4x4Product(modelViewProjectionMat.m, camera->viewProjectionMat.m, currentSceneObject->modelMat.m);
+	// ****TO-DO: framebuffer
+	//	- activate framebuffer for offscreen rendering
+	
+	// clear buffers
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// dummy draw code: render with solid color
-		// ****TO-DO: activate texturing program
-		//	-> remove dummy draw code (the next 4 lines of code)
-		//	-> select and activate program (2 lines)
-		//	-> send correct MVP matrix as uniform (1 line)
-		//	-> activate skybox texture (1 line)
-		//		(pro tip: sampler uniform already sent, only activate texture)
-		currentDemoProgram = demoState->prog_drawColorUnif;
-		a3shaderProgramActivate(currentDemoProgram->program);
-		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, a3identityMat4.mm);
-		a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, grey);
 
-		glDepthFunc(GL_ALWAYS);
-		glCullFace(GL_FRONT);
-		a3vertexDrawableActivateAndRender(currentDrawable);
-		glCullFace(GL_BACK);
-		glDepthFunc(GL_LEQUAL);
-	}
+	// test stencil buffer
+	if (demoSubMode == 1)
+		a3demo_stencilTest(demoState);
 	else
-	{
-		// clearing is expensive!
-		// instead, draw skybox and force depth to farthest possible value in scene
-		// we could call this a "skybox clear" because it serves both purposes
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	}
+		glDisable(GL_STENCIL_TEST);
 
 
+	// draw grid aligned to world
 	if (demoState->displayGrid)
 	{
-		// draw grid aligned to world
 		currentDemoProgram = demoState->prog_drawColorUnif;
 		a3shaderProgramActivate(currentDemoProgram->program);
 		currentDrawable = demoState->draw_grid;
@@ -267,13 +302,16 @@ void a3demo_render(const a3_DemoState *demoState)
 			// forward pass
 		case 0:
 			// select depending on mode and/or sub-mode
-			// ****TO-DO: activate program for current mode
-			//	-> complete the switch cases
-			//		(all draw code below is set up correctly for all cases)
 			switch (demoMode)
 			{
 			case 0:
-				currentDemoProgram = demoState->prog_drawColorUnif;
+				currentDemoProgram = demoState->prog_drawPhongMulti;
+				break;
+			case 1:
+				currentDemoProgram = demoState->prog_drawPhongMulti_mrt;
+				break;
+			case 2:
+				currentDemoProgram = demoState->prog_drawCustom_mrt;
 				break;
 			}
 			a3shaderProgramActivate(currentDemoProgram->program);
@@ -299,7 +337,6 @@ void a3demo_render(const a3_DemoState *demoState)
 				currentSceneObject <= endSceneObject;
 				++k, ++currentDrawable, ++currentSceneObject)
 			{
-				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, rgba4[(k % 5) + 3].v);
 				a3textureActivate(tex_dm[k], a3tex_unit00);
 				a3textureActivate(tex_sm[k], a3tex_unit01);
 				a3real4x4Product(modelViewMat.m, cameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
@@ -321,7 +358,42 @@ void a3demo_render(const a3_DemoState *demoState)
 
 
 	//-------------------------------------------------------------------------
-	// overlays
+	// 2) DISPLAY PASS: display framebuffer on full-screen quad (FSQ)
+	//	- deactivate framebuffer
+	//	- draw common background
+	//		- if your clear color has zero alpha, scene will overlay correctly
+	//	- activate render texture(s)
+	//	- draw FSQ with appropriate program
+
+	// ****TO-DO: draw to back buffer with depth disabled
+
+	// ****TO-DO: display skybox or clear
+	//	- do this last, it's slightly different from your previous skybox code
+	if (demoState->displaySkybox)
+	{
+
+	}
+	else
+	{
+
+	}
+
+	// ****TO-DO: use unit quad as FSQ drawable
+
+	// select texture(s) to use for display
+	currentFBO = demoState->fbo_scene;
+	if (demoOutput < demoOutputCount - 1)
+		a3framebufferBindColorTexture(currentFBO, a3tex_unit00, demoOutput);
+	else
+		a3framebufferBindDepthTexture(currentFBO, a3tex_unit00);
+
+	// ****TO-DO: draw FSQ with texturing
+
+
+	//-------------------------------------------------------------------------
+	// 3) OVERLAYS: done after FSQ so they appear over everything else
+	//	- disable depth testing
+	//	- draw overlays appropriately
 
 	// superimpose axes
 	// draw coordinate axes in front of everything
@@ -397,13 +469,14 @@ void a3demo_render_controls(const a3_DemoState *demoState)
 {
 	// display mode info
 	const a3byte *modeText[demoStateMaxModes] = {
-		"Shader playground scene",
 		"Scene with Phong shading",
-		"Scene with non-photorealistic shading",
+		"Scene with Phong shading (MRT)",
+		"Scene with custom effects (MRT)",
 	};
 	const a3byte *subModeText[demoStateMaxModes][demoStateMaxSubModes] = {
 		{
 			"Draw scene objects",
+			"Draw scene objects with stencil",
 		},
 		{
 			"Draw scene objects",
@@ -415,17 +488,34 @@ void a3demo_render_controls(const a3_DemoState *demoState)
 	const a3byte *outputText[demoStateMaxModes][demoStateMaxSubModes][demoStateMaxOutputModes] = {
 		{
 			{
-				"Back buffer",
+				"Color buffer",
+				"Depth buffer",
+			},
+			{
+				"Color buffer",
+				"Depth buffer",
 			},
 		},
 		{
 			{
-				"Back buffer",
+				"Color0: Position attribute data",
+				"Color1: Normal attribute data",
+				"Color2: Texcoord attribute data",
+				"Color3: Diffuse map sample",
+				"Color4: Specular map sample",
+				"Color5: Diffuse shading total",
+				"Color6: Specular shading total",
+				"Color7: Phong shading total",
+				"Depth buffer",
 			},
 		},
 		{
 			{
-				"Back buffer",
+				"Color0: Custom effect 0",
+				"Color1: Custom effect 1",
+				"Color2: Custom effect 2",
+				"Color3: Custom effect 3",
+				"Depth buffer",
 			},
 		},
 	};
