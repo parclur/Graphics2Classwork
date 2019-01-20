@@ -70,8 +70,8 @@ extern "C"
 		demoStateMaxCount_sceneObject = demoStateMaxCount_object + demoStateMaxCount_camera + demoStateMaxCount_light,
 
 		demoStateMaxCount_timer = 1,
-		demoStateMaxCount_drawDataBuffer = 8,
-		demoStateMaxCount_vertexArray = 12,
+		demoStateMaxCount_drawDataBuffer = 8, //changed values so that the array is large enough to hold one unique buffer per object
+		demoStateMaxCount_vertexArray = 12, //changed values so that the array is large enough to hold one unique buffer per object
 		demoStateMaxCount_drawable = 8,
 		demoStateMaxCount_shaderProgram = 8,
 	};
@@ -226,11 +226,11 @@ extern "C"
 					vao_position_texcoord[1],					// VAO for vertex format with position and UVs
 					vao_position_texcoord_normal[1];			// VAO for vertex format with position, UVs and normal
 				a3_VertexArrayDescriptor
-					vao_planeFormat[1],
-					vao_sphereFormat[1],
-					vao_cylinderFormat[1],
-					vao_torusFormat[1],
-					vao_teapotFormat[1];
+					vao_planeFormat[1], //dedicated format for plane object
+					vao_sphereFormat[1], //dedicated format for sphere object
+					vao_cylinderFormat[1], //dedicated format for cylinder object
+					vao_torusFormat[1], //dedicated format for torus object
+					vao_teapotFormat[1]; //dedicated format for teapot object
 			};
 		};
 

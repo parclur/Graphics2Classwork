@@ -170,6 +170,8 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		//		-> optional: for each object, write data to file for streaming
 		
 		//copied from assignment
+		//Sets up the fun procedural shapes by initializing the geometry data
+		//First 4 lines: initializes a small data structure that describes some procedural shape
 		a3proceduralCreateDescriptorPlane(proceduralShapes + 0,
 			a3geomFlag_texcoords_normals, a3geomAxis_default, 24.0f, 24.0f, 12, 12);
 		a3proceduralCreateDescriptorSphere(proceduralShapes + 1,
@@ -196,6 +198,8 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		//		-> optional: for each object, write data to file for streaming
 		
 		//copied from assignment
+		//Sets up the loaded models
+		//Loops through each model descriptor and initializes accordingly
 		for (i = 0; i < loadedModelsCount; ++i)
 		{
 			a3modelLoadOBJ(loadedModelsData + i,
@@ -281,27 +285,27 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	//			(see descriptor creation above), you only need to make one VAO
 	//		-> generate drawable for each shape (see examples above)
 	
-	//plane; copied from assignment
+	//plane; copied from assignment; uploads the data to the GPU
 	a3geometryGenerateDrawableSelfContained(demoState->draw_plane,
 		demoState->vao_planeFormat, demoState->vbo_planeDrawBuffer,
 		proceduralShapesData + 0); //plus 0 for the first shape
 
-	//sphere; plane code edited for sphere
+	//sphere; plane code edited for sphere; uploads the data to the GPU
 	a3geometryGenerateDrawableSelfContained(demoState->draw_sphere,
 		demoState->vao_sphereFormat, demoState->vbo_sphereDrawBuffer,
 		proceduralShapesData + 1); //plus 1 for the second shape
 
-	//cylinder; plane code edited for cylinder
+	//cylinder; plane code edited for cylinder; uploads the data to the GPU
 	a3geometryGenerateDrawableSelfContained(demoState->draw_cylinder,
 		demoState->vao_cylinderFormat, demoState->vbo_cylinderDrawBuffer,
 		proceduralShapesData + 2); //plus 2 for the third shape
 
-	//torus; plane code edited for torus
+	//torus; plane code edited for torus; uploads the data to the GPU
 	a3geometryGenerateDrawableSelfContained(demoState->draw_torus,
 		demoState->vao_torusFormat, demoState->vbo_torusDrawBuffer,
 		proceduralShapesData + 3); //plus 3 for the fourth shape
 
-	//teapot; plane code edited for teapot
+	//teapot; plane code edited for teapot; uploads the data to the GPU
 	a3geometryGenerateDrawableSelfContained(demoState->draw_teapot,
 		demoState->vao_teapotFormat, demoState->vbo_teapotDrawBuffer,
 		loadedModelsData + 0); //loadedModelsData because the teapot is not a procedural shape
@@ -422,16 +426,19 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	// uniform color program
 	// ****TO-DO: SETUP THIS PROGRAM
 	
-	currentDemoProg = demoState->prog_drawColorUnif;
-	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-unif");
-	a3shaderProgramAttachShader(currentDemoProg->program,
+	//uniform color program - used to draw an entire renderable object using a solid color
+	currentDemoProg = demoState->prog_drawColorUnif; //sets a temporary pointer to the demo's shader object for convenience
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-unif"); //initializes the shader object on the GPU and assigns it a programmer-defined name
+	a3shaderProgramAttachShader(currentDemoProg->program, //attaches a shader object to a program object //vertex shader
 		shaderList.passthru_transform_vs->shader);
-	a3shaderProgramAttachShader(currentDemoProg->program,
+	a3shaderProgramAttachShader(currentDemoProg->program, //attaches a shader object to a program object //fragment shader
 		shaderList.drawColorUnif_fs->shader);		
 
 	
 	// color attrib program
 	// ****TO-DO: SETUP THIS PROGRAM
+
+	//attribut color program - used to draw an object that has a color attribute for each vertex
 	currentDemoProg = demoState->prog_drawColorAttrib;
 	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-attr");
 	a3shaderProgramAttachShader(currentDemoProg->program,

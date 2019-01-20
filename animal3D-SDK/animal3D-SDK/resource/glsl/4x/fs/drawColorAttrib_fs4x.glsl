@@ -30,7 +30,8 @@
 //	1) declare varying to receive input vertex color from vertex shader
 //	2) assign vertex color to output color
 
-in vec4 vPassColor;
+in vec4 vPassColor;
+
 out vec4 rtFragColor;
 
 void main()
