@@ -52,6 +52,12 @@
     <Filter Include="Source Files\common\A3_DEMO\a3_DemoState">
       <UniqueIdentifier>{444e44e6-0d85-4a57-9b28-126490cd3544}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\02-shading">
+      <UniqueIdentifier>{cd09cc72-8e15-4fe8-a758-ee73d90965f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\vs\02-shading">
+      <UniqueIdentifier>{c998ff83-8d7a-4124-9ec2-c98a5cde1ca2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_src_win\main_dll.c">
@@ -114,6 +120,21 @@
     </None>
     <None Include="..\..\..\resource\glsl\4x\vs\passColor_transform_instanced_vs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\vs</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passPhongAttribs_transform_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\02-shading</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passTexcoord_transform_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\02-shading</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawNonPhotoMulti_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\02-shading</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawPhongMulti_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\02-shading</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawTexture_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\02-shading</Filter>
     </None>
   </ItemGroup>
 </Project>

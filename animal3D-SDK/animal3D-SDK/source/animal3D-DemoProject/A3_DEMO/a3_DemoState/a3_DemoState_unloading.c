@@ -69,6 +69,17 @@ void a3demo_unloadShaders(a3_DemoState *demoState)
 }
 
 
+// utility to unload textures
+void a3demo_unloadTextures(a3_DemoState *demoState)
+{
+	a3_Texture *currentTex = demoState->texture,
+		*const endTex = currentTex + demoStateMaxCount_texture;
+
+	while (currentTex < endTex)
+		a3textureRelease(currentTex++);
+}
+
+
 //-----------------------------------------------------------------------------
 
 // confirm that all graphics objects were unloaded
@@ -81,6 +92,8 @@ void a3demo_validateUnload(const a3_DemoState *demoState)
 		*const endVAO = currentVAO + demoStateMaxCount_vertexArray;
 	const a3_DemoStateShaderProgram *currentProg = demoState->shaderProgram,
 		*const endProg = currentProg + demoStateMaxCount_shaderProgram;
+	const a3_Texture *currentTex = demoState->texture,
+		*const endTex = currentTex + demoStateMaxCount_texture;
 
 	handle = 0;
 	currentBuff = demoState->drawDataBuffer;
@@ -102,6 +115,13 @@ void a3demo_validateUnload(const a3_DemoState *demoState)
 		handle += (currentProg++)->program->handle->handle;
 	if (handle)
 		printf("\n A3 Warning: One or more shader programs not released.");
+
+	handle = 0;
+	currentTex = demoState->texture;
+	while (currentTex < endTex)
+		handle += (currentTex++)->handle->handle;
+	if (handle)
+		printf("\n A3 Warning: One or more textures not released.");
 }
 
 

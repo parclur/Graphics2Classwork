@@ -66,7 +66,7 @@ extern "C"
 	{
 		demoStateMaxCount_object = 8,
 		demoStateMaxCount_camera = 1,
-		demoStateMaxCount_light = 1,
+		demoStateMaxCount_light = 4,
 		demoStateMaxCount_sceneObject = demoStateMaxCount_object + demoStateMaxCount_camera + demoStateMaxCount_light,
 
 		demoStateMaxCount_timer = 1,
@@ -74,12 +74,14 @@ extern "C"
 		demoStateMaxCount_vertexArray = 12, //changed values so that the array is large enough to hold one unique buffer per object
 		demoStateMaxCount_drawable = 8,
 		demoStateMaxCount_shaderProgram = 8,
+
+		demoStateMaxCount_texture = 16,
 	};
 
 	// additional counters for demo modes
 	enum a3_DemoStateModeCounts
 	{
-		demoStateMaxModes = 1,
+		demoStateMaxModes = 3,
 		demoStateMaxSubModes = 1,
 		demoStateMaxOutputModes = 1,
 	};
@@ -128,7 +130,7 @@ extern "C"
 		// scene variables and objects
 
 		// demo mode array: 
-		//	- mode (1): which mode/pipeline is being viewed
+		//	- mode (3): which mode/pipeline is being viewed
 		//	- sub-mode (1): which sub-mode/pass in the pipeline is being viewed
 		//	- output (1): which output from the sub-mode/pass is being viewed
 		a3ui32 demoMode, demoSubMode[demoStateMaxModes], demoOutputMode[demoStateMaxModes][demoStateMaxSubModes];
@@ -171,6 +173,7 @@ extern "C"
 					mainCamera[1],
 
 					mainLight[1],
+					addLights[demoStateMaxCount_light - 1],
 					
 					skyboxObject[1],
 					planeObject[1],
@@ -190,6 +193,7 @@ extern "C"
 					sceneCamera[1];						// scene viewing cameras
 			};
 		};
+
 
 		// timers
 		union {
@@ -260,6 +264,29 @@ extern "C"
 					prog_drawColorAttrib[1],					// draw color attribute
 					prog_drawColorUnif_instanced[1],			// draw uniform color with instancing
 					prog_drawColorAttrib_instanced[1];			// draw color attribute with instancing
+				a3_DemoStateShaderProgram
+					prog_drawTexture[1],						// draw texture
+					prog_drawPhongMulti[1],						// draw Phong shading model (multiple lights)
+					prog_drawNonPhotoMulti[1];					// draw non-photorealistic shading model
+			};
+		};
+
+
+		// textures
+		union {
+			a3_Texture texture[demoStateMaxCount_texture];
+			struct {
+				a3_Texture
+					tex_skybox_clouds[1],
+					tex_skybox_water[1],
+					tex_stone_dm[1],
+					tex_earth_dm[1],
+					tex_earth_sm[1],
+					tex_mars_dm[1],
+					tex_mars_sm[1],
+					tex_ramp_dm[1],
+					tex_ramp_sm[1],
+					tex_checker[1];
 			};
 		};
 
@@ -284,11 +311,13 @@ extern "C"
 	// loading
 	void a3demo_loadGeometry(a3_DemoState *demoState);
 	void a3demo_loadShaders(a3_DemoState *demoState);
+	void a3demo_loadTextures(a3_DemoState *demoState);
 	void a3demo_refresh(a3_DemoState *demoState);
 
 	// unloading
 	void a3demo_unloadGeometry(a3_DemoState *demoState);
 	void a3demo_unloadShaders(a3_DemoState *demoState);
+	void a3demo_unloadTextures(a3_DemoState *demoState);
 	void a3demo_validateUnload(const a3_DemoState *demoState);
 
 	// other utils & setup

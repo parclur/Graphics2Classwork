@@ -207,8 +207,13 @@
     <ClInclude Include="..\..\..\source\animal3D-DemoProject\a3_dylib_config_export.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawNonPhotoMulti_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawPhongMulti_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawTexture_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\drawColorAttrib_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\drawColorUnif_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passPhongAttribs_transform_vs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passTexcoord_transform_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\passColor_transform_instanced_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\passColor_transform_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\passthru_transform_instanced_vs4x.glsl" />
