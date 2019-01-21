@@ -33,6 +33,9 @@
 //	5) copy texture coordinate attribute to varying
 
 layout (location = 0) in vec4 aPosition;
+layout(location = 8) in vec2 aTexCoord;
+
+out vec2 vPassTexcoord; //(3)
 
 void main()
 {

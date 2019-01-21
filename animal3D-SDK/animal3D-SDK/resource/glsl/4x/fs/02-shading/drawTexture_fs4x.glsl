@@ -31,6 +31,8 @@
 //	3) sample texture in main
 //	4) copy texture sample to output
 
+in vec2 vPassTexcoord; //(1)
+
 out vec4 rtFragColor;
 
 void main()
