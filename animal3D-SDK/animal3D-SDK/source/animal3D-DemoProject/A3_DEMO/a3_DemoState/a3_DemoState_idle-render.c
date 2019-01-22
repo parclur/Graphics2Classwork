@@ -208,8 +208,8 @@ void a3demo_render(const a3_DemoState *demoState)
 		//	-> send correct MVP matrix as uniform (1 line)
 		//	-> activate skybox texture (1 line)
 		//		(pro tip: sampler uniform already sent, only activate texture)
-		currentDemoProgram = demoState->prog_drawColorUnif;
-		a3shaderProgramActivate(currentDemoProgram->program);
+		currentDemoProgram = demoState->prog_drawTexture; //select program
+		a3shaderProgramActivate(currentDemoProgram->program); //activate program
 		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, a3identityMat4.mm);
 		a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, grey);
 

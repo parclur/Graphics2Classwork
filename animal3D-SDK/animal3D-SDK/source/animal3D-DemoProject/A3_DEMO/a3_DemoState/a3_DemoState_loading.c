@@ -482,6 +482,14 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 
 	// texturing
 	// ****TO-DO: SETUP THIS PROGRAM
+	//Lab2 - Part2: Texturing (1)
+	//correctly configure the texturing program object by initializing it and attaching the appropriate shaders
+	currentDemoProg = demoState->prog_drawTexture; //sets a temporary pointer to the demo's shader object for convenience
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-tex"); //initializes the shader object on the GPU and assigns it a programmer-defined name
+	a3shaderProgramAttachShader(currentDemoProg->program, //attaches a shader object to a program object //vertex shader
+		shaderList.passTexcoord_transform_vs->shader); //named in P2-S3
+	a3shaderProgramAttachShader(currentDemoProg->program, //attaches a shader object to a program object //fragment shader
+		shaderList.drawTexture_fs->shader); //named in P2-S4
 
 	// Phong shading
 	// ****TO-DO: SETUP THIS PROGRAM
