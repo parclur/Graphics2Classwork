@@ -33,12 +33,14 @@
 //	5) copy texture coordinate attribute to varying
 
 layout (location = 0) in vec4 aPosition;
-layout(location = 8) in vec2 aTexCoord;
+layout(location = 8) in vec2 aTexCoord; //(3)
 
-out vec2 vPassTexcoord; //(3)
+uniform mat4 uMVP; //(1)
+
+out vec2 vPassTexcoord; //(4)
 
 void main()
 {
-	// DUMMY OUTPUT: directly assign input position to output position
-	gl_Position = aPosition;
+	gl_Position = uMVP * aPosition; //(2)
+	vPassTexcoord = aTexCoord; //(5)
 }

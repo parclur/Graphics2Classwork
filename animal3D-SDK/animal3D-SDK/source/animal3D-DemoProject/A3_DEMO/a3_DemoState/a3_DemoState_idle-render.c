@@ -210,8 +210,8 @@ void a3demo_render(const a3_DemoState *demoState)
 		//		(pro tip: sampler uniform already sent, only activate texture)
 		currentDemoProgram = demoState->prog_drawTexture; //select program
 		a3shaderProgramActivate(currentDemoProgram->program); //activate program
-		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, a3identityMat4.mm);
-		a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, grey);
+		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+		a3textureActivate(demoState->tex_skybox_clouds, a3tex_unit00); //activate skybox texture
 
 		glDepthFunc(GL_ALWAYS);
 		glCullFace(GL_FRONT);

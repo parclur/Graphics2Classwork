@@ -33,10 +33,13 @@
 
 in vec2 vPassTexcoord; //(1)
 
+uniform vec2 uDiffuseMap; //(2)
+
 out vec4 rtFragColor;
 
 void main()
 {
-	// DUMMY OUTPUT: all fragments are FADED YELLOW
-	rtFragColor = vec4(1.0, 1.0, 0.5, 1.0);
+	//rtFragColor = vec4(vPassTexcoord, 0.0, 1.0); //tests varying output
+
+	rtFragColor = TEXTURE; //(4)
 }
