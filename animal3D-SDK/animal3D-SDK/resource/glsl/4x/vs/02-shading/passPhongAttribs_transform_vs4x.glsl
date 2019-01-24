@@ -38,9 +38,44 @@
 //	9) copy lighting data to varyings
 
 layout (location = 0) in vec4 aPosition;
+layout (location = 2) in vec3 aNormal; //(4)
+layout (location = 9) in vec4 aTexcoord; //(7)
+
+//(1)
+uniform mat4 uMV; //uniform for model view matrix
+uniform mat4 uP //uniform for projection matrix
+
+//(9)
+uniform int uLighCt;
+uniform vec4 uLightPos;
+uniform vec4 uLightCol;
+uniform int uLightSz;
+
+uniform mat3 normalMV; //(5)
+out vec3 fNormal;
+
+vec4 eyeSpace;
+out vec4 vClipSpace; //output for (3)
+
+//varyings for lighting data (8)
+out int vLighCt;
+out vec4 vLightPos;
+out vec4 vLightCol;
+out int vLightSz;
 
 void main()
 {
 	// DUMMY OUTPUT: directly assign input position to output position
+	eyeSpace = uMV * aPosition; //(2)
+	vClipSpace = uP * eyeSpace; //(3)
+
+	fNormal = normalMV * aNormal; //(6)
+
+	//(9)
+	vLightCt = uLighCt;
+	vLightPos = uLightPos;
+	vLightCol = uLightCol;
+	vLightSz = uLightSz;
+
 	gl_Position = aPosition;
 }

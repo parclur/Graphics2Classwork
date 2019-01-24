@@ -275,6 +275,9 @@ void a3demo_render(const a3_DemoState *demoState)
 			case 0:
 				currentDemoProgram = demoState->prog_drawColorUnif;
 				break;
+			case 1: 
+				currentDemoProgram = demoState->prog_drawPhongMulti; //selects the Phong program
+				break;
 			}
 			a3shaderProgramActivate(currentDemoProgram->program);
 

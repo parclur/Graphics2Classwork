@@ -493,6 +493,13 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 
 	// Phong shading
 	// ****TO-DO: SETUP THIS PROGRAM
+	//Lab2 - Part3 - Step1: Create Phong Shader Program
+	currentDemoProg = demoState->prog_drawPhongMulti; //initializes the program
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-phong");
+	a3shaderProgramAttachShader(currentDemoProg->program, //attach the appropriate shaders
+		shaderList.passPhongAttribs_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program,
+		shaderList.drawPhongMulti_fs->shader);
 
 	// non-photorealistic shading
 	// ****TO-DO: SETUP THIS PROGRAM (bonus)
