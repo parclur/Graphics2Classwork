@@ -33,7 +33,7 @@
 
 in vec2 vPassTexcoord; //(1)
 
-uniform vec2 uDiffuseMap; //(2)
+uniform sampler2D uDiffuseMap; //(2)
 
 out vec4 rtFragColor;
 
@@ -41,5 +41,5 @@ void main()
 {
 	//rtFragColor = vec4(vPassTexcoord, 0.0, 1.0); //tests varying output
 
-	rtFragColor = TEXTURE; //(4)
+	rtFragColor = texture2D(uDiffuseMap, vPassTexcoord); //(3, 4)
 }
