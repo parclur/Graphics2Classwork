@@ -1,3 +1,5 @@
+//This file was modified by Claire Yeash with permission of the author.
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -47,20 +49,6 @@ uniform mat4 uP;
 //vec4 eyeSpace;
 
 uniform mat4 uMV_nrm; // (5)
-vec4 fNormal;
-
-//out vec4 clipSpace;
-
-// (8)
-out int vLightCt;
-out vec4 vLightPos;
-out vec4 vLightCol;
-out float vLightSz;
-
-uniform int uLightCt;
-uniform vec4 uLightPos;
-uniform vec4 uLightCol;
-uniform float uLightSz;
 
 out vec4 stupidPosition;
 out vec4 stupidNormal;
@@ -71,17 +59,17 @@ void main()
 	//eyeSpace = uMV * aPosition; // (2)
 	//clipSpace = uP * eyeSpace; // (3)
 
-	fNormal = uMV_nrm * aNormal; // (6)
-
 	stupidNormal = uMV_nrm * aNormal;
 	stupidPosition = uMV * aPosition;
 	stupidTexcoord = aTexcoord;
 
-	// (9)
+	/*
+	// (9) STEP 9 MOVED TO FRAGMENT SHADER
 	vLightCt = uLightCt;
 	vLightPos = uLightPos;
 	vLightCol = uLightCol;
 	vLightSz = uLightSz;
+	*/
 
 	// DUMMY OUTPUT: directly assign input position to output position
 	//condensing steps 2 and 3 into the below line. Previous steps shown above

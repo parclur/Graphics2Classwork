@@ -1,3 +1,5 @@
+//This file was modified by Claire Yeash with permission of the author.
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -49,18 +51,58 @@
 
 out vec4 rtFragColor;
 
-in int vLightCt;
-in vec4 vLightPos;
-in vec4 vLightCol;
-in float vLightSz;
+#define max_Lights 8
+uniform int uLightCt;
+uniform vec4 uLightPos[max_Lights];
+uniform vec4 uLightCol[max_Lights];
+uniform float uLightSz[max_Lights];
 
 in vec4 stupidPosition;
 in vec4 stupidNormal;
 in vec2 stupidTexcoord;
 
+// (2)
+uniform sampler2D tex_dm[];
+uniform sampler2D tex_sm[];
+
+// (3)
+vec4 tempTex_dm;
+vec4 tempTex_sm;
+
+//https://learnopengl.com/Lighting/Basic-Lighting
 void main()
 {
+	//(3)
+	tempTex_dm = texture(tex_dm[0], stupidTexcoord);
+	tempTex_sm = texture(tex_sm[0], stupidTexcoord);
+
+	//ambience
+	float ambientStrength = 1.0;
+	vec3 ambient = ambientStrength * uLightCol[0].rgb;
+
+	//diffuse
+	vec4 norm = normalize(stupidNormal);
+	vec4 lightDir = normalize(uLightPos[0] - stupidPosition);
+
+	float diff = max(dot(norm, lightDir), 0.0);
+	vec3 diffuse = diff * uLightCol[0].rgb;
+
+	//specular
+	float specularStrength = 0.1;
+	vec4 reflectDir = reflect(-lightDir, norm);
+	float spec = pow(max(dot(stupidPosition, reflectDir), 0.0), 16);
+	//float spec = pow(max(dot(stupidPosition, lightDir), 0.0), 16);
+	vec3 specular = specularStrength * spec * uLightCol[0].rgb;
+
+	//attenuation
+
 	// DUMMY OUTPUT: all fragments are FADED CYAN
 	//rtFragColor = vec4(0.5, 1.0, 1.0, 1.0);
-	rtFragColor = vec4(stupidNormal.xy, 0.5, 1.0);
+	vec3 result = (ambient + diffuse + specular) * tempTex_dm.rgb;
+
+	rtFragColor = vec4(result, 1.0);
 }
+
+
+	//float fDotProduct = max(0.0, dot(stupidNormal, uLightPos[0] - stupidPosition));
+	//vec3 vDiffuseColor = tempTex_dm * diffuseLight * fDotProduct;
