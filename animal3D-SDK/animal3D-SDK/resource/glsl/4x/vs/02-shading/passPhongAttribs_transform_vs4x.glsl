@@ -38,44 +38,52 @@
 //	9) copy lighting data to varyings
 
 layout (location = 0) in vec4 aPosition;
-layout (location = 2) in vec3 aNormal; //(4)
-layout (location = 9) in vec4 aTexcoord; //(7)
+layout (location = 2) in vec4 aNormal; // (4)
+layout (location = 8) in vec2 aTexcoord; // (7)
 
-//(1)
-uniform mat4 uMV; //uniform for model view matrix
-uniform mat4 uP //uniform for projection matrix
+// (1)
+uniform mat4 uMV;
+uniform mat4 uP;
+//vec4 eyeSpace;
 
-//(9)
-uniform int uLighCt;
-uniform vec4 uLightPos;
-uniform vec4 uLightCol;
-uniform int uLightSz;
+uniform mat4 uMV_nrm; // (5)
+vec4 fNormal;
 
-uniform mat3 normalMV; //(5)
-out vec3 fNormal;
+//out vec4 clipSpace;
 
-vec4 eyeSpace;
-out vec4 vClipSpace; //output for (3)
-
-//varyings for lighting data (8)
-out int vLighCt;
+// (8)
+out int vLightCt;
 out vec4 vLightPos;
 out vec4 vLightCol;
-out int vLightSz;
+out float vLightSz;
+
+uniform int uLightCt;
+uniform vec4 uLightPos;
+uniform vec4 uLightCol;
+uniform float uLightSz;
+
+out vec4 stupidPosition;
+out vec4 stupidNormal;
+out vec2 stupidTexcoord;
 
 void main()
 {
-	// DUMMY OUTPUT: directly assign input position to output position
-	eyeSpace = uMV * aPosition; //(2)
-	vClipSpace = uP * eyeSpace; //(3)
+	//eyeSpace = uMV * aPosition; // (2)
+	//clipSpace = uP * eyeSpace; // (3)
 
-	fNormal = normalMV * aNormal; //(6)
+	fNormal = uMV_nrm * aNormal; // (6)
 
-	//(9)
-	vLightCt = uLighCt;
+	stupidNormal = uMV_nrm * aNormal;
+	stupidPosition = uMV * aPosition;
+	stupidTexcoord = aTexcoord;
+
+	// (9)
+	vLightCt = uLightCt;
 	vLightPos = uLightPos;
 	vLightCol = uLightCol;
 	vLightSz = uLightSz;
 
-	gl_Position = aPosition;
+	// DUMMY OUTPUT: directly assign input position to output position
+	//condensing steps 2 and 3 into the below line. Previous steps shown above
+	gl_Position = uP * uMV * aPosition;
 }

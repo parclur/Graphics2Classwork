@@ -49,8 +49,18 @@
 
 out vec4 rtFragColor;
 
+in int vLightCt;
+in vec4 vLightPos;
+in vec4 vLightCol;
+in float vLightSz;
+
+in vec4 stupidPosition;
+in vec4 stupidNormal;
+in vec2 stupidTexcoord;
+
 void main()
 {
 	// DUMMY OUTPUT: all fragments are FADED CYAN
-	rtFragColor = vec4(0.5, 1.0, 1.0, 1.0);
+	//rtFragColor = vec4(0.5, 1.0, 1.0, 1.0);
+	rtFragColor = vec4(stupidNormal.xy, 0.5, 1.0);
 }
