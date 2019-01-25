@@ -382,7 +382,7 @@ void a3demo_render(const a3_DemoState *demoState)
 
 	// select texture(s) to use for display
 	currentFBO = demoState->fbo_scene;
-	if (demoOutput < demoOutputCount - 1)
+	if (!currentFBO->depthStencil || demoOutput < demoOutputCount - 1)
 		a3framebufferBindColorTexture(currentFBO, a3tex_unit00, demoOutput);
 	else
 		a3framebufferBindDepthTexture(currentFBO, a3tex_unit00);

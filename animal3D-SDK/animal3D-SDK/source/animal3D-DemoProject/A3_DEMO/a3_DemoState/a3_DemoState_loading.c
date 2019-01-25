@@ -94,7 +94,7 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 
 	// file streaming (if requested)
 	a3_FileStream fileStream[1] = { 0 };
-	const a3byte *const geometryStream = "./data/geom_data_gpro_starter.dat";
+	const a3byte *const geometryStream = "./data/geom_data_gpro_framebuffer.dat";
 
 	// geometry data
 	a3_GeometryData sceneShapesData[4] = { 0 };
