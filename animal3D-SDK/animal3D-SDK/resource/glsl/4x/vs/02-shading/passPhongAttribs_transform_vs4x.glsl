@@ -1,4 +1,4 @@
-//This file was modified by Claire Yeash with permission of the author.
+//This file was modified by Claire Yeash and Zach Phillips with permission of the author.
 
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
@@ -44,34 +44,29 @@ layout (location = 2) in vec4 aNormal; // (4)
 layout (location = 8) in vec2 aTexcoord; // (7)
 
 // (1)
-uniform mat4 uMV;
-uniform mat4 uP;
-//vec4 eyeSpace;
+uniform mat4 uMV; //model view matrix
+uniform mat4 uP; //projection matrix
+uniform mat4 uMV_nrm; // (5) normal model view matrix
 
-uniform mat4 uMV_nrm; // (5)
-
-out vec4 stupidPosition;
-out vec4 stupidNormal;
-out vec2 stupidTexcoord;
+// (4,7) varyings to be sent to fragment shader 
+out vec4 vPosition;
+out vec4 vNormal;
+out vec2 vTexcoord;
 
 void main()
 {
-	//eyeSpace = uMV * aPosition; // (2)
-	//clipSpace = uP * eyeSpace; // (3)
-
-	stupidNormal = uMV_nrm * aNormal;
-	stupidPosition = uMV * aPosition;
-	stupidTexcoord = aTexcoord;
+	vPosition = uMV * aPosition; // (3) view-space coordinate
+	vNormal = uMV_nrm * aNormal; // (6) transform object-space normal to eye-space using the correct matrix; normal in view space
+	vTexcoord = aTexcoord; // (7)
 
 	/*
-	// (9) STEP 9 MOVED TO FRAGMENT SHADER
+	// (9) light data moved to fragment shader, intitialized there; otherwise would be repetitive
 	vLightCt = uLightCt;
 	vLightPos = uLightPos;
 	vLightCol = uLightCol;
 	vLightSz = uLightSz;
 	*/
 
-	// DUMMY OUTPUT: directly assign input position to output position
-	//condensing steps 2 and 3 into the below line. Previous steps shown above
+	//condensing (2) and (3) into the below line. Previous steps shown above
 	gl_Position = uP * uMV * aPosition;
 }
