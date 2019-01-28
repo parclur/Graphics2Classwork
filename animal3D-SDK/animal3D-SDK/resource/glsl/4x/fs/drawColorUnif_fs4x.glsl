@@ -1,3 +1,5 @@
+//This file was modified by Claire Yeash with permission of the author.
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -28,10 +30,11 @@
 //	1) declare uniform variable for color; see demo code for hints
 //	2) assign uniform variable to output color
 
+uniform vec4 uColor;
 out vec4 rtFragColor;
 
 void main()
 {
 	// DUMMY OUTPUT: all fragments are OPAQUE WHITE
-	rtFragColor = vec4(1.0, 1.0, 1.0, 1.0);
+	rtFragColor = uColor;
 }

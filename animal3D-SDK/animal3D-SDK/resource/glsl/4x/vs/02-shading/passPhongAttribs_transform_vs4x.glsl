@@ -1,3 +1,5 @@
+//This file was modified by Claire Yeash and Zach Phillips with permission of the author.
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -38,9 +40,33 @@
 //	9) copy lighting data to varyings
 
 layout (location = 0) in vec4 aPosition;
+layout (location = 2) in vec4 aNormal; // (4)
+layout (location = 8) in vec2 aTexcoord; // (7)
+
+// (1)
+uniform mat4 uMV; //model view matrix
+uniform mat4 uP; //projection matrix
+uniform mat4 uMV_nrm; // (5) normal model view matrix
+
+// (4,7) varyings to be sent to fragment shader 
+out vec4 vPosition;
+out vec4 vNormal;
+out vec2 vTexcoord;
 
 void main()
 {
-	// DUMMY OUTPUT: directly assign input position to output position
-	gl_Position = aPosition;
+	vPosition = uMV * aPosition; // (3) view-space coordinate
+	vNormal = uMV_nrm * aNormal; // (6) transform object-space normal to eye-space using the correct matrix; normal in view space
+	vTexcoord = aTexcoord; // (7)
+
+	/*
+	// (9) light data moved to fragment shader, intitialized there; otherwise would be repetitive
+	vLightCt = uLightCt;
+	vLightPos = uLightPos;
+	vLightCol = uLightCol;
+	vLightSz = uLightSz;
+	*/
+
+	//condensing (2) and (3) into the below line. Previous steps shown above
+	gl_Position = uP * uMV * aPosition;
 }

@@ -1,3 +1,5 @@
+//This file was modified by Claire Yeash and Zach Phillips with permission of the author.
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -31,10 +33,15 @@
 //	3) sample texture in main
 //	4) copy texture sample to output
 
+in vec2 vPassTexcoord; //(1)
+
+uniform sampler2D uDiffuseMap; //(2)
+
 out vec4 rtFragColor;
 
 void main()
 {
-	// DUMMY OUTPUT: all fragments are FADED YELLOW
-	rtFragColor = vec4(1.0, 1.0, 0.5, 1.0);
+	//rtFragColor = vec4(vPassTexcoord, 0.0, 1.0); //tests varying output
+
+	rtFragColor = texture2D(uDiffuseMap, vPassTexcoord); //(3, 4)
 }
