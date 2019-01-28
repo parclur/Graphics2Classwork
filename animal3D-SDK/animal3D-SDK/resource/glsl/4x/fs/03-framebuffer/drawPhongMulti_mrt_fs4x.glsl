@@ -29,10 +29,28 @@
 //	1) declare eight render targets
 //	2) output appropriate data to render targets
 
-out vec4 rtFragColor;
+//out vec4 rtFragColor;
+
+// testing
+//layout qualifier
+
+layout (location = 0) out vec4 rtFragColor;
+layout (location = 1) out vec4 rtFragColor1;
+layout (location = 2) out vec4 rtFragColor2;
+layout (location = 3) out vec4 rtFragColor3;
+
+//layout(location = 0) out vec4 rtPoosition;
+//layout(location = 1) out vec4 rtNormal;
+//layout(location = 2) out vec4 rtTexcoord;
+//layout(location = 3) out vec4 rtDiffuseMap;
 
 void main()
 {
 	// DUMMY OUTPUT: all fragments are FADED CYAN
 	rtFragColor = vec4(0.5, 1.0, 1.0, 1.0);
+
+	// testing
+	rtFragColor1 = vec4(1.0, 0.5, 0.0, 1.0);
+	rtFragColor2 = vec4(1.1, 0.0, 1.0, 1.0);
+	rtFragColor3 = vec4(1.0, 0.0, 0.5, 1.0);
 }

@@ -35,7 +35,7 @@
 
 // **WARNING: FOR TESTING/COMPARISON ONLY, DO NOT USE IN DELIVERABLE BUILDS**
 // uncomment this to allow shader decoding (if available)
-//#define A3_USER_ENABLE_SHADER_DECODING
+#define A3_USER_ENABLE_SHADER_DECODING
 
 
 //-----------------------------------------------------------------------------
@@ -366,9 +366,9 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			{ { { 0 },	"shdr-fs:draw-col-unif",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/drawColorUnif_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-col-attr",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/drawColorAttrib_fs4x.glsl" } } },
 			// 02-shading
-			{ { { 0 },	"shdr-fs:draw-tex",				a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/drawTexture_fs4x.glsl" } } },
-			{ { { 0 },	"shdr-fs:draw-Phong-multi",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/drawPhongMulti_fs4x.glsl" } } },
-			{ { { 0 },	"shdr-fs:draw-nonphoto-multi",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/drawNonPhotoMulti_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-tex",				a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/e/drawTexture_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-Phong-multi",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/e/drawPhongMulti_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-nonphoto-multi",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/e/drawNonPhotoMulti_fs4x.glsl" } } },
 			// 03-framebuffer
 			{ { { 0 },	"shdr-fs:draw-Phong-multi-mrt",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/03-framebuffer/drawPhongMulti_mrt_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-custom-mrt",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/03-framebuffer/drawCustom_mrt_fs4x.glsl" } } },
@@ -419,6 +419,10 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 
 	// texturing
 	// **TO-DO (lab 2): SETUP THIS PROGRAM
+	currentDemoProg = demoState->prog_drawTexture;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-texture");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTexcoord_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawTexture_fs->shader);
 
 	// Phong shading
 	// **TO-DO (lab 2): SETUP THIS PROGRAM
@@ -431,6 +435,10 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 
 	// Phong shading MRT
 	// ****TO-DO: SETUP THIS PROGRAM
+	currentDemoProg = demoState->prog_drawPhongMulti_mrt;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-multi-mrt");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawPhongMulti_mrt_fs->shader);
 
 	// custom effects MRT
 	// ****TO-DO: SETUP THIS PROGRAM
@@ -609,13 +617,15 @@ void a3demo_loadFramebuffers(a3_DemoState *demoState)
 {
 	// create framebuffers and change their texture settings if need be
 	// ****TO-DO: uncomment these as needed
-//	a3_Framebuffer *fbo;
-//	a3ui32 i, j;
-
+	a3_Framebuffer *fbo;
+	//a3ui32 i, j;
+	//glCreateFramebuffers(8, *fbo); // Part 2 (1) creates n new framebuffer objects, places their names in the array passed to framebuffers
 
 	// ****TO-DO: initialize framebuffers: 
 	//	- scene, with MRT and depth
-
+	fbo = demoState->fbo_scene;
+	a3framebufferCreate(fbo, "fbo:scene", 8, a3fbo_colorRGB8, a3fbo_depth24_stencil8, 
+		demoState->frameWidth, demoState->frameHeight);
 
 	// ****TO-DO: change texture settings for all framebuffers (bonus)
 	//	- iterate through textures and change settings as needed

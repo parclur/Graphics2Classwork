@@ -251,7 +251,9 @@ void a3demo_render(const a3_DemoState *demoState)
 
 	// ****TO-DO: framebuffer
 	//	- activate framebuffer for offscreen rendering
-	
+	currentFBO = demoState->fbo_scene;
+	a3framebufferActivate(currentFBO);
+
 	// clear buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
