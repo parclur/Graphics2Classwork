@@ -435,6 +435,7 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 
 	// Phong shading MRT
 	// ****TO-DO: SETUP THIS PROGRAM
+	// creates the Phong MRT program by initializing and attaching the appropriate shaders
 	currentDemoProg = demoState->prog_drawPhongMulti_mrt;
 	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-multi-mrt");
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_transform_vs->shader);
@@ -619,13 +620,12 @@ void a3demo_loadFramebuffers(a3_DemoState *demoState)
 	// ****TO-DO: uncomment these as needed
 	a3_Framebuffer *fbo;
 	//a3ui32 i, j;
-	//glCreateFramebuffers(8, *fbo); // Part 2 (1) creates n new framebuffer objects, places their names in the array passed to framebuffers
 
 	// ****TO-DO: initialize framebuffers: 
 	//	- scene, with MRT and depth
 	fbo = demoState->fbo_scene;
 	a3framebufferCreate(fbo, "fbo:scene", 8, a3fbo_colorRGB8, a3fbo_depth24_stencil8, 
-		demoState->frameWidth, demoState->frameHeight);
+		demoState->frameWidth, demoState->frameHeight); // creates a new framebuffer as big as the window with eight color targets and a depth targer
 
 	// ****TO-DO: change texture settings for all framebuffers (bonus)
 	//	- iterate through textures and change settings as needed

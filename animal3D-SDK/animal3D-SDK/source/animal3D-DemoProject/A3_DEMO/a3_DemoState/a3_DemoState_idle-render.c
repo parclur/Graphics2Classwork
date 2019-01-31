@@ -368,19 +368,23 @@ void a3demo_render(const a3_DemoState *demoState)
 	//	- draw FSQ with appropriate program
 
 	// ****TO-DO: draw to back buffer with depth disabled
+	a3framebufferDeactivateSetViewport(a3fbo_depthDisable, -demoState->frameBorder, -demoState->frameBorder, demoState->frameWidth, demoState->frameHeight); // example found in a3_demo_callbacks.c line 306
 
 	// ****TO-DO: display skybox or clear
 	//	- do this last, it's slightly different from your previous skybox code
+	//glDisable(GL_BLEND); //hint from dan
 	if (demoState->displaySkybox)
 	{
-
+		// do stuff
 	}
 	else
 	{
-
+		// empty... why?
 	}
 
 	// ****TO-DO: use unit quad as FSQ drawable
+	currentDrawable = demoState->draw_unitquad;
+	a3vertexDrawableActivate(currentDrawable);
 
 	// select texture(s) to use for display
 	currentFBO = demoState->fbo_scene;
@@ -390,7 +394,10 @@ void a3demo_render(const a3_DemoState *demoState)
 		a3framebufferBindDepthTexture(currentFBO, a3tex_unit00);
 
 	// ****TO-DO: draw FSQ with texturing
-
+	currentDemoProgram = demoState->prog_drawTexture;
+	a3shaderProgramActivate(currentDemoProgram->program);
+	a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, a3identityMat4.mm);
+	a3vertexDrawableRenderActive(); // last step
 
 	//-------------------------------------------------------------------------
 	// 3) OVERLAYS: done after FSQ so they appear over everything else
