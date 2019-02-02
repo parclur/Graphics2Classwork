@@ -31,10 +31,17 @@
 //	1) declare at least four render targets
 //	2) implement four custom effects, outputting each one to a render target
 
+layout(location = 0) out vec4 rtShader1;
+layout(location = 1) out vec4 rtShader2;
+layout(location = 2) out vec4 rtShader3;
+layout(location = 3) out vec4 rtShader4;
+
 out vec4 rtFragColor;
 
 void main()
 {
-	// DUMMY OUTPUT: all fragments are FADED CYAN
-	rtFragColor = vec4(0.5, 1.0, 1.0, 1.0);
+	rtShader1 = vec4(1.0, 0.0, 0.0, 1.0);
+	rtShader2 = vec4(0.0, 1.0, 0.0, 1.0);
+	rtShader3 = vec4(0.0, 0.0, 1.0, 1.0);
+	rtShader4 = vec4(1.0, 0.0, 1.0, 1.0);
 }

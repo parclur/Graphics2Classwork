@@ -35,7 +35,7 @@
 
 // **WARNING: FOR TESTING/COMPARISON ONLY, DO NOT USE IN DELIVERABLE BUILDS**
 // uncomment this to allow shader decoding (if available)
-#define A3_USER_ENABLE_SHADER_DECODING
+//#define A3_USER_ENABLE_SHADER_DECODING
 
 
 //-----------------------------------------------------------------------------
@@ -366,9 +366,9 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			{ { { 0 },	"shdr-fs:draw-col-unif",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/drawColorUnif_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-col-attr",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/drawColorAttrib_fs4x.glsl" } } },
 			// 02-shading
-			{ { { 0 },	"shdr-fs:draw-tex",				a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/e/drawTexture_fs4x.glsl" } } },
-			{ { { 0 },	"shdr-fs:draw-Phong-multi",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/e/drawPhongMulti_fs4x.glsl" } } },
-			{ { { 0 },	"shdr-fs:draw-nonphoto-multi",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/e/drawNonPhotoMulti_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-tex",				a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/drawTexture_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-Phong-multi",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/drawPhongMulti_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-nonphoto-multi",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/drawNonPhotoMulti_fs4x.glsl" } } },
 			// 03-framebuffer
 			{ { { 0 },	"shdr-fs:draw-Phong-multi-mrt",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/03-framebuffer/drawPhongMulti_mrt_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-custom-mrt",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/03-framebuffer/drawCustom_mrt_fs4x.glsl" } } },
@@ -426,6 +426,10 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 
 	// Phong shading
 	// **TO-DO (lab 2): SETUP THIS PROGRAM
+	currentDemoProg = demoState->prog_drawPhongMulti;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-multi");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawPhongMulti_fs->shader);
 
 	// non-photorealistic shading
 	// **TO-DO (lab 2): SETUP THIS PROGRAM (bonus)
@@ -443,7 +447,10 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 
 	// custom effects MRT
 	// ****TO-DO: SETUP THIS PROGRAM
-
+	currentDemoProg = demoState->prog_drawCustom_mrt;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Custom-mrt");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawCustom_mrt_fs->shader);
 
 	// activate a primitive for validation
 	// makes sure the specified geometry can draw using programs
