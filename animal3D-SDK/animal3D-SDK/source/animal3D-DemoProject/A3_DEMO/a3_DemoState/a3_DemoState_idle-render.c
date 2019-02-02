@@ -372,10 +372,27 @@ void a3demo_render(const a3_DemoState *demoState)
 
 	// ****TO-DO: display skybox or clear
 	//	- do this last, it's slightly different from your previous skybox code
-	//glDisable(GL_BLEND); //hint from dan
+
+	glDisable(GL_BLEND); //hint from dan
+
 	if (demoState->displaySkybox)
 	{
-		// do stuff
+		// draw solid color box, inverted
+		currentDrawable = demoState->draw_skybox;
+		currentSceneObject = demoState->skyboxObject;
+		a3real4x4Product(modelViewProjectionMat.m, camera->viewProjectionMat.m, currentSceneObject->modelMat.m);
+
+		currentDemoProgram = demoState->prog_drawTexture; //select program
+		a3shaderProgramActivate(currentDemoProgram->program); //activate program
+		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+		a3textureActivate(demoState->tex_skybox_clouds, a3tex_unit00); //activate skybox texture
+		a3demo_enableCompositeBlending();
+
+		//glDepthFunc(GL_ALWAYS);
+		glCullFace(GL_FRONT);
+		a3vertexDrawableActivateAndRender(currentDrawable);
+		glCullFace(GL_BACK);
+		//glDepthFunc(GL_LEQUAL);
 	}
 	else
 	{
