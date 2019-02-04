@@ -212,10 +212,15 @@
     <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawTexture_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\03-framebuffer\drawCustom_mrt_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\03-framebuffer\drawPhongMulti_mrt_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\fs\04-shadow\drawCustom_post_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\fs\04-shadow\drawPhongMulti_projective_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\fs\04-shadow\drawPhongMulti_shadowmap_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\fs\04-shadow\drawPhongMulti_shadowmap_projective_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\drawColorAttrib_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\drawColorUnif_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passPhongAttribs_transform_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passTexcoord_transform_vs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\vs\04-shadow\passPhongAttribs_passShadowCoord_transform_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\passColor_transform_instanced_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\passColor_transform_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\passthru_transform_instanced_vs4x.glsl" />

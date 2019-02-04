@@ -61,6 +61,12 @@
     <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\03-framebuffer">
       <UniqueIdentifier>{c57fe210-324c-4b98-81c3-f1794a825211}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\04-shadow">
+      <UniqueIdentifier>{edc3775d-a076-41bb-8a2d-e5d6d69adc34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\vs\04-shadow">
+      <UniqueIdentifier>{a02bd9a7-9eb7-43fe-a588-5cdfbab352d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_src_win\main_dll.c">
@@ -144,6 +150,21 @@
     </None>
     <None Include="..\..\..\resource\glsl\4x\fs\03-framebuffer\drawPhongMulti_mrt_fs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\fs\03-framebuffer</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\vs\04-shadow\passPhongAttribs_passShadowCoord_transform_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\04-shadow</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\04-shadow\drawCustom_post_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\04-shadow</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\04-shadow\drawPhongMulti_projective_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\04-shadow</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\04-shadow\drawPhongMulti_shadowmap_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\04-shadow</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\04-shadow\drawPhongMulti_shadowmap_projective_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\04-shadow</Filter>
     </None>
   </ItemGroup>
 </Project>

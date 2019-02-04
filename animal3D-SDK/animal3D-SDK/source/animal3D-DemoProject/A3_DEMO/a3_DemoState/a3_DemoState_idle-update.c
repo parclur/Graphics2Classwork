@@ -105,11 +105,15 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 
 
 	// update scene objects
-	for (i = 0; i < demoStateMaxCount_sceneObject; ++i)
-		a3demo_updateSceneObject(demoState->sceneObject + i, i < demoStateMaxCount_camera);
-
-	// update cameras
+	for (i = 0; i < demoStateMaxCount_object; ++i)
+		a3demo_updateSceneObject(demoState->generalObject + i, 0);
 	for (i = 0; i < demoStateMaxCount_camera; ++i)
+		a3demo_updateSceneObject(demoState->cameraObject + i, 1);
+	for (i = 0; i < demoStateMaxCount_light; ++i)
+		a3demo_updateSceneObject(demoState->lightObject + i, 1);
+
+	// update cameras/projectors
+	for (i = 0; i < demoStateMaxCount_projector; ++i)
 		a3demo_updateCameraViewProjection(demoState->camera + i);
 
 
@@ -118,7 +122,7 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 	demoState->gridTransform = useVerticalY ? convertZ2Y : a3identityMat4;
 
 	// skybox position
-	demoState->skyboxObject->modelMat.v3 = demoState->cameraObject->modelMat.v3;
+	demoState->skyboxObject->modelMat.v3 = camera->sceneObject->modelMat.v3;
 
 
 	// grid lines highlight

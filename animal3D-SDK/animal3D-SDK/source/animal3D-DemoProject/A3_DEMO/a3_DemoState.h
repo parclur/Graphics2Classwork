@@ -66,6 +66,7 @@ extern "C"
 		demoStateMaxCount_camera = 1,
 		demoStateMaxCount_light = 4,
 		demoStateMaxCount_sceneObject = demoStateMaxCount_object + demoStateMaxCount_camera + demoStateMaxCount_light,
+		demoStateMaxCount_projector = 2,
 
 		demoStateMaxCount_timer = 1,
 		demoStateMaxCount_drawDataBuffer = 1,
@@ -74,7 +75,7 @@ extern "C"
 		demoStateMaxCount_shaderProgram = 16,
 
 		demoStateMaxCount_texture = 16,
-		demoStateMaxCount_framebuffer = 1,
+		demoStateMaxCount_framebuffer = 4,
 	};
 
 	// additional counters for demo modes
@@ -82,7 +83,7 @@ extern "C"
 	{
 		demoStateMaxModes = 3,
 		demoStateMaxSubModes = 2,
-		demoStateMaxOutputModes = 9,
+		demoStateMaxOutputModes = 2,
 	};
 
 
@@ -129,15 +130,16 @@ extern "C"
 		// scene variables and objects
 
 		// demo mode array: 
-		//	- mode (3): which mode/pipeline is being viewed
-		//	- sub-mode (2): which sub-mode/pass in the pipeline is being viewed
-		//	- output (9): which output from the sub-mode/pass is being viewed
+		//	- mode: which mode/pipeline is being viewed
+		//	- sub-mode: which sub-mode/pass in the pipeline is being viewed
+		//	- output: which output from the sub-mode/pass is being viewed
 		a3ui32 demoMode, demoSubMode[demoStateMaxModes], demoOutputMode[demoStateMaxModes][demoStateMaxSubModes];
 		a3ui32 demoModeCount, demoSubModeCount[demoStateMaxModes], demoOutputCount[demoStateMaxModes][demoStateMaxSubModes];
 
 		// toggle grid in scene and axes superimposed
-		a3i32 displayGrid, displaySkybox, displayWorldAxes, displayObjectAxes;
-		a3i32 updateAnimation;
+		a3boolean displayGrid, displaySkybox, displayWorldAxes, displayObjectAxes, displayHiddenVolumes;
+		a3boolean updateAnimation, enablePostProcessing;
+		a3boolean singleLight;
 
 		// grid properties
 		a3mat4 gridTransform;
@@ -163,18 +165,21 @@ extern "C"
 			a3_DemoSceneObject sceneObject[demoStateMaxCount_sceneObject];
 			struct {
 				a3_DemoSceneObject
-					cameraObject[demoStateMaxCount_camera],	// transform for cameras
-					lightObject[demoStateMaxCount_light],	// transform for lights
-					object[demoStateMaxCount_object];		// transform for general objects
+					generalObject[demoStateMaxCount_object],	// transform for general objects
+					cameraObject[demoStateMaxCount_camera],		// transform for camera objects
+					lightObject[demoStateMaxCount_light];		// transform for light objects
 			};
 			struct {
 				a3_DemoSceneObject
-					mainCamera[1],
-
-					mainLight[1],
-					addLights[demoStateMaxCount_light - 1],
-					
-					skyboxObject[1],
+					objectOffset[demoStateMaxCount_object];		// offset objects
+				a3_DemoSceneObject
+					mainCameraObject[1];						// named cameras
+				a3_DemoSceneObject
+					mainLightObject[1];							// named lights
+			};
+			struct {
+				a3_DemoSceneObject
+					skyboxObject[1],							// named scene objects
 					planeObject[1],
 					sphereObject[1],
 					cylinderObject[1],
@@ -186,10 +191,12 @@ extern "C"
 		// cameras
 		//	- any object can have a camera "component"
 		union {
-			a3_DemoCamera camera[demoStateMaxCount_camera];
+			a3_DemoCamera camera[demoStateMaxCount_projector];
 			struct {
 				a3_DemoCamera
 					sceneCamera[1];						// scene viewing cameras
+				a3_DemoCamera
+					projectorLight[1];					// other projectors
 			};
 		};
 
@@ -233,7 +240,10 @@ extern "C"
 					draw_grid[1],								// wireframe ground plane to emphasize scaling
 					draw_axes[1],								// coordinate axes at the center of the world
 					draw_skybox[1],								// skybox cube mesh
-					draw_unitquad[1],							// unit quad (used for fsq)
+					draw_unitquad[1];							// unit quad (used for fsq)
+				a3_VertexDrawable
+					draw_pointlight[1];							// volume for point light (low-res sphere)
+				a3_VertexDrawable
 					draw_plane[1],								// procedural plane
 					draw_sphere[1],								// procedural sphere
 					draw_cylinder[1],							// procedural cylinder
@@ -259,6 +269,12 @@ extern "C"
 				a3_DemoStateShaderProgram
 					prog_drawPhongMulti_mrt[1],					// draw Phong to MRT
 					prog_drawCustom_mrt[1];						// draw custom effects to MRT
+				a3_DemoStateShaderProgram
+					prog_transform[1],							// transform vertex only; no fragment shader
+					prog_drawPhongMulti_projtex[1],				// projective texturing
+					prog_drawPhongMulti_shadowmap[1],			// shadow mapping
+					prog_drawPhongMulti_shadowmap_projtex[1],	// shadow mapping and projective texturing
+					prog_drawCustom_post[1];					// custom post-processing
 			};
 		};
 
@@ -286,7 +302,11 @@ extern "C"
 		union {
 			a3_Framebuffer framebuffer[demoStateMaxCount_framebuffer];
 			struct {
-				a3_Framebuffer fbo_scene[1];					// fbo with color and depth
+				a3_Framebuffer
+					fbo_scene[1];					// fbo with color and depth
+				a3_Framebuffer
+					fbo_composite[1],				// fbo for compositing with color only
+					fbo_shadowmap[1];				// fbo for shadow map with depth only
 			};
 		};
 
