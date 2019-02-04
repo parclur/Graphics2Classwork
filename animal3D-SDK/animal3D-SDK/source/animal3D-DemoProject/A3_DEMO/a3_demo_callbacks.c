@@ -433,9 +433,25 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 		demoState->displayObjectAxes = 1 - demoState->displayObjectAxes;
 		break;
 
+		// toggle hidden volumes
+	case 'h':
+		demoState->displayHiddenVolumes = 1 - demoState->displayHiddenVolumes;
+		break;
+
 		// update animation
 	case 'm':
 		demoState->updateAnimation = 1 - demoState->updateAnimation;
+		break;
+
+		// enable post-processing
+	case 'n':
+		demoState->enablePostProcessing = 1 - demoState->enablePostProcessing;
+		break;
+
+		// single light only
+	case 'l':
+		demoState->singleLight = 1 - demoState->singleLight;
+		demoState->lightCount = demoState->singleLight ? 1 : demoStateMaxCount_light;
 		break;
 	}
 }

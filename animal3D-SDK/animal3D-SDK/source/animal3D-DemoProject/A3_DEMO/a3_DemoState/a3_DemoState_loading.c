@@ -94,13 +94,15 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 
 	// file streaming (if requested)
 	a3_FileStream fileStream[1] = { 0 };
-	const a3byte *const geometryStream = "./data/geom_data_gpro_framebuffer.dat";
+	const a3byte *const geometryStream = "./data/geom_data_gpro_shadow.dat";
 
 	// geometry data
-	a3_GeometryData sceneShapesData[4] = { 0 };
+	a3_GeometryData displayShapesData[4] = { 0 };
+	a3_GeometryData hiddenShapesData[1] = { 0 };
 	a3_GeometryData proceduralShapesData[4] = { 0 };
 	a3_GeometryData loadedModelsData[1] = { 0 };
-	const a3ui32 sceneShapesCount = sizeof(sceneShapesData) / sizeof(a3_GeometryData);
+	const a3ui32 displayShapesCount = sizeof(displayShapesData) / sizeof(a3_GeometryData);
+	const a3ui32 hiddenShapesCount = sizeof(hiddenShapesData) / sizeof(a3_GeometryData);
 	const a3ui32 proceduralShapesCount = sizeof(proceduralShapesData) / sizeof(a3_GeometryData);
 	const a3ui32 loadedModelsCount = sizeof(loadedModelsData) / sizeof(a3_GeometryData);
 
@@ -115,9 +117,13 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	{
 		// read from stream
 
-		// static scene objects
-		for (i = 0; i < sceneShapesCount; ++i)
-			a3fileStreamReadObject(fileStream, sceneShapesData + i, (a3_FileStreamReadFunc)a3geometryLoadDataBinary);
+		// static display objects
+		for (i = 0; i < displayShapesCount; ++i)
+			a3fileStreamReadObject(fileStream, displayShapesData + i, (a3_FileStreamReadFunc)a3geometryLoadDataBinary);
+
+		// hidden volume objects
+		for (i = 0; i < hiddenShapesCount; ++i)
+			a3fileStreamReadObject(fileStream, hiddenShapesData + i, (a3_FileStreamReadFunc)a3geometryLoadDataBinary);
 
 		// procedurally-generated objects
 		for (i = 0; i < proceduralShapesCount; ++i)
@@ -134,7 +140,8 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	else if (!demoState->streaming || a3fileStreamOpenWrite(fileStream, geometryStream))
 	{
 		// create new data
-		a3_ProceduralGeometryDescriptor sceneShapes[4] = { a3geomShape_none };
+		a3_ProceduralGeometryDescriptor displayShapes[4] = { a3geomShape_none };
+		a3_ProceduralGeometryDescriptor hiddenShapes[1] = { a3geomShape_none };
 		a3_ProceduralGeometryDescriptor proceduralShapes[4] = { a3geomShape_none };
 		const a3byte *loadedShapesFile[1] = {
 			"../../../../resource/obj/teapot/teapot.obj",
@@ -147,15 +154,24 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		};
 
 		// static scene procedural objects
-		//	(grid, axes, skybox, unit quad)
-		a3proceduralCreateDescriptorPlane(sceneShapes + 0, a3geomFlag_wireframe, a3geomAxis_default, 20.0f, 20.0f, 20, 20);
-		a3proceduralCreateDescriptorAxes(sceneShapes + 1, a3geomFlag_wireframe, 0.0f, 1);
-		a3proceduralCreateDescriptorBox(sceneShapes + 2, a3geomFlag_texcoords, 100.0f, 100.0f, 100.0f, 1, 1, 1);
-		a3proceduralCreateDescriptorPlane(sceneShapes + 3, a3geomFlag_texcoords, a3geomAxis_default, 2.0f, 2.0f, 1, 1);
-		for (i = 0; i < sceneShapesCount; ++i)
+		//	(display shapes, grid, axes, skybox, unit quad)
+		a3proceduralCreateDescriptorPlane(displayShapes + 0, a3geomFlag_wireframe, a3geomAxis_default, 20.0f, 20.0f, 20, 20);
+		a3proceduralCreateDescriptorAxes(displayShapes + 1, a3geomFlag_wireframe, 0.0f, 1);
+		a3proceduralCreateDescriptorBox(displayShapes + 2, a3geomFlag_texcoords, 100.0f, 100.0f, 100.0f, 1, 1, 1);
+		a3proceduralCreateDescriptorPlane(displayShapes + 3, a3geomFlag_texcoords, a3geomAxis_default, 2.0f, 2.0f, 1, 1);
+		for (i = 0; i < displayShapesCount; ++i)
 		{
-			a3proceduralGenerateGeometryData(sceneShapesData + i, sceneShapes + i, 0);
-			a3fileStreamWriteObject(fileStream, sceneShapesData + i, (a3_FileStreamWriteFunc)a3geometrySaveDataBinary);
+			a3proceduralGenerateGeometryData(displayShapesData + i, displayShapes + i, 0);
+			a3fileStreamWriteObject(fileStream, displayShapesData + i, (a3_FileStreamWriteFunc)a3geometrySaveDataBinary);
+		}
+
+		// hidden volumes and shapes
+		//	(light volumes)
+		a3proceduralCreateDescriptorSphere(hiddenShapes + 0, a3geomFlag_vanilla, a3geomAxis_default, 0.5f, 8, 6);
+		for (i = 0; i < hiddenShapesCount; ++i)
+		{
+			a3proceduralGenerateGeometryData(hiddenShapesData + i, hiddenShapes + i, 0);
+			a3fileStreamWriteObject(fileStream, hiddenShapesData + i, (a3_FileStreamWriteFunc)a3geometrySaveDataBinary);
 		}
 
 		// other procedurally-generated objects
@@ -189,10 +205,15 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 
 	// get storage size
 	sharedVertexStorage = numVerts = 0;
-	for (i = 0; i < sceneShapesCount; ++i)
+	for (i = 0; i < displayShapesCount; ++i)
 	{
-		sharedVertexStorage += a3geometryGetVertexBufferSize(sceneShapesData + i);
-		numVerts += sceneShapesData[i].numVertices;
+		sharedVertexStorage += a3geometryGetVertexBufferSize(displayShapesData + i);
+		numVerts += displayShapesData[i].numVertices;
+	}
+	for (i = 0; i < hiddenShapesCount; ++i)
+	{
+		sharedVertexStorage += a3geometryGetVertexBufferSize(hiddenShapesData + i);
+		numVerts += hiddenShapesData[i].numVertices;
 	}
 	for (i = 0; i < proceduralShapesCount; ++i)
 	{
@@ -209,8 +230,10 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	// common index format required for shapes that share vertex formats
 	a3geometryCreateIndexFormat(sceneCommonIndexFormat, numVerts);
 	sharedIndexStorage = 0;
-	for (i = 0; i < sceneShapesCount; ++i)
-		sharedIndexStorage += a3indexStorageSpaceRequired(sceneCommonIndexFormat, sceneShapesData[i].numIndices);
+	for (i = 0; i < displayShapesCount; ++i)
+		sharedIndexStorage += a3indexStorageSpaceRequired(sceneCommonIndexFormat, displayShapesData[i].numIndices);
+	for (i = 0; i < hiddenShapesCount; ++i)
+		sharedIndexStorage += a3indexStorageSpaceRequired(sceneCommonIndexFormat, hiddenShapesData[i].numIndices);
 	for (i = 0; i < proceduralShapesCount; ++i)
 		sharedIndexStorage += a3indexStorageSpaceRequired(sceneCommonIndexFormat, proceduralShapesData[i].numIndices);
 	for (i = 0; i < loadedModelsCount; ++i)
@@ -227,23 +250,25 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	// grid: position attribute only
 	// overlay objects are also just position
 	vao = demoState->vao_position;
-	a3geometryGenerateVertexArray(vao, "vao:pos", sceneShapesData + 0, vbo_ibo, sharedVertexStorage);
+	a3geometryGenerateVertexArray(vao, "vao:pos", displayShapesData + 0, vbo_ibo, sharedVertexStorage);
 	currentDrawable = demoState->draw_grid;
-	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, sceneShapesData + 0, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 0, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	currentDrawable = demoState->draw_pointlight;
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, hiddenShapesData + 0, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 
 	// axes: position and color
 	vao = demoState->vao_position_color;
-	a3geometryGenerateVertexArray(vao, "vao:pos+col", sceneShapesData + 1, vbo_ibo, sharedVertexStorage);
+	a3geometryGenerateVertexArray(vao, "vao:pos+col", displayShapesData + 1, vbo_ibo, sharedVertexStorage);
 	currentDrawable = demoState->draw_axes;
-	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, sceneShapesData + 1, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 1, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 
 	// skybox, unit quad: position and texture coordinates
 	vao = demoState->vao_position_texcoord;
-	a3geometryGenerateVertexArray(vao, "vao:pos+tex", sceneShapesData + 2, vbo_ibo, sharedVertexStorage);
+	a3geometryGenerateVertexArray(vao, "vao:pos+tex", displayShapesData + 2, vbo_ibo, sharedVertexStorage);
 	currentDrawable = demoState->draw_skybox;
-	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, sceneShapesData + 2, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 2, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 	currentDrawable = demoState->draw_unitquad;
-	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, sceneShapesData + 3, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 3, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 
 	// scene objects: position, texture coordinates and normal
 	vao = demoState->vao_position_texcoord_normal;
@@ -261,8 +286,10 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 
 
 	// release data when done
-	for (i = 0; i < sceneShapesCount; ++i)
-		a3geometryReleaseData(sceneShapesData + i);
+	for (i = 0; i < displayShapesCount; ++i)
+		a3geometryReleaseData(displayShapesData + i);
+	for (i = 0; i < hiddenShapesCount; ++i)
+		a3geometryReleaseData(hiddenShapesData + i);
 	for (i = 0; i < proceduralShapesCount; ++i)
 		a3geometryReleaseData(proceduralShapesData + i);
 	for (i = 0; i < loadedModelsCount; ++i)
@@ -296,6 +323,7 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 		"uMV",
 		"uP",
 		"uMV_nrm",
+		"uMVPB_proj",
 		"uAtlas",
 
 		// common fragment
@@ -303,17 +331,24 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 		"uLightPos",
 		"uLightCol",
 		"uLightSz",
-		"uTex_dm",
-		"uTex_sm",
-		"uTex_dm_ramp",
-		"uTex_sm_ramp",
+		"uPixelSz",
 		"uColor",
+
+		// named textures
+		"uTex_dm","uTex_sm","uTex_nm","uTex_hm","uTex_dm_ramp","uTex_sm_ramp","uTex_proj","uTex_shadow",
+
+		// generic images
+		"uImage0","uImage1","uImage2","uImage3","uImage4","uImage5","uImage6","uImage7",
+
+		// common global
+		"uTime",
 	};
 
 
 	// some default uniform values
 	const a3f32 defaultColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	const a3i32 defaultTexUnits[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+	const a3i32 defaultTexUnits[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+	const a3f64 defaultDouble[] = { 0.0 };
 	const a3f32 defaultFloat[] = { 0.0f };
 	const a3i32 defaultInt[] = { 0 };
 
@@ -332,6 +367,8 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			// 02-shading
 			a3_DemoStateShader passTexcoord_transform_vs[1];
 			a3_DemoStateShader passPhongAttribs_transform_vs[1];
+			// 04-shadow
+			a3_DemoStateShader passPhongAttribs_shadowCoord_transform_vs[1];
 
 			// fragment shaders
 			// base
@@ -344,6 +381,11 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			// 03-framebuffer
 			a3_DemoStateShader drawPhongMulti_mrt_fs[1];
 			a3_DemoStateShader drawCustom_mrt_fs[1];
+			// 04-shadow
+			a3_DemoStateShader drawPhongMulti_projtex_fs[1];
+			a3_DemoStateShader drawPhongMulti_shadowmap_fs[1];
+			a3_DemoStateShader drawPhongMulti_shadowmap_projtex_fs[1];
+			a3_DemoStateShader drawCustom_post_fs[1];
 		};
 	} shaderList = {
 		{
@@ -360,6 +402,8 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			// 02-shading
 			{ { { 0 },	"shdr-vs:pass-tex",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/02-shading/passTexcoord_transform_vs4x.glsl" } } },
 			{ { { 0 },	"shdr-vs:pass-Phong",			a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/02-shading/passPhongAttribs_transform_vs4x.glsl" } } },
+			// 04-shadow
+			{ { { 0 },	"shdr-vs:pass-Phong-shadow",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/04-shadow/passPhongAttribs_passShadowCoord_transform_vs4x.glsl" } } },
 
 			// fs
 			// base
@@ -372,6 +416,11 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			// 03-framebuffer
 			{ { { 0 },	"shdr-fs:draw-Phong-multi-mrt",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/03-framebuffer/drawPhongMulti_mrt_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-custom-mrt",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/03-framebuffer/drawCustom_mrt_fs4x.glsl" } } },
+			// 04-shadow
+			{ { { 0 },	"shdr-fs:draw-Phong-projtex",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/04-shadow/drawPhongMulti_projective_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-Phong-shadow",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/04-shadow/drawPhongMulti_shadowmap_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-Phong-shadproj",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/04-shadow/drawPhongMulti_shadowmap_projective_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-custom-post",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/04-shadow/drawCustom_post_fs4x.glsl" } } },
 		}
 	};
 	a3_DemoStateShader *const shaderListPtr = (a3_DemoStateShader *)(&shaderList), *shaderPtr;
@@ -403,37 +452,82 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	// base programs
 
 	// uniform color program
-	// **TO-DO (lab 1): SETUP THIS PROGRAM
+	currentDemoProg = demoState->prog_drawColorUnif;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-unif");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passthru_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorUnif_fs->shader);
 	
 	// color attrib program
-	// **TO-DO (lab 1): SETUP THIS PROGRAM
+	currentDemoProg = demoState->prog_drawColorAttrib;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-attr");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passColor_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorAttrib_fs->shader);
 
 	// uniform color program with instancing
-	// (optional)
+	currentDemoProg = demoState->prog_drawColorUnif_instanced;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-unif-inst");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passthru_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorUnif_fs->shader);
 
 	// color attrib program with instancing
-	// (optional)
+	currentDemoProg = demoState->prog_drawColorAttrib_instanced;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-attr-inst");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passColor_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorAttrib_fs->shader);
 
 
 	// 02-shading programs
 
 	// texturing
-	// **TO-DO (lab 2): SETUP THIS PROGRAM
+	currentDemoProg = demoState->prog_drawTexture;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-tex");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTexcoord_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawTexture_fs->shader);
 
 	// Phong shading
-	// **TO-DO (lab 2): SETUP THIS PROGRAM
+	currentDemoProg = demoState->prog_drawPhongMulti;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-multi");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawPhongMulti_fs->shader);
 
 	// non-photorealistic shading
-	// **TO-DO (lab 2): SETUP THIS PROGRAM (bonus)
+	currentDemoProg = demoState->prog_drawNonPhotoMulti;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-nonphoto-multi");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawNonPhotoMulti_fs->shader);
 
 
 	// 03-framebuffer programs
 
 	// Phong shading MRT
-	// ****TO-DO: SETUP THIS PROGRAM
+	currentDemoProg = demoState->prog_drawPhongMulti_mrt;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-multi-mrt");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawPhongMulti_mrt_fs->shader);
 
 	// custom effects MRT
-	// ****TO-DO: SETUP THIS PROGRAM
+	currentDemoProg = demoState->prog_drawCustom_mrt;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-custom-mrt");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawCustom_mrt_fs->shader);
+
+
+	// 04-shadow programs
+
+	// transform only
+	// ****TO-DO: set up this program
+
+	// projective texturing
+	// ****TO-DO: set up this program
+
+	// shadow mapping
+	// ****TO-DO: set up this program
+
+	// shadow mapping and projective texturing
+	// ****TO-DO: set up this program
+
+	// custom post-processing
+	// ****TO-DO: set up this program
 
 
 	// activate a primitive for validation
@@ -488,6 +582,8 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			a3shaderUniformSendFloatMat(a3unif_mat4, 0, uLocation, 1, a3identityMat4.mm);
 		if ((uLocation = currentDemoProg->uMV_nrm) >= 0)
 			a3shaderUniformSendFloatMat(a3unif_mat4, 0, uLocation, 1, a3identityMat4.mm);
+		if ((uLocation = currentDemoProg->uMVPB_proj) >= 0)
+			a3shaderUniformSendFloatMat(a3unif_mat4, 0, uLocation, 1, a3identityMat4.mm);
 		if ((uLocation = currentDemoProg->uAtlas) >= 0)
 			a3shaderUniformSendFloatMat(a3unif_mat4, 0, uLocation, 1, a3identityMat4.mm);
 
@@ -500,16 +596,50 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			a3shaderUniformSendFloat(a3unif_vec4, uLocation, 1, defaultColor);
 		if ((uLocation = currentDemoProg->uLightSz) >= 0)
 			a3shaderUniformSendFloat(a3unif_single, uLocation, 1, defaultFloat);
+		if ((uLocation = currentDemoProg->uPixelSz) >= 0)
+			a3shaderUniformSendFloat(a3unif_vec2, uLocation, 1, a3oneVec2.v);
+		if ((uLocation = currentDemoProg->uColor) >= 0)
+			a3shaderUniformSendFloat(a3unif_vec4, uLocation, 1, defaultColor);
+
+		// named textures
 		if ((uLocation = currentDemoProg->uTex_dm) >= 0)
 			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 0);
 		if ((uLocation = currentDemoProg->uTex_sm) >= 0)
 			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 1);
+		if ((uLocation = currentDemoProg->uTex_nm) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 2);
+		if ((uLocation = currentDemoProg->uTex_hm) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 3);
 		if ((uLocation = currentDemoProg->uTex_dm_ramp) >= 0)
 			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 4);
 		if ((uLocation = currentDemoProg->uTex_sm_ramp) >= 0)
 			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 5);
-		if ((uLocation = currentDemoProg->uColor) >= 0)
-			a3shaderUniformSendFloat(a3unif_vec4, uLocation, 1, defaultColor);
+		if ((uLocation = currentDemoProg->uTex_proj) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 6);
+		if ((uLocation = currentDemoProg->uTex_shadow) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 7);
+
+		// generic images
+		if ((uLocation = currentDemoProg->uImage0) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 0);
+		if ((uLocation = currentDemoProg->uImage1) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 1);
+		if ((uLocation = currentDemoProg->uImage2) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 2);
+		if ((uLocation = currentDemoProg->uImage3) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 3);
+		if ((uLocation = currentDemoProg->uImage4) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 4);
+		if ((uLocation = currentDemoProg->uImage5) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 5);
+		if ((uLocation = currentDemoProg->uImage6) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 6);
+		if ((uLocation = currentDemoProg->uImage7) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 7);
+
+		// common general
+		if ((uLocation = currentDemoProg->uTime) >= 0)
+			a3shaderUniformSendDouble(a3unif_single, uLocation, 1, defaultDouble);
 	}
 
 
@@ -612,9 +742,20 @@ void a3demo_loadFramebuffers(a3_DemoState *demoState)
 //	a3_Framebuffer *fbo;
 //	a3ui32 i, j;
 
+	// storage precision
+	const a3_FramebufferColorType colorType_scene = a3fbo_colorRGBA8;
+	const a3_FramebufferDepthType depthType_scene = a3fbo_depth24_stencil8;
+	const a3_FramebufferColorType colorType_comp = colorType_scene;
 
-	// ****TO-DO: initialize framebuffers: 
-	//	- scene, with MRT and depth
+	// other settings
+	const a3ui16 shadowMapSz = 2048;
+
+
+	// ****TO-DO: these
+	// initialize framebuffers: 
+	//	- scene, with or without MRT (determine your needs), add depth
+	//	- compositing, color only
+	//	- shadow map, depth only
 
 
 	// ****TO-DO: change texture settings for all framebuffers (bonus)
