@@ -63,11 +63,10 @@ void a3demo_initScene(a3_DemoState *demoState)
 		a3demo_initSceneObject(demoState->sceneObject + i);
 
 	// cameras
-	for (i = 0; i < demoStateMaxCount_camera; ++i)
-	{
-		a3demo_setCameraSceneObject(demoState->camera + i, demoState->cameraObject + i);
-		a3demo_initCamera(demoState->camera + i);
-	}
+	a3demo_setCameraSceneObject(demoState->sceneCamera, demoState->mainCameraObject);
+	a3demo_setCameraSceneObject(demoState->projectorLight, demoState->mainLightObject);
+	a3demo_initCamera(demoState->sceneCamera);
+	a3demo_initCamera(demoState->projectorLight);
 
 	// camera params
 	demoState->activeCamera = 0;
@@ -83,6 +82,20 @@ void a3demo_initScene(a3_DemoState *demoState)
 	camera->ctrlZoomSpeed = 5.0f;
 	camera->sceneObject->position = sceneCameraStartPos;
 	camera->sceneObject->euler = sceneCameraStartEuler;
+
+	// other projectors
+	camera = demoState->projectorLight + 0;
+	camera->perspective = a3true;
+	camera->fovy = a3realSixty; // a3realNinety;
+	camera->znear = 10.0f;
+	camera->zfar = 100.0f;
+	camera->sceneObject->position = sceneCameraStartPos;
+	camera->sceneObject->euler = sceneCameraStartEuler;
+
+
+	// set projection matrix for non window-dependent projectors
+	//	(resize callback handles window-dependents)
+	a3demo_updateCameraProjection(demoState->projectorLight);
 
 
 	// init transforms
@@ -101,33 +114,33 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->demoMode = 0;
 
 	// modes/pipelines: 
-	// A: Phong shading mode
-	//	- draw objects sub-mode
+	// A: projective texturing
+	//	- scene
 	//		- color buffer
 	//		- depth buffer
-	//	- stencil test sub-mode (same outputs)
-	// B: Phong MRT mode
-	//	- draw objects sub-mode
-	//		- position attribute
-	//		- normal attribute
-	//		- texcoord attribute
-	//		- diffuse map
-	//		- specular map
-	//		- diffuse shading
-	//		- specular shading
-	//		- Phong shading
+	//	- shadow map
 	//		- depth buffer
-	// C: custom MRT
-	//	- draw objects sub-mode
-	//		- 4x custom outputs
+	// B: shadow mapping
+	//	- scene
+	//		- color buffer
+	//		- depth buffer
+	//	- shadow map
+	//		- depth buffer
+	// A: shadow mapping and projective texturing
+	//	- scene
+	//		- color buffer
+	//		- depth buffer
+	//	- shadow map
 	//		- depth buffer
 	demoState->demoSubModeCount[0] = 2;
 	demoState->demoOutputCount[0][0] = 2;
-	demoState->demoOutputCount[0][1] = 2;
-	demoState->demoSubModeCount[1] = 1;
-	demoState->demoOutputCount[1][0] = 9;
-	demoState->demoSubModeCount[2] = 1;
-	demoState->demoOutputCount[2][0] = 5;
+	demoState->demoOutputCount[0][1] = 1;
+	demoState->demoSubModeCount[1] = 2;
+	demoState->demoOutputCount[1][0] = 2;
+	demoState->demoOutputCount[1][1] = 1;
+	demoState->demoSubModeCount[2] = 2;
+	demoState->demoOutputCount[2][0] = 2;
+	demoState->demoOutputCount[2][1] = 1;
 
 
 	// initialize other objects
@@ -135,19 +148,23 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->displayWorldAxes = 1;
 	demoState->displayObjectAxes = 1;
 	demoState->displaySkybox = 1;
+	demoState->displayHiddenVolumes = 1;
 	demoState->updateAnimation = 1;
+	demoState->enablePostProcessing = 0;
+	demoState->singleLight = 0;
 
 
 	// lights
-	demoState->lightCount = demoStateMaxCount_light;
+	demoState->lightCount = demoState->singleLight ? 1 : demoStateMaxCount_light;
 
-	// first light is hard-coded
+	// first light is hard-coded (starts at camera)
 	pointLight = demoState->pointLight;
 	pointLight->worldPos = a3wVec4;
-	if (demoState->verticalAxis)
-		pointLight->worldPos.y = 10.0f;
-	else
-		pointLight->worldPos.z = 10.0f;
+	pointLight->worldPos.xyz = demoState->mainLightObject->position;
+//	if (demoState->verticalAxis)
+//		pointLight->worldPos.y = 10.0f;
+//	else
+//		pointLight->worldPos.z = 10.0f;
 	pointLight->radius = 100.0f;
 	pointLight->radiusInvSq = a3recip(pointLight->radius * pointLight->radius);
 	pointLight->color = a3oneVec4;

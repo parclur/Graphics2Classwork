@@ -48,7 +48,7 @@ extern "C"
 	// maximum number of uniforms in a program
 	enum a3_DemoShaderProgramMaxCounts
 	{
-		demoStateMaxCount_shaderProgramUniform = 16,
+		demoStateMaxCount_shaderProgramUniform = 32,
 	};
 
 
@@ -75,22 +75,40 @@ extern "C"
 			struct {
 				a3i32
 					// common vertex shader uniforms
-					uMVP,						// model-view-projection transform
+					uMVP,						// model-view-projection transform (object -> clip)
 					uMV,						// model-view matrix (object -> view)
 					uP,							// projection matrix (view -> clip)
 					uMV_nrm,					// model-view matrix for normals (object -> view)
-					uAtlas,						// atlas matrix for texture coordinates
+					uMVPB_proj,					// model-view-projection-bias matrix for projection (object -> bias clip)
+					uAtlas;						// atlas matrix for texture coordinates
 					
+				a3i32
 					// common fragment shader uniforms
 					uLightCt,					// number of lights
-					uLightPos,				// array of light positions in eye-space
+					uLightPos,					// array of light positions in eye-space
 					uLightCol,					// array of light colors
 					uLightSz,					// array of light sizes
+					uPixelSz,					// pixel size in texture space
+					uColor;						// uniform color
+
+				a3i32
+					// named texture handles
 					uTex_dm,					// named texture handle for diffuse map
 					uTex_sm,					// named texture handle for specular map
+					uTex_nm,					// named texture handle for normal map
+					uTex_hm,					// named texture handle for height map
 					uTex_dm_ramp,				// named texture handle for diffuse ramp
 					uTex_sm_ramp,				// named texture handle for specular ramp
-					uColor;						// uniform color
+					uTex_proj,					// named texture handle for projective texture
+					uTex_shadow;				// named texture handle for shadow map
+
+				a3i32
+					// generic image handles
+					uImage0, uImage1, uImage2, uImage3, uImage4, uImage5, uImage6, uImage7;
+
+				a3i32
+					// common global uniforms
+					uTime;						// time
 			};
 		};
 	};
