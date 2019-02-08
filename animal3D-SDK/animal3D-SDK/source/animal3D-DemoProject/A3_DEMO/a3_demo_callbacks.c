@@ -285,7 +285,7 @@ A3DYLIBSYMBOL void a3demoCB_windowResize(a3_DemoState *demoState, a3i32 newWindo
 	a3_DemoCamera *camera;
 
 	// account for borders here
-	const a3i32 frameBorder = 0;
+	const a3i32 frameBorder = 64;
 	const a3ui32 frameWidth = newWindowWidth + frameBorder + frameBorder;
 	const a3ui32 frameHeight = newWindowHeight + frameBorder + frameBorder;
 	const a3real aspect = (a3real)frameWidth / (a3real)frameHeight;
@@ -307,7 +307,7 @@ A3DYLIBSYMBOL void a3demoCB_windowResize(a3_DemoState *demoState, a3i32 newWindo
 
 	// viewing info for projection matrix
 	// initialize cameras dependent on viewport
-	for (i = 0, camera = demoState->camera + i; i < demoStateMaxCount_camera; ++i, ++camera)
+	for (i = 0, camera = demoState->camera + i; i < demoStateMaxCount_cameraObject; ++i, ++camera)
 	{
 		camera->aspect = aspect;
 		a3demo_updateCameraProjection(camera);
@@ -407,10 +407,10 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 
 		// toggle active camera
 	case 'v':
-		demoState->activeCamera = (demoState->activeCamera + 1) % demoStateMaxCount_camera;
+		demoState->activeCamera = (demoState->activeCamera + 1) % demoStateMaxCount_cameraObject;
 		break;
 	case 'c':
-		demoState->activeCamera = (demoState->activeCamera - 1 + demoStateMaxCount_camera) % demoStateMaxCount_camera;
+		demoState->activeCamera = (demoState->activeCamera - 1 + demoStateMaxCount_cameraObject) % demoStateMaxCount_cameraObject;
 		break;
 
 		// toggle grid
@@ -443,15 +443,35 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 		demoState->updateAnimation = 1 - demoState->updateAnimation;
 		break;
 
-		// enable post-processing
+		// additional post-processing
 	case 'n':
-		demoState->enablePostProcessing = 1 - demoState->enablePostProcessing;
+		demoState->additionalPostProcessing = 1 - demoState->additionalPostProcessing;
 		break;
 
-		// single light only
+		// toggle pipeline overlay
+	case 'o':
+		demoState->displayPipeline = 1 - demoState->displayPipeline;
+		break;
+
+		// toggle stencil test
+	case 'i':
+		demoState->stencilTest = 1 - demoState->stencilTest;
+		break;
+
+		// toggle projective texturing
+	case 'j':
+		demoState->projectiveTexturing = 1 - demoState->projectiveTexturing;
+		break;
+
+		// toggle shadow mapping
+	case 'k':
+		demoState->shadowMapping = 1 - demoState->shadowMapping;
+		break;
+
+		// toggle single light only
 	case 'l':
 		demoState->singleLight = 1 - demoState->singleLight;
-		demoState->lightCount = demoState->singleLight ? 1 : demoStateMaxCount_light;
+		demoState->lightCount = demoState->singleLight ? 1 : demoStateMaxCount_lightObject;
 		break;
 	}
 }

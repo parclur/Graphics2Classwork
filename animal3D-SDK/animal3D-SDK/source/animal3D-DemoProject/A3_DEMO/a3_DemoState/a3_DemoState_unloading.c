@@ -85,9 +85,13 @@ void a3demo_unloadFramebuffers(a3_DemoState *demoState)
 {
 	a3_Framebuffer *currentFBO = demoState->framebuffer,
 		*const endFBO = currentFBO + demoStateMaxCount_framebuffer;
+	a3_FramebufferDouble *currentDFBO = demoState->framebuffer_double,
+		*const endDFBO = currentDFBO + demoStateMaxCount_framebufferDouble;
 
 	while (currentFBO < endFBO)
 		a3framebufferRelease(currentFBO++);
+	while (currentDFBO < endDFBO)
+		a3framebufferDoubleRelease(currentDFBO++);
 }
 
 
@@ -107,6 +111,8 @@ void a3demo_validateUnload(const a3_DemoState *demoState)
 		*const endTex = currentTex + demoStateMaxCount_texture;
 	const a3_Framebuffer *currentFBO = demoState->framebuffer,
 		*const endFBO = currentFBO + demoStateMaxCount_framebuffer;
+	const a3_FramebufferDouble *currentDFBO = demoState->framebuffer_double,
+		*const endDFBO = currentDFBO + demoStateMaxCount_framebufferDouble;
 
 	handle = 0;
 	while (currentBuff < endBuff)
@@ -137,6 +143,12 @@ void a3demo_validateUnload(const a3_DemoState *demoState)
 		handle += (currentFBO++)->handle->handle;
 	if (handle)
 		printf("\n A3 Warning: One or more framebuffers not released.");
+
+	handle = 0;
+	while (currentDFBO < endDFBO)
+		handle += (currentDFBO++)->handle->handle;
+	if (handle)
+		printf("\n A3 Warning: One or more double framebuffers not released.");
 }
 
 

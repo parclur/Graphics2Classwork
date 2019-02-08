@@ -61,6 +61,10 @@ void a3demo_initScene(a3_DemoState *demoState)
 	// all objects
 	for (i = 0; i < demoStateMaxCount_sceneObject; ++i)
 		a3demo_initSceneObject(demoState->sceneObject + i);
+	for (i = 0; i < demoStateMaxCount_cameraObject; ++i)
+		a3demo_initSceneObject(demoState->cameraObject + i);
+	for (i = 0; i < demoStateMaxCount_lightObject; ++i)
+		a3demo_initSceneObject(demoState->lightObject + i);
 
 	// cameras
 	a3demo_setCameraSceneObject(demoState->sceneCamera, demoState->mainCameraObject);
@@ -110,52 +114,50 @@ void a3demo_initScene(a3_DemoState *demoState)
 
 
 	// demo modes
-	demoState->demoModeCount = 3;
+	demoState->demoModeCount = 1;
 	demoState->demoMode = 0;
 
 	// modes/pipelines: 
-	// A: projective texturing
-	//	- scene
-	//		- color buffer
-	//		- depth buffer
-	//	- shadow map
-	//		- depth buffer
-	// B: shadow mapping
-	//	- scene
-	//		- color buffer
-	//		- depth buffer
-	//	- shadow map
-	//		- depth buffer
-	// A: shadow mapping and projective texturing
-	//	- scene
-	//		- color buffer
-	//		- depth buffer
-	//	- shadow map
-	//		- depth buffer
-	demoState->demoSubModeCount[0] = 2;
+	// A: bloom
+	//	 1) scene
+	//		a) color buffer
+	//		b) depth buffer
+	//	 2) scene composite (add skybox and HUD)
+	//	 3) bright 1/2
+	//	 4) blur H 1/2
+	//	 5) blur V 1/2
+	//	 6) bright 1/4
+	//	 7) blur H 1/4
+	//	 8) blur V 1/4
+	//	 9) bright 1/8
+	//	10) blur H 1/8
+	//	11) blur V 1/8
+	//	12) bloom composite
+	//	13) shadow map (supplementary)
+	//		a) depth buffer
 	demoState->demoOutputCount[0][0] = 2;
-	demoState->demoOutputCount[0][1] = 1;
-	demoState->demoSubModeCount[1] = 2;
-	demoState->demoOutputCount[1][0] = 2;
-	demoState->demoOutputCount[1][1] = 1;
-	demoState->demoSubModeCount[2] = 2;
-	demoState->demoOutputCount[2][0] = 2;
-	demoState->demoOutputCount[2][1] = 1;
+	for (i = 1; i < demoStateMaxSubModes; ++i)
+		demoState->demoOutputCount[0][i] = 1;
+	demoState->demoSubModeCount[0] = i;
 
 
-	// initialize other objects
+	// initialize other objects and settings
 	demoState->displayGrid = 1;
 	demoState->displayWorldAxes = 1;
 	demoState->displayObjectAxes = 1;
 	demoState->displaySkybox = 1;
 	demoState->displayHiddenVolumes = 1;
+	demoState->displayPipeline = 0;
 	demoState->updateAnimation = 1;
-	demoState->enablePostProcessing = 0;
+	demoState->additionalPostProcessing = 0;
+	demoState->stencilTest = 0;
+	demoState->projectiveTexturing = 0;
+	demoState->shadowMapping = 0;
 	demoState->singleLight = 0;
 
 
 	// lights
-	demoState->lightCount = demoState->singleLight ? 1 : demoStateMaxCount_light;
+	demoState->lightCount = demoState->singleLight ? 1 : demoStateMaxCount_lightObject;
 
 	// first light is hard-coded (starts at camera)
 	pointLight = demoState->pointLight;
@@ -172,7 +174,7 @@ void a3demo_initScene(a3_DemoState *demoState)
 	// all other lights are random
 	a3randomSetSeed(0);
 	for (i = 1, pointLight = demoState->pointLight + i;
-		i < demoStateMaxCount_light;
+		i < demoStateMaxCount_lightObject;
 		++i, ++pointLight)
 	{
 		// set to zero vector
