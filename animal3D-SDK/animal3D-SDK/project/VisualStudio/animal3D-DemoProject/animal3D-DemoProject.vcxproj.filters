@@ -53,19 +53,28 @@
       <UniqueIdentifier>{444e44e6-0d85-4a57-9b28-126490cd3544}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\02-shading">
-      <UniqueIdentifier>{cd09cc72-8e15-4fe8-a758-ee73d90965f4}</UniqueIdentifier>
+      <UniqueIdentifier>{24ad0c62-6ac7-4a58-bfd7-769f32b8e782}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files\A3_DEMO\glsl\4x\vs\02-shading">
-      <UniqueIdentifier>{c998ff83-8d7a-4124-9ec2-c98a5cde1ca2}</UniqueIdentifier>
+      <UniqueIdentifier>{76a01b96-0604-4c3e-be05-00999c16c4c5}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\03-framebuffer">
-      <UniqueIdentifier>{c57fe210-324c-4b98-81c3-f1794a825211}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\04-shadow">
-      <UniqueIdentifier>{edc3775d-a076-41bb-8a2d-e5d6d69adc34}</UniqueIdentifier>
+      <UniqueIdentifier>{7287360b-cdd0-458a-ab5d-32ff67159e9d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files\A3_DEMO\glsl\4x\vs\04-shadow">
-      <UniqueIdentifier>{a02bd9a7-9eb7-43fe-a588-5cdfbab352d5}</UniqueIdentifier>
+      <UniqueIdentifier>{5bbd7b44-bd0c-4ed9-823b-584087425777}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\04-shadow">
+      <UniqueIdentifier>{41eab4f6-fe6d-4e8a-86e3-078f064f17f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\05-bloom">
+      <UniqueIdentifier>{f84de84b-5db0-49eb-824f-5191eb6cb840}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\A3_DEMO\_demo_graphics">
+      <UniqueIdentifier>{b3290ab9-149a-43a7-91fe-3b8ee4b020be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common\A3_DEMO\_demo_graphics">
+      <UniqueIdentifier>{2d54bcab-98ea-48c0-a41c-c431a8e9b333}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -96,6 +105,9 @@
     <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\a3_DemoState\a3_DemoState_initialize.c">
       <Filter>Source Files\common\A3_DEMO\a3_DemoState</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_graphics\a3_RenderPipeline.c">
+      <Filter>Source Files\common\A3_DEMO\_demo_graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\source\animal3D-DemoProject\a3_dylib_config_export.h">
@@ -109,6 +121,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_utilities\a3_DemoShaderProgram.h">
       <Filter>Header Files\A3_DEMO\_utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_graphics\a3_RenderPipeline.h">
+      <Filter>Header Files\A3_DEMO\_demo_graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -130,12 +145,6 @@
     <None Include="..\..\..\resource\glsl\4x\vs\passColor_transform_instanced_vs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\vs</Filter>
     </None>
-    <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passPhongAttribs_transform_vs4x.glsl">
-      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\02-shading</Filter>
-    </None>
-    <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passTexcoord_transform_vs4x.glsl">
-      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\02-shading</Filter>
-    </None>
     <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawNonPhotoMulti_fs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\fs\02-shading</Filter>
     </None>
@@ -145,17 +154,17 @@
     <None Include="..\..\..\resource\glsl\4x\fs\02-shading\drawTexture_fs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\fs\02-shading</Filter>
     </None>
-    <None Include="..\..\..\resource\glsl\4x\fs\03-framebuffer\drawCustom_mrt_fs4x.glsl">
-      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\03-framebuffer</Filter>
+    <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passPhongAttribs_transform_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\02-shading</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passTexcoord_transform_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\02-shading</Filter>
     </None>
     <None Include="..\..\..\resource\glsl\4x\fs\03-framebuffer\drawPhongMulti_mrt_fs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\fs\03-framebuffer</Filter>
     </None>
-    <None Include="..\..\..\resource\glsl\4x\vs\04-shadow\passPhongAttribs_passShadowCoord_transform_vs4x.glsl">
-      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\04-shadow</Filter>
-    </None>
-    <None Include="..\..\..\resource\glsl\4x\fs\04-shadow\drawCustom_post_fs4x.glsl">
-      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\04-shadow</Filter>
+    <None Include="..\..\..\resource\glsl\4x\fs\03-framebuffer\drawCustom_mrt_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\03-framebuffer</Filter>
     </None>
     <None Include="..\..\..\resource\glsl\4x\fs\04-shadow\drawPhongMulti_projective_fs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\fs\04-shadow</Filter>
@@ -165,6 +174,21 @@
     </None>
     <None Include="..\..\..\resource\glsl\4x\fs\04-shadow\drawPhongMulti_shadowmap_projective_fs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\fs\04-shadow</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\vs\04-shadow\passPhongAttribs_passShadowCoord_transform_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\04-shadow</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\04-shadow\drawCustom_post_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\04-shadow</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\05-bloom\drawBlendComposite_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\05-bloom</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\05-bloom\drawBlurGaussian_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\05-bloom</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\05-bloom\drawBrightPass_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\05-bloom</Filter>
     </None>
   </ItemGroup>
 </Project>
