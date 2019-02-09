@@ -796,7 +796,6 @@ void a3demo_loadFramebuffers(a3_DemoState *demoState)
 
 	// initialize framebuffers: 
 	//	- scene, with or without MRT (determine your needs), add depth
-	//	- compositing, color only
 	//	- shadow map, depth only
 	fbo = demoState->fbo_scene;
 	a3framebufferCreate(fbo, "fbo:scene",
