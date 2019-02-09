@@ -98,18 +98,40 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 	// active camera
 	a3_DemoCamera *camera = demoState->camera + demoState->activeCamera;
 	a3_DemoSceneObject *cameraObject = camera->sceneObject;
+	a3_DemoSceneObject *currentSceneObject;
 
 	// light pointers
 	a3_DemoPointLight *pointLight;
 	a3mat4 *lightMVP;
 
 
+	// do simple animation
+	if (useVerticalY)
+	{
+		for (i = 0, currentSceneObject = demoState->sphereObject; 
+			i < 4; ++i, ++currentSceneObject)
+		{
+			currentSceneObject->euler.y += dr;
+			currentSceneObject->euler.y = a3trigValid_sind(currentSceneObject->euler.y);
+		}
+	}
+	else
+	{
+		for (i = 0, currentSceneObject = demoState->sphereObject; 
+			i < 4; ++i, ++currentSceneObject)
+		{
+			currentSceneObject->euler.z += dr;
+			currentSceneObject->euler.z = a3trigValid_sind(currentSceneObject->euler.z);
+		}
+	}
+
+
 	// update scene objects
-	for (i = 0; i < demoStateMaxCount_object; ++i)
-		a3demo_updateSceneObject(demoState->generalObject + i, 0);
-	for (i = 0; i < demoStateMaxCount_camera; ++i)
+	for (i = 0; i < demoStateMaxCount_sceneObject; ++i)
+		a3demo_updateSceneObject(demoState->sceneObject + i, 0);
+	for (i = 0; i < demoStateMaxCount_cameraObject; ++i)
 		a3demo_updateSceneObject(demoState->cameraObject + i, 1);
-	for (i = 0; i < demoStateMaxCount_light; ++i)
+	for (i = 0; i < demoStateMaxCount_lightObject; ++i)
 		a3demo_updateSceneObject(demoState->lightObject + i, 1);
 
 	// update cameras/projectors

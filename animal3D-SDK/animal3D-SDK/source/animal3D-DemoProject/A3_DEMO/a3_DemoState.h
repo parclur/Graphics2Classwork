@@ -62,28 +62,54 @@ extern "C"
 	//	more than enough memory to hold extra objects
 	enum a3_DemoStateObjectMaxCounts
 	{
-		demoStateMaxCount_object = 8,
-		demoStateMaxCount_camera = 1,
-		demoStateMaxCount_light = 4,
-		demoStateMaxCount_sceneObject = demoStateMaxCount_object + demoStateMaxCount_camera + demoStateMaxCount_light,
+		demoStateMaxCount_sceneObject = 8,
+		demoStateMaxCount_cameraObject = 1,
+		demoStateMaxCount_lightObject = 4,
 		demoStateMaxCount_projector = 2,
 
 		demoStateMaxCount_timer = 1,
 		demoStateMaxCount_drawDataBuffer = 1,
 		demoStateMaxCount_vertexArray = 4,
 		demoStateMaxCount_drawable = 16,
-		demoStateMaxCount_shaderProgram = 16,
+		demoStateMaxCount_shaderProgram = 32,
 
 		demoStateMaxCount_texture = 16,
 		demoStateMaxCount_framebuffer = 4,
+		demoStateMaxCount_framebufferDouble = 8,
 	};
 
 	// additional counters for demo modes
 	enum a3_DemoStateModeCounts
 	{
-		demoStateMaxModes = 3,
-		demoStateMaxSubModes = 2,
+		demoStateMaxModes = 1,
+		demoStateMaxSubModes = 13,
 		demoStateMaxOutputModes = 2,
+	};
+
+	
+//-----------------------------------------------------------------------------
+
+	// render pass names for this demo's render pipelines
+	enum a3_DemoStateRenderPassNames
+	{
+		// general
+		demoStateRenderPass_scene,
+		demoStateRenderPass_composite,
+
+		// bloom
+		demoStateRenderPass_bloom_bright_2 = demoStateRenderPass_composite + 1,
+		demoStateRenderPass_bloom_blurH_2,
+		demoStateRenderPass_bloom_blurV_2,
+		demoStateRenderPass_bloom_bright_4,
+		demoStateRenderPass_bloom_blurH_4,
+		demoStateRenderPass_bloom_blurV_4,
+		demoStateRenderPass_bloom_bright_8,
+		demoStateRenderPass_bloom_blurH_8,
+		demoStateRenderPass_bloom_blurV_8,
+		demoStateRenderPass_bloom_blend,
+
+		// supplementary
+		demoStateRenderPass_shadow,
 	};
 
 
@@ -136,10 +162,10 @@ extern "C"
 		a3ui32 demoMode, demoSubMode[demoStateMaxModes], demoOutputMode[demoStateMaxModes][demoStateMaxSubModes];
 		a3ui32 demoModeCount, demoSubModeCount[demoStateMaxModes], demoOutputCount[demoStateMaxModes][demoStateMaxSubModes];
 
-		// toggle grid in scene and axes superimposed
-		a3boolean displayGrid, displaySkybox, displayWorldAxes, displayObjectAxes, displayHiddenVolumes;
-		a3boolean updateAnimation, enablePostProcessing;
-		a3boolean singleLight;
+		// toggle grid in scene and axes superimposed, as well as other mods
+		a3boolean displayGrid, displaySkybox, displayWorldAxes, displayObjectAxes, displayHiddenVolumes, displayPipeline;
+		a3boolean updateAnimation, additionalPostProcessing;
+		a3boolean stencilTest, projectiveTexturing, shadowMapping, singleLight;
 
 		// grid properties
 		a3mat4 gridTransform;
@@ -149,8 +175,8 @@ extern "C"
 		a3ui32 activeCamera;
 
 		// lights
-		a3_DemoPointLight pointLight[demoStateMaxCount_light];
-		a3mat4 pointLightMVP[demoStateMaxCount_light];
+		a3_DemoPointLight pointLight[demoStateMaxCount_lightObject];
+		a3mat4 pointLightMVP[demoStateMaxCount_lightObject];
 		a3ui32 lightCount;
 
 
@@ -165,26 +191,26 @@ extern "C"
 			a3_DemoSceneObject sceneObject[demoStateMaxCount_sceneObject];
 			struct {
 				a3_DemoSceneObject
-					generalObject[demoStateMaxCount_object],	// transform for general objects
-					cameraObject[demoStateMaxCount_camera],		// transform for camera objects
-					lightObject[demoStateMaxCount_light];		// transform for light objects
-			};
-			struct {
-				a3_DemoSceneObject
-					objectOffset[demoStateMaxCount_object];		// offset objects
-				a3_DemoSceneObject
-					mainCameraObject[1];						// named cameras
-				a3_DemoSceneObject
-					mainLightObject[1];							// named lights
-			};
-			struct {
-				a3_DemoSceneObject
-					skyboxObject[1],							// named scene objects
+					skyboxObject[1],
 					planeObject[1],
 					sphereObject[1],
 					cylinderObject[1],
 					torusObject[1],
 					teapotObject[1];
+			};
+		};
+		union {
+			a3_DemoSceneObject cameraObject[demoStateMaxCount_cameraObject];
+			struct {
+				a3_DemoSceneObject
+					mainCameraObject[1];
+			};
+		};
+		union {
+			a3_DemoSceneObject lightObject[demoStateMaxCount_lightObject];
+			struct {
+				a3_DemoSceneObject
+					mainLightObject[1];
 			};
 		};
 
@@ -275,6 +301,10 @@ extern "C"
 					prog_drawPhongMulti_shadowmap[1],			// shadow mapping
 					prog_drawPhongMulti_shadowmap_projtex[1],	// shadow mapping and projective texturing
 					prog_drawCustom_post[1];					// custom post-processing
+				a3_DemoStateShaderProgram
+					prog_drawBrightPass[1],						// post-process bright pass
+					prog_drawBlurGaussian[1],					// post-process blurring (Gaussian)
+					prog_drawBlendComposite[1];					// post-process blending & composite
 			};
 		};
 
@@ -305,8 +335,17 @@ extern "C"
 				a3_Framebuffer
 					fbo_scene[1];					// fbo with color and depth
 				a3_Framebuffer
-					fbo_composite[1],				// fbo for compositing with color only
 					fbo_shadowmap[1];				// fbo for shadow map with depth only
+			};
+		};
+		union {
+			a3_FramebufferDouble framebuffer_double[demoStateMaxCount_framebufferDouble];
+			struct {
+				a3_FramebufferDouble
+					fbo_dbl_nodepth[2],				// full frame dfbo (w or w/o border), no depth
+					fbo_dbl_nodepth_2[2],			// half-frame, ditto
+					fbo_dbl_nodepth_4[2],			// quarter-frame, ditto
+					fbo_dbl_nodepth_8[2];			// eighth-frame, ditto
 			};
 		};
 

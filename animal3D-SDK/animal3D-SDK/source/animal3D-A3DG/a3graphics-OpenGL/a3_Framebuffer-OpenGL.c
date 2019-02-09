@@ -39,18 +39,27 @@ void a3framebufferInternalHandleReleaseFunc(a3i32 count, a3ui32 *handlePtr)
 {
 	// first is framebuffer
 	// the rest are textures
-	glDeleteFramebuffers(1, handlePtr);
-	glDeleteTextures(count -= 1, handlePtr += 1);
+	glDeleteFramebuffers(1, handlePtr++);
+	glDeleteTextures(count -= 1, handlePtr);
 	memset(handlePtr, 0, count * sizeof(a3ui32));
 }
 
 void a3framebufferDoubleInternalHandleReleaseFunc(a3i32 count, a3ui32 *handlePtr)
 {
 	// first two are framebuffers
+	// **BUG**: byte alignment in handle is wrong for 64-bit
+	//	-> extra handles are not adjacent with main handle; change counter size
+	//	-> update dependencies
+#ifdef A3_32_BIT
+	glDeleteFramebuffers(2, handlePtr++);	// **FIX**
+#else	// !A3_32_BIT
+	glDeleteFramebuffers(1, handlePtr++);	// **TMP**
+	glDeleteFramebuffers(1, ++handlePtr);	// **TMP**
+#endif	// A3_32_BIT
+
 	// the rest are textures
-	glDeleteFramebuffers(2, handlePtr);
-	*(handlePtr + 1) = 0;
-	glDeleteTextures(count -= 2, handlePtr += 2);
+	*(handlePtr++) = 0;
+	glDeleteTextures(count -= 2, handlePtr);
 	memset(handlePtr, 0, count * sizeof(a3ui32));
 }
 

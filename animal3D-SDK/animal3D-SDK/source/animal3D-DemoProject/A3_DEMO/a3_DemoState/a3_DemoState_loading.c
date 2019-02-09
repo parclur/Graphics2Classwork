@@ -35,7 +35,7 @@
 
 // **WARNING: FOR TESTING/COMPARISON ONLY, DO NOT USE IN DELIVERABLE BUILDS**
 // uncomment this to allow shader decoding (if available)
-//#define A3_USER_ENABLE_SHADER_DECODING
+#define A3_USER_ENABLE_SHADER_DECODING
 
 
 //-----------------------------------------------------------------------------
@@ -94,7 +94,7 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 
 	// file streaming (if requested)
 	a3_FileStream fileStream[1] = { 0 };
-	const a3byte *const geometryStream = "./data/geom_data_gpro_shadow.dat";
+	const a3byte *const geometryStream = "./data/geom_data_gpro_bloom.dat";
 
 	// geometry data
 	a3_GeometryData displayShapesData[4] = { 0 };
@@ -360,32 +360,44 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 		struct {
 			// vertex shaders
 			// base
-			a3_DemoStateShader passthru_transform_vs[1];
-			a3_DemoStateShader passColor_transform_vs[1];
-			a3_DemoStateShader passthru_transform_instanced_vs[1];
-			a3_DemoStateShader passColor_transform_instanced_vs[1];
+			a3_DemoStateShader
+				passthru_transform_vs[1],
+				passColor_transform_vs[1],
+				passthru_transform_instanced_vs[1],
+				passColor_transform_instanced_vs[1];
 			// 02-shading
-			a3_DemoStateShader passTexcoord_transform_vs[1];
-			a3_DemoStateShader passPhongAttribs_transform_vs[1];
+			a3_DemoStateShader
+				passTexcoord_transform_vs[1],
+				passPhongAttribs_transform_vs[1];
 			// 04-shadow
-			a3_DemoStateShader passPhongAttribs_shadowCoord_transform_vs[1];
+			a3_DemoStateShader
+				passPhongAttribs_shadowCoord_transform_vs[1];
 
 			// fragment shaders
 			// base
-			a3_DemoStateShader drawColorUnif_fs[1];
-			a3_DemoStateShader drawColorAttrib_fs[1];
+			a3_DemoStateShader
+				drawColorUnif_fs[1],
+				drawColorAttrib_fs[1];
 			// 02-shading
-			a3_DemoStateShader drawTexture_fs[1];
-			a3_DemoStateShader drawPhongMulti_fs[1];
-			a3_DemoStateShader drawNonPhotoMulti_fs[1];
+			a3_DemoStateShader
+				drawTexture_fs[1],
+				drawPhongMulti_fs[1],
+				drawNonPhotoMulti_fs[1];
 			// 03-framebuffer
-			a3_DemoStateShader drawPhongMulti_mrt_fs[1];
-			a3_DemoStateShader drawCustom_mrt_fs[1];
+			a3_DemoStateShader
+				drawPhongMulti_mrt_fs[1],
+				drawCustom_mrt_fs[1];
 			// 04-shadow
-			a3_DemoStateShader drawPhongMulti_projtex_fs[1];
-			a3_DemoStateShader drawPhongMulti_shadowmap_fs[1];
-			a3_DemoStateShader drawPhongMulti_shadowmap_projtex_fs[1];
-			a3_DemoStateShader drawCustom_post_fs[1];
+			a3_DemoStateShader
+				drawPhongMulti_projtex_fs[1],
+				drawPhongMulti_shadowmap_fs[1],
+				drawPhongMulti_shadowmap_projtex_fs[1],
+				drawCustom_post_fs[1];
+			// 05-bloom
+			a3_DemoStateShader
+				drawBrightPass_fs[1],
+				drawBlurGaussian_fs[1],
+				drawBlendComposite_fs[1];
 		};
 	} shaderList = {
 		{
@@ -395,32 +407,36 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 
 			// vs
 			// base
-			{ { { 0 },	"shdr-vs:passthru",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/passthru_transform_vs4x.glsl" } } },
-			{ { { 0 },	"shdr-vs:pass-col",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/passColor_transform_vs4x.glsl" } } },
-			{ { { 0 },	"shdr-vs:passthru-inst",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/passthru_transform_instanced_vs4x.glsl" } } },
-			{ { { 0 },	"shdr-vs:pass-col-inst",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/passColor_transform_instanced_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:passthru",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passthru_transform_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-col",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passColor_transform_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:passthru-inst",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passthru_transform_instanced_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-col-inst",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passColor_transform_instanced_vs4x.glsl" } } },
 			// 02-shading
-			{ { { 0 },	"shdr-vs:pass-tex",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/02-shading/passTexcoord_transform_vs4x.glsl" } } },
-			{ { { 0 },	"shdr-vs:pass-Phong",			a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/02-shading/passPhongAttribs_transform_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-tex",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/02-shading/e/passTexcoord_transform_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-Phong",			a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/02-shading/e/passPhongAttribs_transform_vs4x.glsl" } } },
 			// 04-shadow
-			{ { { 0 },	"shdr-vs:pass-Phong-shadow",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/04-shadow/passPhongAttribs_passShadowCoord_transform_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-Phong-shadow",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/04-shadow/e/passPhongAttribs_passShadowCoord_transform_vs4x.glsl" } } },
 
 			// fs
 			// base
-			{ { { 0 },	"shdr-fs:draw-col-unif",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/drawColorUnif_fs4x.glsl" } } },
-			{ { { 0 },	"shdr-fs:draw-col-attr",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/drawColorAttrib_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-col-unif",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/e/drawColorUnif_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-col-attr",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/e/drawColorAttrib_fs4x.glsl" } } },
 			// 02-shading
-			{ { { 0 },	"shdr-fs:draw-tex",				a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/drawTexture_fs4x.glsl" } } },
-			{ { { 0 },	"shdr-fs:draw-Phong-multi",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/drawPhongMulti_fs4x.glsl" } } },
-			{ { { 0 },	"shdr-fs:draw-nonphoto-multi",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/drawNonPhotoMulti_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-tex",				a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/e/drawTexture_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-Phong-multi",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/e/drawPhongMulti_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-nonphoto-multi",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/02-shading/e/drawNonPhotoMulti_fs4x.glsl" } } },
 			// 03-framebuffer
-			{ { { 0 },	"shdr-fs:draw-Phong-multi-mrt",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/03-framebuffer/drawPhongMulti_mrt_fs4x.glsl" } } },
-			{ { { 0 },	"shdr-fs:draw-custom-mrt",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/03-framebuffer/drawCustom_mrt_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-Phong-multi-mrt",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/03-framebuffer/e/drawPhongMulti_mrt_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-custom-mrt",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/03-framebuffer/e/drawCustom_mrt_fs4x.glsl" } } },
 			// 04-shadow
-			{ { { 0 },	"shdr-fs:draw-Phong-projtex",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/04-shadow/drawPhongMulti_projective_fs4x.glsl" } } },
-			{ { { 0 },	"shdr-fs:draw-Phong-shadow",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/04-shadow/drawPhongMulti_shadowmap_fs4x.glsl" } } },
-			{ { { 0 },	"shdr-fs:draw-Phong-shadproj",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/04-shadow/drawPhongMulti_shadowmap_projective_fs4x.glsl" } } },
-			{ { { 0 },	"shdr-fs:draw-custom-post",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/04-shadow/drawCustom_post_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-Phong-projtex",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/04-shadow/e/drawPhongMulti_projective_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-Phong-shadow",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/04-shadow/e/drawPhongMulti_shadowmap_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-Phong-shadproj",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/04-shadow/e/drawPhongMulti_shadowmap_projective_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-custom-post",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/04-shadow/e/drawCustom_post_fs4x.glsl" } } },
+			// 05-bloom
+			{ { { 0 },	"shdr-fs:draw-brightpass",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/05-bloom/drawBrightPass_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-blur-Gaussian",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/05-bloom/drawBlurGaussian_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-blend-composite",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/05-bloom/drawBlendComposite_fs4x.glsl" } } },
 		}
 	};
 	a3_DemoStateShader *const shaderListPtr = (a3_DemoStateShader *)(&shaderList), *shaderPtr;
@@ -449,8 +465,7 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	//	- create program object
 	//	- attach shader objects
 
-	// base programs
-
+	// base programs: 
 	// uniform color program
 	currentDemoProg = demoState->prog_drawColorUnif;
 	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-unif");
@@ -475,9 +490,7 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passColor_transform_vs->shader);
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorAttrib_fs->shader);
 
-
-	// 02-shading programs
-
+	// 02-shading programs: 
 	// texturing
 	currentDemoProg = demoState->prog_drawTexture;
 	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-tex");
@@ -496,9 +509,7 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_transform_vs->shader);
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawNonPhotoMulti_fs->shader);
 
-
-	// 03-framebuffer programs
-
+	// 03-framebuffer programs: 
 	// Phong shading MRT
 	currentDemoProg = demoState->prog_drawPhongMulti_mrt;
 	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-multi-mrt");
@@ -511,23 +522,54 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_transform_vs->shader);
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawCustom_mrt_fs->shader);
 
-
-	// 04-shadow programs
-
+	// 04-shadow programs: 
 	// transform only
-	// ****TO-DO: set up this program
+	currentDemoProg = demoState->prog_transform;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:transform");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passthru_transform_vs->shader);
 
 	// projective texturing
-	// ****TO-DO: set up this program
+	currentDemoProg = demoState->prog_drawPhongMulti_projtex;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-projtex");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_shadowCoord_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawPhongMulti_projtex_fs->shader);
 
 	// shadow mapping
-	// ****TO-DO: set up this program
+	currentDemoProg = demoState->prog_drawPhongMulti_shadowmap;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-shadow");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_shadowCoord_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawPhongMulti_shadowmap_fs->shader);
 
 	// shadow mapping and projective texturing
-	// ****TO-DO: set up this program
+	currentDemoProg = demoState->prog_drawPhongMulti_shadowmap_projtex;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-shadproj");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passPhongAttribs_shadowCoord_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawPhongMulti_shadowmap_projtex_fs->shader);
 
 	// custom post-processing
-	// ****TO-DO: set up this program
+	currentDemoProg = demoState->prog_drawCustom_post;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-custom-post");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTexcoord_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawCustom_post_fs->shader);
+
+	// 05-bloom programs: 
+	// bright pass
+	currentDemoProg = demoState->prog_drawBrightPass;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-brightpass");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTexcoord_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawBrightPass_fs->shader);
+
+	// Gaussian blur
+	currentDemoProg = demoState->prog_drawBlurGaussian;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-blur-Gaussian");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTexcoord_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawBlurGaussian_fs->shader);
+
+	// blending and composition
+	currentDemoProg = demoState->prog_drawBlendComposite;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-blend-composite");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTexcoord_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawBlendComposite_fs->shader);
 
 
 	// activate a primitive for validation
@@ -738,28 +780,114 @@ void a3demo_loadTextures(a3_DemoState *demoState)
 void a3demo_loadFramebuffers(a3_DemoState *demoState)
 {
 	// create framebuffers and change their texture settings if need be
-	// ****TO-DO: uncomment these as needed
-//	a3_Framebuffer *fbo;
-//	a3ui32 i, j;
+	a3_Framebuffer *fbo;
+	a3_FramebufferDouble *fbo_dbl;
+	a3ui32 i, j;
 
 	// storage precision
-	const a3_FramebufferColorType colorType_scene = a3fbo_colorRGBA8;
+	const a3_FramebufferColorType colorType_scene = a3fbo_colorRGBA16;
 	const a3_FramebufferDepthType depthType_scene = a3fbo_depth24_stencil8;
 	const a3_FramebufferColorType colorType_comp = colorType_scene;
+	const a3_FramebufferColorType colorType_post = colorType_comp;
 
 	// other settings
 	const a3ui16 shadowMapSz = 2048;
 
 
-	// ****TO-DO: these
 	// initialize framebuffers: 
 	//	- scene, with or without MRT (determine your needs), add depth
-	//	- compositing, color only
 	//	- shadow map, depth only
+	fbo = demoState->fbo_scene;
+	a3framebufferCreate(fbo, "fbo:scene",
+		2, colorType_scene, depthType_scene,
+		demoState->frameWidth, demoState->frameHeight);
+
+	fbo = demoState->fbo_shadowmap;
+	a3framebufferCreate(fbo, "fbo:shadowmap", 
+		0, a3fbo_colorDisable, a3fbo_depth24, 
+		shadowMapSz, shadowMapSz);
 
 
-	// ****TO-DO: change texture settings for all framebuffers (bonus)
-	//	- iterate through textures and change settings as needed
+	// double framebuffers: 
+	//	- half, quarter and eighth of frame size
+	//	- there are two of each because of how they will be used (see render algorithm)
+	for (i = 0; i < 2; ++i)
+	{
+		fbo_dbl = demoState->fbo_dbl_nodepth + i;
+		a3framebufferDoubleCreate(fbo_dbl, "fbo-dbl:nodepth",
+			1, colorType_post, a3fbo_depthDisable,
+			demoState->frameWidth, demoState->frameHeight);
+
+		fbo_dbl = demoState->fbo_dbl_nodepth_2 + i;
+		a3framebufferDoubleCreate(fbo_dbl, "fbo-dbl:nodepth-1/2",
+			1, colorType_post, a3fbo_depthDisable,
+			demoState->frameWidth / 2, demoState->frameHeight / 2);
+
+		fbo_dbl = demoState->fbo_dbl_nodepth_4 + i;
+		a3framebufferDoubleCreate(fbo_dbl, "fbo-dbl:nodepth-1/4",
+			1, colorType_post, a3fbo_depthDisable,
+			demoState->frameWidth / 4, demoState->frameHeight / 4);
+
+		fbo_dbl = demoState->fbo_dbl_nodepth_8 + i;
+		a3framebufferDoubleCreate(fbo_dbl, "fbo-dbl:nodepth-1/8",
+			1, colorType_post, a3fbo_depthDisable,
+			demoState->frameWidth / 8, demoState->frameHeight / 8);
+	}
+
+
+	// change texture settings for all framebuffers
+	for (i = 0, fbo = demoState->framebuffer;
+		i < demoStateMaxCount_framebuffer;
+		++i, ++fbo)
+	{
+		// color, if applicable
+		for (j = 0; j < fbo->color; ++j)
+		{
+			a3framebufferBindColorTexture(fbo, a3tex_unit00, j);
+			a3textureChangeRepeatMode(a3tex_repeatClamp, a3tex_repeatClamp);
+			a3textureChangeFilterMode(a3tex_filterLinear);
+		}
+
+		// depth, if applicable
+		if (fbo->depthStencil)
+		{
+			a3framebufferBindDepthTexture(fbo, a3tex_unit00);
+			a3textureChangeRepeatMode(a3tex_repeatClamp, a3tex_repeatClamp);
+			a3textureChangeFilterMode(a3tex_filterLinear);
+		}
+	}
+
+	// ditto for double framebuffers
+	for (i = 0, fbo_dbl = demoState->framebuffer_double;
+		i < demoStateMaxCount_framebufferDouble;
+		++i, ++fbo_dbl)
+	{
+		// color, if applicable
+		for (j = 0; j < fbo_dbl->color; ++j)
+		{
+			a3framebufferDoubleSwap(fbo_dbl);
+			a3framebufferDoubleBindColorTexture(fbo_dbl, a3tex_unit00, j);
+			a3textureChangeRepeatMode(a3tex_repeatClamp, a3tex_repeatClamp);
+			a3textureChangeFilterMode(a3tex_filterLinear);
+			a3framebufferDoubleSwap(fbo_dbl);
+			a3framebufferDoubleBindColorTexture(fbo_dbl, a3tex_unit00, j);
+			a3textureChangeRepeatMode(a3tex_repeatClamp, a3tex_repeatClamp);
+			a3textureChangeFilterMode(a3tex_filterLinear);
+		}
+
+		// depth, if applicable
+		if (fbo_dbl->depthStencil)
+		{
+			a3framebufferDoubleSwap(fbo_dbl);
+			a3framebufferDoubleBindDepthTexture(fbo_dbl, a3tex_unit00);
+			a3textureChangeRepeatMode(a3tex_repeatClamp, a3tex_repeatClamp);
+			a3textureChangeFilterMode(a3tex_filterLinear);
+			a3framebufferDoubleSwap(fbo_dbl);
+			a3framebufferDoubleBindDepthTexture(fbo_dbl, a3tex_unit00);
+			a3textureChangeRepeatMode(a3tex_repeatClamp, a3tex_repeatClamp);
+			a3textureChangeFilterMode(a3tex_filterLinear);
+		}
+	}
 
 
 	// deactivate texture
@@ -785,6 +913,8 @@ void a3demo_refresh(a3_DemoState *demoState)
 		*const endTex = currentTex + demoStateMaxCount_texture;
 	a3_Framebuffer *currentFBO = demoState->framebuffer,
 		*const endFBO = currentFBO + demoStateMaxCount_framebuffer;
+	a3_FramebufferDouble *currentDFBO = demoState->framebuffer_double,
+		*const endDFBO = currentDFBO + demoStateMaxCount_framebufferDouble;
 
 	while (currentBuff < endBuff)
 		a3bufferHandleUpdateReleaseCallback(currentBuff++);
@@ -796,6 +926,8 @@ void a3demo_refresh(a3_DemoState *demoState)
 		a3textureHandleUpdateReleaseCallback(currentTex++);
 	while (currentFBO < endFBO)
 		a3framebufferHandleUpdateReleaseCallback(currentFBO++);
+	while (currentDFBO < endDFBO)
+		a3framebufferDoubleHandleUpdateReleaseCallback(currentDFBO++);
 }
 
 
