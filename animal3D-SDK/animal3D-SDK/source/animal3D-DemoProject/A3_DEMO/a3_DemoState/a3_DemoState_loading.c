@@ -788,7 +788,7 @@ void a3demo_loadFramebuffers(a3_DemoState *demoState)
 	const a3_FramebufferColorType colorType_scene = a3fbo_colorRGBA16;
 	const a3_FramebufferDepthType depthType_scene = a3fbo_depth24_stencil8;
 	const a3_FramebufferColorType colorType_comp = colorType_scene;
-	const a3_FramebufferColorType colorType_post = colorType_comp;
+	const a3_FramebufferColorType colorType_post = a3fbo_colorRGBA32F;
 
 	// other settings
 	const a3ui16 shadowMapSz = 2048;

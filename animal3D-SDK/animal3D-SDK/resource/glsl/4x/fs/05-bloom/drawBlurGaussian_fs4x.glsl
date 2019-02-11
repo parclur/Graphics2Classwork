@@ -33,6 +33,8 @@ in vec2 vPassTexcoord;
 
 uniform sampler2D uImage0;
 
+uniform vec2 uPixelSz; // (1) a3DemoProgram.h
+
 layout (location = 0) out vec4 rtFragColor;
 
 
@@ -45,8 +47,18 @@ layout (location = 0) out vec4 rtFragColor;
 //		2^4 = 16:		1	4	6	4	1
 vec4 calcGaussianBlur1D_4(in sampler2D image, in vec2 center, in vec2 axis)	// (2)
 {
+	vec4 color = vec4(0.0);
+
+	color += texture(image, center + axis*2.0);
+	color += texture(image, center + axis) * 4.0;
+	color += texture(image, center) * 6.0;
+	color += texture(image, center - axis) * 4.0;
+	color += texture(image, center - axis*2.0);
+
+	return color / 16;
+
 	// dummy: sample image at center
-	return texture(image, center);
+	//return texture(image, center);
 }
 
 
@@ -56,7 +68,8 @@ void main()
 //	rtFragColor = vec4(0.0, 1.0, 0.5, 1.0);
 
 	// DEBUGGING
-	vec4 sample0 = texture(uImage0, vPassTexcoord);
+	//vec4 sample0 = texture(uImage0, vPassTexcoord);
 //	rtFragColor = vec4(vPassTexcoord, 0.0, 1.0);
-	rtFragColor = 1.0 - sample0;
+	//rtFragColor = 1.0 - sample0;
+	rtFragColor = calcGaussianBlur1D_4(uImage0, vPassTexcoord, uPixelSz);
 }

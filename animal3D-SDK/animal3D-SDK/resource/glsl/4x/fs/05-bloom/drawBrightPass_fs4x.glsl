@@ -39,11 +39,18 @@ layout (location = 0) out vec4 rtFragColor;
 
 void main()
 {
+
+	//get bright - average rgb multiply by color
+
 	// DUMMY OUTPUT: all fragments are ORANGE
 //	rtFragColor = vec4(1.0, 0.5, 0.0, 1.0);
 
 	// DEBUGGING
 	vec4 sample0 = texture(uImage0, vPassTexcoord);
+
+	float lum = 0.21126 * sample0.r + 0.7152 * sample0.g + 0.0722 * sample0.b; // make sure it always adds up to one
+	rtFragColor = sample0 * lum;
+
 //	rtFragColor = vec4(vPassTexcoord, 0.0, 1.0);
-	rtFragColor = 0.1 + sample0;
+	 //rtFragColor = 0.1 + sample0;
 }
