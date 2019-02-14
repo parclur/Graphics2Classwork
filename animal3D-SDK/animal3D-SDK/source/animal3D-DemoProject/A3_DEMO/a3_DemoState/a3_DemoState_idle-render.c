@@ -542,7 +542,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	currentDemoProgram = demoState->prog_drawBlurGaussian;
 	a3shaderProgramActivate(currentDemoProgram->program);
 	pixelSzInv.x = +a3recip(readDFBO->frameWidth);
-	pixelSzInv.y = a3realZero;	// +a3recip(readDFBO->frameHeight);
+	pixelSzInv.y = +a3recip(readDFBO->frameHeight);//a3realZero;	// +a3recip(readDFBO->frameHeight);
 	a3shaderUniformSendFloat(a3unif_vec2, currentDemoProgram->uPixelSz, 1, pixelSzInv.v);
 
 	// buffers
@@ -563,7 +563,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	//	(its actual behavior can be modified by the uniforms!)
 //	currentDemoProgram = demoState->prog_drawBlurGaussian;
 //	a3shaderProgramActivate(currentDemoProgram->program);
-	pixelSzInv.x = a3realZero;	// -a3recip(readDFBO->frameWidth);
+	pixelSzInv.x = -a3recip(readDFBO->frameWidth); //a3realZero;	// -a3recip(readDFBO->frameWidth);
 	pixelSzInv.y = +a3recip(readDFBO->frameHeight);
 	a3shaderUniformSendFloat(a3unif_vec2, currentDemoProgram->uPixelSz, 1, pixelSzInv.v);
 
@@ -597,7 +597,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	currentDemoProgram = demoState->prog_drawBlurGaussian;
 	a3shaderProgramActivate(currentDemoProgram->program);
 	pixelSzInv.x = +a3recip(readDFBO->frameWidth);
-	pixelSzInv.y = a3realZero;	// +a3recip(readDFBO->frameHeight);
+	pixelSzInv.y = +a3recip(readDFBO->frameHeight); //a3realZero;	// +a3recip(readDFBO->frameHeight);
 	a3shaderUniformSendFloat(a3unif_vec2, currentDemoProgram->uPixelSz, 1, pixelSzInv.v);
 	writeDFBO = demoState->fbo_dbl_nodepth_4 + 1;
 	a3framebufferDoubleActivate(writeDFBO);
@@ -612,7 +612,7 @@ void a3demo_render(const a3_DemoState *demoState)
 
 //	currentDemoProgram = demoState->prog_drawBlurGaussian;
 //	a3shaderProgramActivate(currentDemoProgram->program);
-	pixelSzInv.x = a3realZero;	// -a3recip(readDFBO->frameWidth);
+	pixelSzInv.x = -a3recip(readDFBO->frameWidth); //a3realZero;	// -a3recip(readDFBO->frameWidth);
 	pixelSzInv.y = +a3recip(readDFBO->frameHeight);
 	a3shaderUniformSendFloat(a3unif_vec2, currentDemoProgram->uPixelSz, 1, pixelSzInv.v);
 	writeDFBO = demoState->fbo_dbl_nodepth_4 + 1;
@@ -642,7 +642,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	currentDemoProgram = demoState->prog_drawBlurGaussian;
 	a3shaderProgramActivate(currentDemoProgram->program);
 	pixelSzInv.x = +a3recip(readDFBO->frameWidth);
-	pixelSzInv.y = a3realZero;	// +a3recip(readDFBO->frameHeight);
+	pixelSzInv.y = +a3recip(readDFBO->frameHeight); //a3realZero;	// +a3recip(readDFBO->frameHeight);
 	a3shaderUniformSendFloat(a3unif_vec2, currentDemoProgram->uPixelSz, 1, pixelSzInv.v);
 	writeDFBO = demoState->fbo_dbl_nodepth_8 + 1;
 	a3framebufferDoubleActivate(writeDFBO);
@@ -657,7 +657,7 @@ void a3demo_render(const a3_DemoState *demoState)
 
 //	currentDemoProgram = demoState->prog_drawBlurGaussian;
 //	a3shaderProgramActivate(currentDemoProgram->program);
-	pixelSzInv.x = a3realZero;	// -a3recip(readDFBO->frameWidth);
+	pixelSzInv.x = -a3recip(readDFBO->frameWidth); //a3realZero;	// -a3recip(readDFBO->frameWidth);
 	pixelSzInv.y = +a3recip(readDFBO->frameHeight);
 	a3shaderUniformSendFloat(a3unif_vec2, currentDemoProgram->uPixelSz, 1, pixelSzInv.v);
 	writeDFBO = demoState->fbo_dbl_nodepth_8 + 1;
