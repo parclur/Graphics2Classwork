@@ -37,6 +37,9 @@ uniform vec2 uPixelSz; // (1) a3DemoProgram.h
 
 layout (location = 0) out vec4 rtFragColor;
 
+const int sizeOfBlurArray = 5;
+float blurFilter[sizeOfBlurArray] = float[] ( 2.0, 4.0, 6.0, 4.0, 2.0 );
+//start position -3 (-7 -1 / 2)
 
 // Gaussian blur with 1D kernel about given axis
 //	weights are selected by rows in Pascal's triangle
@@ -45,6 +48,8 @@ layout (location = 0) out vec4 rtFragColor;
 //		2^2 = 4:		1	2	1
 //		2^3 = 8:		1	3	3	1
 //		2^4 = 16:		1	4	6	4	1
+// Dan's function
+/*
 vec4 calcGaussianBlur1D_4(in sampler2D image, in vec2 center, in vec2 axis)	// (2)
 {
 	vec4 color = vec4(0.0);
@@ -60,8 +65,24 @@ vec4 calcGaussianBlur1D_4(in sampler2D image, in vec2 center, in vec2 axis)	// (
 	// dummy: sample image at center
 	//return texture(image, center);
 }
+*/
 
+// Gaussian Blur
+vec4 calcGaussianBlur1D_4(in sampler2D image, in vec2 center, in vec2 axis)	// (2)
+{
+	vec4 color = vec4(0.0);
 
+	for (int i = 0; i < sizeOfBlurArray; i++)
+	{
+		vec2 uvOffset = vec2(axis.x, axis.y) * vec2(i - 1);
+		color += texture(image, center + axis) * blurFilter[i];
+	}
+
+	return color / 16;
+
+	// dummy: sample image at center
+	//return texture(image, center);
+}
 void main()
 {
 	// DUMMY OUTPUT: all fragments are LIME
