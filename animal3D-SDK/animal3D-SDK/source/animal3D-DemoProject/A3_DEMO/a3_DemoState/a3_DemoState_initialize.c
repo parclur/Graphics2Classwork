@@ -118,27 +118,33 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->demoMode = 0;
 
 	// modes/pipelines: 
-	// A: bloom
+	// A: deferred + bloom
 	//	 1) scene
-	//		a) color buffer
-	//		b) depth buffer
-	//	 2) scene composite (add skybox and HUD)
-	//	 3) bright 1/2
-	//	 4) blur H 1/2
-	//	 5) blur V 1/2
-	//	 6) bright 1/4
-	//	 7) blur H 1/4
-	//	 8) blur V 1/4
-	//	 9) bright 1/8
-	//	10) blur H 1/8
-	//	11) blur V 1/8
-	//	12) bloom composite
-	//	13) shadow map (supplementary)
+	//		a) color buffer 0 (shading/position)
+	//		b) color buffer 1 (normal)
+	//		c) color buffer 2 (texcoord)
+	//		d) depth buffer
+	//	 2) light volumes (deferred lighting only)
+	//		a) color buffer 0 (diffuse)
+	//		b) color buffer 1 (specular)
+	//	 3) full composite (skybox, lighting, UI)
+	//	 4) bright 1/2
+	//	 5) blur H 1/2
+	//	 6) blur V 1/2
+	//	 7) bright 1/4
+	//	 8) blur H 1/4
+	//	 9) blur V 1/4
+	//	10) bright 1/8
+	//	11) blur H 1/8
+	//	12) blur V 1/8
+	//	13) bloom composite
+	//	14) shadow map (supplementary)
 	//		a) depth buffer
-	demoState->demoOutputCount[0][0] = 2;
-	for (i = 1; i < demoStateMaxSubModes; ++i)
+	for (i = 0; i < demoStateMaxSubModes; ++i)
 		demoState->demoOutputCount[0][i] = 1;
-	demoState->demoSubModeCount[0] = i;
+	demoState->demoSubModeCount[0] = demoStateMaxSubModes;
+	demoState->demoOutputCount[0][0] = 4;
+	demoState->demoOutputCount[0][1] = 2;
 
 
 	// initialize other objects and settings
@@ -150,17 +156,20 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->displayPipeline = 0;
 	demoState->updateAnimation = 1;
 	demoState->additionalPostProcessing = 0;
+	demoState->previewIntermediatePostProcessing = 0;
 	demoState->stencilTest = 0;
 	demoState->projectiveTexturing = 0;
 	demoState->shadowMapping = 0;
-	demoState->singleLight = 0;
+	demoState->singleForwardLight = 0;
+	demoState->lightingPipelineMode = demoStatePipelineMode_forward;
 
 
 	// lights
-	demoState->lightCount = demoState->singleLight ? 1 : demoStateMaxCount_lightObject;
+	demoState->forwardLightCount = demoState->singleForwardLight ? 1 : demoStateMaxCount_lightObject;
+	demoState->deferredLightCount = demoStateMaxCount_lightVolumePerBlock / 32;
 
 	// first light is hard-coded (starts at camera)
-	pointLight = demoState->pointLight;
+	pointLight = demoState->forwardPointLight;
 	pointLight->worldPos = a3wVec4;
 	pointLight->worldPos.xyz = demoState->mainLightObject->position;
 //	if (demoState->verticalAxis)
@@ -173,7 +182,7 @@ void a3demo_initScene(a3_DemoState *demoState)
 
 	// all other lights are random
 	a3randomSetSeed(0);
-	for (i = 1, pointLight = demoState->pointLight + i;
+	for (i = 1, pointLight = demoState->forwardPointLight + i;
 		i < demoStateMaxCount_lightObject;
 		++i, ++pointLight)
 	{
@@ -204,6 +213,38 @@ void a3demo_initScene(a3_DemoState *demoState)
 		pointLight->radiusInvSq = a3recip(pointLight->radius * pointLight->radius);
 	}
 
+	// deferred lights
+	for (i = 0, pointLight = demoState->deferredPointLight + i;
+		i < demoStateMaxCount_lightVolume;
+		++i, ++pointLight)
+	{
+		// set to zero vector
+		pointLight->worldPos = a3wVec4;
+
+		// random positions
+		pointLight->worldPos.x = a3randomRange(-6.0f, +6.0f);
+		if (demoState->verticalAxis)
+		{
+			pointLight->worldPos.z = -a3randomRange(-6.0f, +6.0f);
+			pointLight->worldPos.y = -a3randomRange(-2.0f, +4.0f);
+		}
+		else
+		{
+			pointLight->worldPos.y = a3randomRange(-6.0f, +6.0f);
+			pointLight->worldPos.z = a3randomRange(-2.0f, +4.0f);
+		}
+
+		// random colors
+		pointLight->color.r = a3randomNormalized();
+		pointLight->color.g = a3randomNormalized();
+		pointLight->color.b = a3randomNormalized();
+		pointLight->color.a = a3realOne;
+
+		// random radius: they should be small!
+		pointLight->radius = a3randomRange(0.25f, 0.50f);
+		pointLight->radiusInvSq = a3recip(pointLight->radius * pointLight->radius);
+	}
+
 
 	// position scene objects
 	demoState->sphereObject->scale.x = 2.0f;
@@ -214,19 +255,25 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->cylinderObject->scaleMode = 2;	// non-uniform
 	demoState->torusObject->scaleMode = 1;		// uniform
 
-	demoState->sphereObject->position.x = +8.0f;
-	demoState->torusObject->position.x = -8.0f;
+	demoState->sphereObject->position.x = +6.0f;
+	demoState->torusObject->position.x = -6.0f;
 	if (demoState->verticalAxis)
 	{
-		demoState->planeObject->position.y = -4.0f;
-		demoState->cylinderObject->position.z = -8.0f;
-		demoState->teapotObject->position.z = +8.0f;
+		demoState->planeObject->position.y = -2.0f;
+		demoState->sphereObject->position.y = +1.0f;
+		demoState->cylinderObject->position.y = +1.0f;
+		demoState->torusObject->position.y = +1.0f;
+		demoState->cylinderObject->position.z = -6.0f;
+		demoState->teapotObject->position.z = +6.0f;
 	}
 	else
 	{
-		demoState->planeObject->position.z = -4.0f;
-		demoState->cylinderObject->position.y = +8.0f;
-		demoState->teapotObject->position.y = -8.0f;
+		demoState->planeObject->position.z = -2.0f;
+		demoState->sphereObject->position.z = +1.0f;
+		demoState->cylinderObject->position.z = +1.0f;
+		demoState->torusObject->position.z = +1.0f;
+		demoState->cylinderObject->position.y = +6.0f;
+		demoState->teapotObject->position.y = -6.0f;
 	}
 }
 

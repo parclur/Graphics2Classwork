@@ -67,6 +67,10 @@ extern "C"
 		demoStateMaxCount_lightObject = 4,
 		demoStateMaxCount_projector = 2,
 
+		demoStateMaxCount_lightVolumeBlock = 4,
+		demoStateMaxCount_lightVolumePerBlock = a3index_countMaxShort / sizeof(a3_DemoPointLight),
+		demoStateMaxCount_lightVolume = demoStateMaxCount_lightVolumeBlock * demoStateMaxCount_lightVolumePerBlock,
+
 		demoStateMaxCount_timer = 1,
 		demoStateMaxCount_drawDataBuffer = 1,
 		demoStateMaxCount_vertexArray = 4,
@@ -76,14 +80,16 @@ extern "C"
 		demoStateMaxCount_texture = 16,
 		demoStateMaxCount_framebuffer = 4,
 		demoStateMaxCount_framebufferDouble = 8,
+
+		demoStateMaxCount_uniformBuffer = 4 * demoStateMaxCount_lightVolumeBlock,
 	};
 
 	// additional counters for demo modes
 	enum a3_DemoStateModeCounts
 	{
 		demoStateMaxModes = 1,
-		demoStateMaxSubModes = 13,
-		demoStateMaxOutputModes = 2,
+		demoStateMaxSubModes = 14,
+		demoStateMaxOutputModes = 4,
 	};
 
 	
@@ -94,10 +100,15 @@ extern "C"
 	{
 		// general
 		demoStateRenderPass_scene,
+
+		// deferred
+		demoStateRenderPass_deferred_volumes,
+
+		// compositing
 		demoStateRenderPass_composite,
 
 		// bloom
-		demoStateRenderPass_bloom_bright_2 = demoStateRenderPass_composite + 1,
+		demoStateRenderPass_bloom_bright_2,
 		demoStateRenderPass_bloom_blurH_2,
 		demoStateRenderPass_bloom_blurV_2,
 		demoStateRenderPass_bloom_bright_4,
@@ -109,7 +120,15 @@ extern "C"
 		demoStateRenderPass_bloom_blend,
 
 		// supplementary
-		demoStateRenderPass_shadow,
+		demoStateRenderPass_shadow = demoStateMaxSubModes - 1,
+	};
+
+	// pipeline modes
+	enum a3_DemoStatePipelineModeNames
+	{
+		demoStatePipelineMode_forward,
+		demoStatePipelineMode_deferredShading,
+		demoStatePipelineMode_deferredLighting,
 	};
 
 
@@ -164,8 +183,9 @@ extern "C"
 
 		// toggle grid in scene and axes superimposed, as well as other mods
 		a3boolean displayGrid, displaySkybox, displayWorldAxes, displayObjectAxes, displayHiddenVolumes, displayPipeline;
-		a3boolean updateAnimation, additionalPostProcessing;
-		a3boolean stencilTest, projectiveTexturing, shadowMapping, singleLight;
+		a3boolean updateAnimation, additionalPostProcessing, previewIntermediatePostProcessing;
+		a3boolean stencilTest, projectiveTexturing, shadowMapping, singleForwardLight;
+		a3boolean lightingPipelineMode;
 
 		// grid properties
 		a3mat4 gridTransform;
@@ -175,9 +195,20 @@ extern "C"
 		a3ui32 activeCamera;
 
 		// lights
-		a3_DemoPointLight pointLight[demoStateMaxCount_lightObject];
-		a3mat4 pointLightMVP[demoStateMaxCount_lightObject];
-		a3ui32 lightCount;
+		a3_DemoPointLight forwardPointLight[demoStateMaxCount_lightObject];
+		a3_DemoPointLight deferredPointLight[demoStateMaxCount_lightVolume];
+		a3mat4 deferredLightMVP[demoStateMaxCount_lightVolume];
+		a3mat4 deferredLightMVPB[demoStateMaxCount_lightVolume];
+		a3ui32 forwardLightCount;
+		a3ui32 deferredLightCount, deferredLightBlockCount, deferredLightCountPerBlock[demoStateMaxCount_lightVolumeBlock];
+
+		// texture atlas transforms
+		union {
+			a3mat4 atlasTransform[4];
+			struct {
+				a3mat4 atlas_stone[1], atlas_earth[1], atlas_mars[1], atlas_checker[1];
+			};
+		};
 
 
 		//---------------------------------------------------------------------
@@ -305,6 +336,11 @@ extern "C"
 					prog_drawBrightPass[1],						// post-process bright pass
 					prog_drawBlurGaussian[1],					// post-process blurring (Gaussian)
 					prog_drawBlendComposite[1];					// post-process blending & composite
+				a3_DemoStateShaderProgram
+					prog_drawGBuffers[1],						// output geometry buffers ("g-buffers")
+					prog_drawPhongMulti_deferred[1],			// perform deferred Phong shading
+					prog_drawPhong_volume[1],					// render one light volume with Phong
+					prog_drawDeferredLightingComposite[1];		// composite deferred lighting
 			};
 		};
 
@@ -316,6 +352,8 @@ extern "C"
 				a3_Texture
 					tex_skybox_clouds[1],
 					tex_skybox_water[1],
+					tex_atlas_dm[1],
+					tex_atlas_sm[1],
 					tex_stone_dm[1],
 					tex_earth_dm[1],
 					tex_earth_sm[1],
@@ -346,6 +384,19 @@ extern "C"
 					fbo_dbl_nodepth_2[2],			// half-frame, ditto
 					fbo_dbl_nodepth_4[2],			// quarter-frame, ditto
 					fbo_dbl_nodepth_8[2];			// eighth-frame, ditto
+			};
+		};
+
+
+		// uniform buffer objects
+		union {
+			a3_UniformBuffer uniformBuffer[demoStateMaxCount_uniformBuffer];
+			struct {
+				// lighting uniform buffers
+				a3_UniformBuffer
+					ubo_transformMVP[demoStateMaxCount_lightVolumeBlock],
+					ubo_transformMVPB[demoStateMaxCount_lightVolumeBlock],
+					ubo_pointLight[demoStateMaxCount_lightVolumeBlock];
 			};
 		};
 

@@ -49,6 +49,7 @@ extern "C"
 	enum a3_DemoShaderProgramMaxCounts
 	{
 		demoStateMaxCount_shaderProgramUniform = 32,
+		demoStateMaxCount_shaderProgramUniformBlock = 4,
 	};
 
 
@@ -78,8 +79,10 @@ extern "C"
 					uMVP,						// model-view-projection transform (object -> clip)
 					uMV,						// model-view matrix (object -> view)
 					uP,							// projection matrix (view -> clip)
+					uP_inv,						// inverse projection matrix (clip -> view)
 					uMV_nrm,					// model-view matrix for normals (object -> view)
-					uMVPB_proj,					// model-view-projection-bias matrix for projection (object -> bias clip)
+					uMVPB,						// model-view-projection-bias matrix (object -> bias clip)
+					uMVPB_proj,					// model-view-projection-bias matrix for projector
 					uAtlas;						// atlas matrix for texture coordinates
 					
 				a3i32
@@ -109,6 +112,18 @@ extern "C"
 				a3i32
 					// common global uniforms
 					uTime;						// time
+			};
+		};
+
+		// uniform blocks
+		union {
+			a3i32 uniformBlockLocation[demoStateMaxCount_shaderProgramUniformBlock];
+			struct {
+				// lighting uniform blocks
+				a3i32
+					ubTransformMVP,
+					ubTransformMVPB,
+					ubPointLight;
 			};
 		};
 	};
