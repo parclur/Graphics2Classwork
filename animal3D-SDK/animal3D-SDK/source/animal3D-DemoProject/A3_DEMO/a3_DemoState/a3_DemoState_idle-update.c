@@ -92,6 +92,15 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 	};
 
 
+	// bias matrix
+	const a3mat4 bias = {
+		0.5f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.5f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f,
+	};
+
+
 	// tmp matrix for scale
 	a3mat4 scaleMat = a3identityMat4;
 
@@ -102,7 +111,8 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 
 	// light pointers
 	a3_DemoPointLight *pointLight;
-	a3mat4 *lightMVP;
+	a3mat4 *lightMVPptr, *lightMVPBptr;
+	a3ui32 tmpLightCount, tmpBlockLightCount;
 
 
 	// do simple animation
@@ -158,20 +168,62 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 
 
 	// update lights
-	for (i = 0, pointLight = demoState->pointLight + i, lightMVP = demoState->pointLightMVP + i; 
-		i < demoState->lightCount; 
-		++i, ++pointLight, ++lightMVP)
+	for (i = 0, pointLight = demoState->forwardPointLight + i;
+		i < demoState->forwardLightCount;
+		++i, ++pointLight)
+	{
+		// convert to view space and retrieve view position
+		a3real4Real4x4Product(pointLight->viewPos.v, cameraObject->modelMatInv.m, pointLight->worldPos.v);
+	}
+
+	for (i = 0, pointLight = demoState->deferredPointLight + i, 
+		lightMVPptr = demoState->deferredLightMVP + i,
+		lightMVPBptr = demoState->deferredLightMVPB + i;
+		i < demoState->deferredLightCount;
+		++i, ++pointLight, ++lightMVPptr, ++lightMVPBptr)
 	{
 		// set light scale and world position
-		*lightMVP = a3identityMat4;
-		lightMVP->v3 = pointLight->worldPos;
+		a3real4x4SetScale(lightMVPptr->m, pointLight->radius);
+		lightMVPptr->v3 = pointLight->worldPos;
 
 		// convert to view space and retrieve view position
-		a3real4x4ConcatR(cameraObject->modelMatInv.m, lightMVP->m);
-		pointLight->viewPos = lightMVP->v3;
+		a3real4x4ConcatR(cameraObject->modelMatInv.m, lightMVPptr->m);
+		pointLight->viewPos = lightMVPptr->v3;
 
 		// complete by converting to clip space
-		a3real4x4ConcatR(camera->projectionMat.m, lightMVP->m);
+		a3real4x4ConcatR(camera->projectionMat.m, lightMVPptr->m);
+
+		// calculate biased clip as well
+		a3real4x4Product(lightMVPBptr->m, bias.m, lightMVPptr->m);
+	}
+
+	// upload buffer data
+	tmpLightCount = demoState->deferredLightCount;
+	if (tmpLightCount && demoState->lightingPipelineMode == demoStatePipelineMode_deferredLighting)
+	{
+		demoState->deferredLightBlockCount = (tmpLightCount - 1) / demoStateMaxCount_lightVolumePerBlock + 1;
+		for (i = 0, pointLight = demoState->deferredPointLight,
+			lightMVPptr = demoState->deferredLightMVP, lightMVPBptr = demoState->deferredLightMVPB; i < demoState->deferredLightBlockCount;
+			++i, tmpLightCount -= tmpBlockLightCount,
+			pointLight += demoStateMaxCount_lightVolumePerBlock,
+			lightMVPptr += demoStateMaxCount_lightVolumePerBlock, lightMVPBptr += demoStateMaxCount_lightVolumePerBlock)
+		{
+			// upload data for current light set
+			tmpBlockLightCount = a3minimum(tmpLightCount, demoStateMaxCount_lightVolumePerBlock);
+			demoState->deferredLightCountPerBlock[i] = tmpBlockLightCount;
+			a3bufferFill(demoState->ubo_transformMVP + i, 0, tmpBlockLightCount * sizeof(a3mat4), lightMVPptr, 0);
+			a3bufferFill(demoState->ubo_transformMVPB + i, 0, tmpBlockLightCount * sizeof(a3mat4), lightMVPBptr, 0);
+			a3bufferFill(demoState->ubo_pointLight + i, 0, tmpBlockLightCount * sizeof(a3_DemoPointLight), pointLight, 0);
+
+			// reset used flag so we can always fill buffers
+			demoState->ubo_transformMVP[i].used[0] = 0;
+			demoState->ubo_transformMVPB[i].used[0] = 0;
+			demoState->ubo_pointLight[i].used[0] = 0;
+		}
+	}
+	else
+	{
+		demoState->deferredLightBlockCount = 0;
 	}
 
 

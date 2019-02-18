@@ -139,7 +139,7 @@ A3DYLIBSYMBOL a3_DemoState *a3demoCB_load(a3_DemoState *demoState, a3boolean hot
 
 		// initialize state variables
 		// e.g. timer, thread, etc.
-		a3timerSet(demoState->renderTimer, 60.0);
+		a3timerSet(demoState->renderTimer, 30.0);
 		a3timerStart(demoState->renderTimer);
 
 		// text
@@ -385,12 +385,30 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 
 		// change pipeline stage
 	case '>': {
-		const a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode], demoSubModeCount = demoState->demoSubModeCount[demoState->demoMode];
-		demoState->demoSubMode[demoState->demoMode] = (demoSubMode + 1) % demoSubModeCount;
+		const a3ui32 demoSubModeCount = demoState->demoSubModeCount[demoState->demoMode];
+		a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode];
+		demoSubMode = demoState->demoSubMode[demoState->demoMode] = (demoSubMode + 1) % demoSubModeCount;
+		if (!demoState->previewIntermediatePostProcessing &&
+			demoSubMode > demoStateRenderPass_composite &&
+			demoSubMode < demoStateRenderPass_bloom_blend)
+			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_bloom_blend;
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
+			demoSubMode > demoStateRenderPass_scene &&
+			demoSubMode < demoStateRenderPass_composite)
+			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
 	}	break;
 	case '<': {
-		const a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode], demoSubModeCount = demoState->demoSubModeCount[demoState->demoMode];
-		demoState->demoSubMode[demoState->demoMode] = (demoSubMode + demoSubModeCount - 1) % demoSubModeCount;
+		const a3ui32 demoSubModeCount = demoState->demoSubModeCount[demoState->demoMode];
+		a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode];
+		demoSubMode = demoState->demoSubMode[demoState->demoMode] = (demoSubMode + demoSubModeCount - 1) % demoSubModeCount;
+		if (!demoState->previewIntermediatePostProcessing &&
+			demoSubMode > demoStateRenderPass_composite &&
+			demoSubMode < demoStateRenderPass_bloom_blend)
+			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
+			demoSubMode > demoStateRenderPass_scene &&
+			demoSubMode < demoStateRenderPass_composite)
+			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_scene;
 	}	break;
 
 		// change stage output
@@ -448,6 +466,16 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 		demoState->additionalPostProcessing = 1 - demoState->additionalPostProcessing;
 		break;
 
+		// preview post-processing passes
+	case 'r': {
+		const a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode];
+		demoState->previewIntermediatePostProcessing = 1 - demoState->previewIntermediatePostProcessing;
+		if (!demoState->previewIntermediatePostProcessing &&
+			demoSubMode > demoStateRenderPass_composite &&
+			demoSubMode < demoStateRenderPass_bloom_blend)
+			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_bloom_blend;
+	}	break;
+
 		// toggle pipeline overlay
 	case 'o':
 		demoState->displayPipeline = 1 - demoState->displayPipeline;
@@ -468,11 +496,36 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 		demoState->shadowMapping = 1 - demoState->shadowMapping;
 		break;
 
-		// toggle single light only
+		// toggle single light only or decrease light count
 	case 'l':
-		demoState->singleLight = 1 - demoState->singleLight;
-		demoState->lightCount = demoState->singleLight ? 1 : demoStateMaxCount_lightObject;
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+		{
+			demoState->singleForwardLight = 1 - demoState->singleForwardLight;
+			demoState->forwardLightCount = demoState->singleForwardLight ? 1 : demoStateMaxCount_lightObject;
+		}
+		else if (demoState->deferredLightCount > 0)
+			demoState->deferredLightCount -= 4;
 		break;
+
+		// increase light count
+	case 'L':
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+		{
+		}
+		else if (demoState->deferredLightCount < demoStateMaxCount_lightVolume)
+			demoState->deferredLightCount += 4;
+		break;
+
+		// pipeline mode
+	case 'p': {
+		const a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode];
+		demoState->lightingPipelineMode = (demoState->lightingPipelineMode + 1) % 3;
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
+			demoSubMode > demoStateRenderPass_scene &&
+			demoSubMode < demoStateRenderPass_composite)
+			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
+	}	break;
+
 	}
 }
 
@@ -481,6 +534,28 @@ A3DYLIBSYMBOL void a3demoCB_keyCharHold(a3_DemoState *demoState, a3i32 asciiKey)
 {
 	// persistent state update
 	a3keyboardSetStateASCII(demoState->keyboard, (a3byte)asciiKey);
+
+	// handle special cases immediately
+	switch (asciiKey)
+	{
+		// decrease light count
+	case 'l':
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+		{
+		}
+		else if (demoState->deferredLightCount > 0)
+			demoState->deferredLightCount -= 4;
+		break;
+
+		// increase light count
+	case 'L':
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+		{
+		}
+		else if (demoState->deferredLightCount < demoStateMaxCount_lightVolume)
+			demoState->deferredLightCount += 4;
+		break;
+	}
 }
 
 // mouse button is clicked

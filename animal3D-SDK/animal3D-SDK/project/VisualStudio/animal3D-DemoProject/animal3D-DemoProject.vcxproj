@@ -221,11 +221,17 @@
     <None Include="..\..\..\resource\glsl\4x\fs\05-bloom\drawBlendComposite_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\05-bloom\drawBlurGaussian_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\05-bloom\drawBrightPass_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\fs\06-deferred\drawDeferredLightingComposite_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\fs\06-deferred\drawGBuffers_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\fs\06-deferred\drawPhongMulti_deferred_fs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\fs\06-deferred\drawPhong_volume_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\drawColorAttrib_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\fs\drawColorUnif_fs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passPhongAttribs_transform_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\02-shading\passTexcoord_transform_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\04-shadow\passPhongAttribs_passShadowCoord_transform_vs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\vs\06-deferred\passBiasClipCoord_transform_instanced_vs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\vs\06-deferred\passPhongAttribs_transform_atlas_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\passColor_transform_instanced_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\passColor_transform_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\passthru_transform_instanced_vs4x.glsl" />
