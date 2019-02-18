@@ -45,9 +45,29 @@
 
 layout (location = 0) out vec4 rtFragColor;
 
+// (2)
+in vec4 vPassBiasClipCoord;
+flat in int vPassInstanceID; // (2)
+
+#define max_lights 1024
+struct sPointLight
+{
+	a3vec4 worldPos;					// position in world space
+	a3vec4 viewPos;						// position in viewer space
+	a3vec4 color;						// RGB color with padding
+	a3real radius;						// radius (distance of effect from center)
+	a3real radiusInvSq;					// radius inverse squared (attenuation factor)
+	a3real pad[2];						// padding
+};
+uniform ubPointLight{ //scene objects header for point light
+	sPointLight uPoint[max_lights];
+};
+
 void main()
 {
 	// DUMMY OUTPUT: all fragments are FADED MAGENTA
-	rtFragColor = vec4(1.0, 0.5, 1.0, 1.0);
+	//rtFragColor = vec4(1.0, 0.5, 1.0, 1.0);
+
+	rtFragColor = uPointLight[vPassInstanceID].color;
 }
 
