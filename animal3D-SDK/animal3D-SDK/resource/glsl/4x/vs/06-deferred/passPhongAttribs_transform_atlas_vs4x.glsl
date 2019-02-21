@@ -31,9 +31,15 @@
 //	3) transform input data appropriately
 //	4) copy transformed data to varyings
 
-layout (location = 0) in vec4 aPosition;
-layout (location = 2) in vec4 aNormal;
-layout (location = 8) in vec4 aTexcoord;
+// (1) declare transformation uniforms
+uniform mat4 uMV, uP;
+uniform mat4 uMV_nrm;
+uniform mat4 uP_inv;
+
+// (2) declare varyings (attribute data) to send to fragment shader
+layout(location = 0) in vec4 aPosition;
+layout(location = 2) in vec4 aNormal;
+layout(location = 8) in vec4 aTexcoord;
 
 void main()
 {
