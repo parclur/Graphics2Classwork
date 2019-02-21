@@ -77,7 +77,7 @@ vec4 calcGaussianBlur1D_4(in sampler2D image, in vec2 center, in vec2 axis)	// (
 	for (int i = 0; i < sizeOfBlurArray; i++)
 	{
 		// every other i is a negative, decreasing the amount of movement
-		color += texture(image, center + (axis (-1 * (i % 2))) * blurFilter[i];
+		color += texture(image, center + (axis * (-1 * (i % 2)))) * blurFilter[i];
 	}
 
 	return color / 16;
