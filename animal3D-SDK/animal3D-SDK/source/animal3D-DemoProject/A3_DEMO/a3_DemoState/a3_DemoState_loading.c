@@ -455,7 +455,7 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			// 04-shadow
 			{ { { 0 },	"shdr-vs:pass-Phong-shadow",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/04-shadow/e/passPhongAttribs_passShadowCoord_transform_vs4x.glsl" } } },
 			// 06-deferred
-			{ { { 0 },	"shdr-vs:pass-Phong-atlas",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/06-deferred/e/passPhongAttribs_transform_atlas_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-Phong-atlas",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/06-deferred/passPhongAttribs_transform_atlas_vs4x.glsl" } } },
 			{ { { 0 },	"shdr-vs:pass-biasclip",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/06-deferred/passBiasClipCoord_transform_instanced_vs4x.glsl" } } },
 
 			// fs
@@ -479,7 +479,7 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			{ { { 0 },	"shdr-fs:draw-blur-Gaussian",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/05-bloom/e/drawBlurGaussian_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-blend-composite",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/05-bloom/e/drawBlendComposite_fs4x.glsl" } } },
 			// 06-deferred
-			{ { { 0 },	"shdr-fs:draw-gbuffers",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/06-deferred/e/drawGBuffers_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-gbuffers",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/06-deferred/drawGBuffers_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-Phong-deferred",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/06-deferred/drawPhongMulti_deferred_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-Phong-volume",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/06-deferred/drawPhong_volume_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-deferltcomp",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/06-deferred/drawDeferredLightingComposite_fs4x.glsl" } } },

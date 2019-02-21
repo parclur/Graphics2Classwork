@@ -52,15 +52,15 @@ flat in int vPassInstanceID; // (2)
 #define max_lights 1024
 struct sPointLight
 {
-	a3vec4 worldPos;					// position in world space
-	a3vec4 viewPos;						// position in viewer space
-	a3vec4 color;						// RGB color with padding
-	a3real radius;						// radius (distance of effect from center)
-	a3real radiusInvSq;					// radius inverse squared (attenuation factor)
-	a3real pad[2];						// padding
+	vec4 worldPos;					// position in world space
+	vec4 viewPos;						// position in viewer space
+	vec4 color;						// RGB color with padding
+	float radius;						// radius (distance of effect from center)
+	float radiusInvSq;					// radius inverse squared (attenuation factor)
+	float pad[2];						// padding
 };
 uniform ubPointLight{ //scene objects header for point light
-	sPointLight uPoint[max_lights];
+	sPointLight uPointLight[max_lights];
 };
 
 void main()

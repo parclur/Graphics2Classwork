@@ -32,17 +32,36 @@
 //	4) copy transformed data to varyings
 
 // (1) declare transformation uniforms
-uniform mat4 uMV, uP;
-uniform mat4 uMV_nrm;
-uniform mat4 uP_inv;
+uniform mat4 uMV; // model-view matrix (object -> view)
+uniform mat4 uP;
+uniform mat4 uMV_nrm; // model-view matrix for normals (object -> view)
+//uniform mat4 uP_inv; // clip to view
+uniform mat2 uAtlas; // atlas matrix for texture coordinates
 
 // (2) declare varyings (attribute data) to send to fragment shader
 layout(location = 0) in vec4 aPosition;
 layout(location = 2) in vec4 aNormal;
-layout(location = 8) in vec4 aTexcoord;
+layout(location = 8) in vec2 aTexcoord;
 
+out vec4 vPosition;
+out vec4 vNormal;
+out vec2 vTexcoord;
+
+// Resources: https://learnopengl.com/Advanced-Lighting/Deferred-Shading
 void main()
 {
+	vPosition = uMV * aPosition; // object to view
+	gl_Position = vPosition; 
+	vNormal = uMV_nrm * aNormal; // object to view
+	vTexcoord = uAtlas * aTexcoord;
+
+	/*
+	vec4 pos_eye = uMV * aPosition;
+	gl_Position = uP * pos_eye;
+
+	vec4 nrm_eye = uMV_nrm * aNormal;
+	*/
+	
 	// DUMMY OUTPUT: directly assign input position to output position
-	gl_Position = aPosition;
+	//gl_Position = aPosition;
 }
