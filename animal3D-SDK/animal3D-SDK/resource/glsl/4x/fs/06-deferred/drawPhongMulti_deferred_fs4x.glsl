@@ -45,8 +45,6 @@ layout (location = 5) out vec4 rtDiffuseShading;
 layout (location = 6) out vec4 rtSpecularShading;
 layout (location = 7) out vec4 rtPhongSum;
 
-out vec4 rtFragColor;
-
 // (1)
 uniform sampler2D uImage4;
 uniform sampler2D uImage5;
@@ -58,148 +56,86 @@ vec4 gNormal; // (2)
 vec2 gTexcoord; // (2)
 float gDepth; // (2)
 
-//(4) declare fixed-sized arrays for lighting values and other related values
-#define max_lights 8
+out vec4 rtFragColor;
+
+// (1) declare varyings from vertex shader
+in vec4 vPosition;
+in vec4 vNormal;
+in vec2 vTexcoord;
+
+// (2) declare uniforms for textures (diffuse, specular)
+uniform sampler2D tex_dm[]; // diffuse sample
+uniform sampler2D tex_sm[]; // specular sample
+
+// (3) temporary values for textures
+vec4 tempTex_dm;
+vec4 tempTex_sm;
+
+// (8) moved from the vertex shader
+// (4) declare fixed-sized arrays for lighting values and other related values
+#define max_Lights 8
 uniform int uLightCt;
-uniform vec4 uLightPos[max_lights];
-uniform vec4 uLightCol[max_lights];
-uniform float uLightSz[max_lights];
+uniform vec4 uLightPos[max_Lights];
+uniform vec4 uLightCol[max_Lights];
+uniform float uLightSz[max_Lights];
+vec3 phongShading;
 
-//(2) declare uniforms for textures (diffuse, specular)
-uniform sampler2D tex_dm[8];
-uniform sampler2D tex_sm[8];
-
-// (1) declare varyings to read from vertex shader
-//in vec4 vPosition;
-//in vec4 vNormal;
-//in vec2 vTexcoord;
-
-//(3) sample textures and store as temporary values
-vec4 tempDM;
-vec4 tempSM;
-
-float ambiantStrength = 0.5;
-
-vec3 PhongCalculations(int lightNumber)
+//References
+//(a) OpenGL SuperBible book pages 574-575
+//(b) https://learnopengl.com/Lighting/Basic-Lighting
+//(c) https://www.tomdalling.com/blog/modern-opengl/07-more-lighting-ambient-specular-attenuation-gamma/
+// (5) implement Phong shading calculation (modular)
+vec3 PhongShadingCalculations(int lightNumber)
 {
-	//Setting up the albedo values
+	//(a) all of the values are referenced from the Phong Shading Model in the OpenGL SuperBible
 	vec3 diffuse_albedo = uLightCol[lightNumber].rgb;
 	vec3 specular_albedo = vec3(0.7);
-	float specular_power = 128.0;
+	float specular_power = 128.0; //128
 
-	//Normalize the vectors
+	//Normalize vectors
+	// surface normal
 	vec3 N = normalize(gNormal.xyz);
+	// unit vector from the point being shaded to the light
 	vec3 lightVector = uLightPos[lightNumber].xyz - gPosition.xyz;
 	vec3 L = normalize(lightVector);
+	// vector to the viewer
 	vec3 viewVector = -gPosition.xyz;
 	vec3 V = normalize(viewVector);
-
 	//Calculate R locally
+	// reflection of the negative of the light vector L in the plane defined by N
 	vec3 R = reflect(-L, N);
 
-	//create the final varable
-	vec3 returnValue;
+	//Compute the diffuse and specular components for each fragment
+	vec3 diffuse = max(dot(N,L), 0.0) * diffuse_albedo;
+	vec3 specular = pow(max(dot(R,V), 0.0), specular_power) * specular_albedo;
+	//attenuation (c)
+	float lightAttVar = .001; // falloff range (the variable increases the falloff range as the number gets smaller)
+	float attenuation = 1.0 / (1.0 + lightAttVar * pow(distance(gPosition, uLightPos[lightNumber]),2));
 
-	//calculate ambiant light (Not needed)
-	//vec3 ambiant = ambiantStrength * uLightCol[0].rgb;
-
-	//(5) implement Phong shading calculations
-	//calculate the diffuse and specular light
-	vec3 diffuse = max(dot(N, L), 0.0) * diffuse_albedo;
-	vec3 specular = pow(max(dot(R, V), 0.0), specular_power) * specular_albedo;
-
-	//calculate the attenuation
-	float lightAttVar = .001; //This varable increases the falloff range as the number gets smaller
-	float attenuation = 1.0 / (1.0 + lightAttVar * pow(distance(gPosition, uLightPos[lightNumber]), 2));
-	
-	//bring them all together
-	//returnValue = (ambiant + diffuse + specular) * tempDM.rgb;
-	returnValue = (diffuse + specular) * tempDM.rgb * attenuation;
-
-	//(6) calculate Phong shading model for one light
-	return returnValue;
-}
-
-vec3 DiffuseShadingTotalCalculation()
-{
-	vec3 total;
-
-	for (int i; i < max_lights; i++)
-	{
-		vec3 diffuse_albedo = uLightCol[i].rgb;
-
-		vec3 N = normalize(gNormal.xyz);
-		vec3 lightVector = uLightPos[i].xyz - gPosition.xyz;
-		vec3 L = normalize(lightVector);
-
-		total += max(dot(N, L), 0.0) * diffuse_albedo;
-	}	
-
-	return total;
-}
-
-vec3 SpecularShadingTotalCalculation()
-{
-	vec3 total;
-
-	vec3 specular_albedo = vec3(0.7);
-	float specular_power = 128.0;
-
-	for (int i; i < max_lights; i++)
-	{
-		vec3 diffuse_albedo = uLightCol[i].rgb;
-
-		vec3 viewVector = -gPosition.xyz;
-		vec3 V = normalize(viewVector);
-		vec3 N = normalize(gNormal.xyz);
-		vec3 lightVector = uLightPos[i].xyz - gPosition.xyz;
-		vec3 L = normalize(lightVector);
-
-		//Calculate R locally
-		vec3 R = reflect(-L, N);
-
-		total += pow(max(dot(R, V), 0.0), specular_power) * specular_albedo;
-	}	
-
-	return total;
+	// (6) add all of the lighting effects for one light together
+	vec3 result = (diffuse + specular) * attenuation;
+	return result;
 }
 
 void main()
 {
-	// DUMMY OUTPUT: all fragments are PURPLE
-	//rtFragColor = vec4(0.5, 0.0, 1.0, 1.0);
-
-	gPosition = texture(uImage4, vPassTexcoord); // (2)
-	gNormal = texture(uImage5, vPassTexcoord); // (2)
-	gTexcoord = texture(uImage6, vPassTexcoord).xy; // (2)
-	gDepth = texture(uImage7, vPassTexcoord).x; // (2)
-	
-	// Testing
-	//rtFragColor = gPosition;
-	//rtFragColor = vec4(gNormal.xyz * 0.5 + 0.5, 1.0);
-	//rtFragColor = vec4(gTexcoord, 0.0, 1.0);
-	//rtFragColor = vec4(gDepth, gDepth, gDepth, 1.0);
+	vec4 gPosition = texture(uImage4, vPassTexcoord); // (2)
+	vec4 gNormal = texture(uImage5, vPassTexcoord); // (2)
+	vec2 gTexcoord = texture(uImage6, vPassTexcoord).xy; // (2)
+	float gDepth = texture(uImage7, vPassTexcoord).x; // (2)
 
 	//(3) sample textures and store as temporary values
-	tempDM = texture2D(tex_dm[0], gTexcoord);
-	tempSM = texture2D(tex_sm[0], gTexcoord);
-	
-	vec3 totalLighting;
+	tempTex_dm = texture(tex_dm[0], gTexcoord);
+	tempTex_sm = texture(tex_sm[0], gTexcoord);
 
-	//(7) calculate Phong shading for all lights
-	for (int i; i < max_lights; i++)
+	// (7) calculate Phong shading for all lights
+	for(int i = 0; i < max_Lights; i++)
 	{
-		//(8) add all light values appropriately
-		totalLighting += PhongCalculations(i);
+		phongShading += PhongShadingCalculations(i); // (8) add the light values appropriately
 	}
-
-	rtPosition = gPosition; 
-	rtNormal = vec4(normalize(gNormal.xyz) * .5 + .5, 1.0); 
-	rtTexcoord = vec4(gTexcoord, 0.0, 1.0);
-	rtDiffuseMap = tempDM;
-	rtSpecularMap = tempSM; //not working properly
-	rtDiffuseShading = vec4(DiffuseShadingTotalCalculation(), 1);
-	rtSpecularShading = vec4(SpecularShadingTotalCalculation(), 1);
-	rtPhongSum = vec4(totalLighting, tempDM.a);
-	//rtFragColor = rtPhongSum;
+	// (9) calculate all the models with textures and output correctly
+	// use alpha channel from diffuse sample for final alpha
+	//rtFragColor = vec4(phongShading * tempTex_dm.rgb, tempTex_dm.a);
+	rtFragColor = vec4(tempTex_dm.rgb * tempTex_sm.rgb, tempTex_dm.a * tempTex_sm.a);
+	//rtFragColor = vec4(phongShading, tempTex_dm.a);
 }
