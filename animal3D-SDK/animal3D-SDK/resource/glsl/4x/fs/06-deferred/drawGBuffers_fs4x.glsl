@@ -30,14 +30,20 @@
 //	3) pack attribute data into outputs
 
 layout (location = 0) out vec4 rtFragColor;
+//layout(location = 0) out vec4 rtPosition;
+layout(location = 1) out vec4 rtNormal;
+layout(location = 2) out vec4 rtTexcoord;
 
 in vec4 vPosition;
 in vec4 vNormal;
-in vec2 vTexcoord;
+in vec4 vTexcoord;
 
 void main()
 {
 	// DUMMY OUTPUT: all fragments are FADED YELLOW
-	rtFragColor = vec4(1.0, 1.0, 0.5, 1.0);
-	//rtFragColor = vPosition;
+	//rtFragColor = vec4(1.0, 1.0, 0.5, 1.0);
+	rtFragColor = vPosition;
+	rtNormal = normalize(vNormal);
+	//rtTexcoord = vec3(vTexcoord, 0.0);
+	rtTexcoord = vTexcoord;
 }
