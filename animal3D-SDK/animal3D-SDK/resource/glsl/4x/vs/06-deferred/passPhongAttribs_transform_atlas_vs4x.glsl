@@ -51,15 +51,15 @@ out vec2 vTexcoord;
 void main()
 {
 	vPosition = uMV * aPosition; // object to view
-	gl_Position = vPosition; 
+	gl_Position = uP * vPosition; 
 	vNormal = uMV_nrm * aNormal; // object to view
 	vTexcoord = uAtlas * aTexcoord;
 
 	/*
-	vec4 pos_eye = uMV * aPosition;
-	gl_Position = uP * pos_eye;
-
-	vec4 nrm_eye = uMV_nrm * aNormal;
+	gl_Position = gWVP * vec4(Position, 1.0);
+    TexCoord0 = TexCoord; 
+    Normal0 = (gWorld * vec4(Normal, 0.0)).xyz; 
+    WorldPos0 = (gWorld * vec4(Position, 1.0)).xyz;
 	*/
 	
 	// DUMMY OUTPUT: directly assign input position to output position

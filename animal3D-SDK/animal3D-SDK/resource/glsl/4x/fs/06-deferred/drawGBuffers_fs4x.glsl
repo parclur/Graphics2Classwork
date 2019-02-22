@@ -31,8 +31,13 @@
 
 layout (location = 0) out vec4 rtFragColor;
 
+in vec4 vPosition;
+in vec4 vNormal;
+in vec2 vTexcoord;
+
 void main()
 {
 	// DUMMY OUTPUT: all fragments are FADED YELLOW
 	rtFragColor = vec4(1.0, 1.0, 0.5, 1.0);
+	//rtFragColor = vPosition;
 }
