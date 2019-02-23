@@ -108,14 +108,14 @@ vec3 PhongShadingCalculations(int lightNumber)
 
 	//Compute the diffuse and specular components for each fragment
 	vec3 diffuse = max(dot(N,L), 0.0) * diffuse_albedo;
-	//vec3 specular = pow(max(dot(R,V), 0.0), specular_power) * specular_albedo;
+	vec3 specular = pow(max(dot(R,V), 0.0), specular_power) * specular_albedo;
 	//attenuation (c)
 	float lightAttVar = .001; // falloff range (the variable increases the falloff range as the number gets smaller)
 	float attenuation = 1.0 / (1.0 + lightAttVar * pow(distance(gPosition, uLightPos[lightNumber]),2));
 
 	// (6) add all of the lighting effects for one light together
-	//vec3 result = (diffuse + specular) * attenuation;
-	vec3 result = (diffuse) * attenuation;
+	vec3 result = (diffuse + specular) * attenuation;
+	//vec3 result = (diffuse) * attenuation;
 	return result;
 }
 
