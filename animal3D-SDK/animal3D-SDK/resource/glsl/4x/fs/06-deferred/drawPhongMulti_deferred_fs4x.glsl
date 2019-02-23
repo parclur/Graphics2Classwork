@@ -64,8 +64,8 @@ in vec4 vNormal;
 in vec2 vTexcoord;
 
 // (2) declare uniforms for textures (diffuse, specular)
-uniform sampler2D tex_dm[]; // diffuse sample
-uniform sampler2D tex_sm[]; // specular sample
+uniform sampler2D tex_atlas_dm[]; // diffuse sample
+uniform sampler2D tex_atlas_sm[]; // specular sample
 
 // (3) temporary values for textures
 vec4 tempTex_dm;
@@ -94,6 +94,7 @@ vec3 PhongShadingCalculations(int lightNumber)
 
 	//Normalize vectors
 	// surface normal
+	//vec3 N = normalize(gNormal.xyz);
 	vec3 N = normalize(gNormal.xyz);
 	// unit vector from the point being shaded to the light
 	vec3 lightVector = uLightPos[lightNumber].xyz - gPosition.xyz;
@@ -107,26 +108,27 @@ vec3 PhongShadingCalculations(int lightNumber)
 
 	//Compute the diffuse and specular components for each fragment
 	vec3 diffuse = max(dot(N,L), 0.0) * diffuse_albedo;
-	vec3 specular = pow(max(dot(R,V), 0.0), specular_power) * specular_albedo;
+	//vec3 specular = pow(max(dot(R,V), 0.0), specular_power) * specular_albedo;
 	//attenuation (c)
 	float lightAttVar = .001; // falloff range (the variable increases the falloff range as the number gets smaller)
 	float attenuation = 1.0 / (1.0 + lightAttVar * pow(distance(gPosition, uLightPos[lightNumber]),2));
 
 	// (6) add all of the lighting effects for one light together
-	vec3 result = (diffuse + specular) * attenuation;
+	//vec3 result = (diffuse + specular) * attenuation;
+	vec3 result = (diffuse) * attenuation;
 	return result;
 }
 
 void main()
 {
-	vec4 gPosition = texture(uImage4, vPassTexcoord); // (2)
-	vec4 gNormal = texture(uImage5, vPassTexcoord); // (2)
-	vec2 gTexcoord = texture(uImage6, vPassTexcoord).xy; // (2)
-	float gDepth = texture(uImage7, vPassTexcoord).x; // (2)
+	gPosition = texture(uImage4, vPassTexcoord); // (2)
+	gNormal = texture(uImage5, vPassTexcoord); // (2)
+	gTexcoord = texture(uImage6, vPassTexcoord).xy; // (2)
+	gDepth = texture(uImage7, vPassTexcoord).x; // (2)
 
 	//(3) sample textures and store as temporary values
-	tempTex_dm = texture(tex_dm[0], gTexcoord);
-	tempTex_sm = texture(tex_sm[0], gTexcoord);
+	tempTex_dm = texture(tex_atlas_dm[0], gTexcoord);
+	tempTex_sm = texture(tex_atlas_sm[0], gTexcoord);
 
 	// (7) calculate Phong shading for all lights
 	for(int i = 0; i < max_Lights; i++)
@@ -136,6 +138,7 @@ void main()
 	// (9) calculate all the models with textures and output correctly
 	// use alpha channel from diffuse sample for final alpha
 	//rtFragColor = vec4(phongShading * tempTex_dm.rgb, tempTex_dm.a);
-	rtFragColor = vec4(tempTex_dm.rgb * tempTex_sm.rgb, tempTex_dm.a * tempTex_sm.a);
+	rtFragColor = vec4(phongShading * tempTex_dm.rgb * tempTex_sm.rgb, tempTex_dm.a * tempTex_sm.a);
+	//rtFragColor = vec4(phongShading * tempTex_dm.rgb, tempTex_dm.a);
 	//rtFragColor = vec4(phongShading, tempTex_dm.a);
 }
