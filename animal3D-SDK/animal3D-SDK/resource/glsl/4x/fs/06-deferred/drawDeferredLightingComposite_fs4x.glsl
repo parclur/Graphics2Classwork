@@ -56,14 +56,14 @@ vec4 tempTex_sm;
 
 vec4 gPosition; // (2)
 vec4 gNormal; // (2)
-vec2 gTexcoord; // (2)
+vec4 gTexcoord; // (2)
 float gDepth; // (2)
 
 void main()
 {
 	gPosition = texture(uImage4, vPassTexcoord); // (2)
 	gNormal = texture(uImage5, vPassTexcoord); // (2)
-	gTexcoord = texture(uImage6, vPassTexcoord).xy; // (2)
+	gTexcoord = texture(uImage6, vPassTexcoord); // (2)
 
 	tempTex_dm = texture(tex_atlas_dm[0], gTexcoord.xy);
 	tempTex_sm = texture(tex_atlas_sm[0], gTexcoord.xy);
@@ -72,11 +72,11 @@ void main()
 	//rtFragColor = tempTex_dm * tempTex_sm * gPosition;
 
 	//Pretty sure this is wrong
-	vec4 diffuse_DM_atlas_total = (tempTex_dm * vPassBiasClipCoord);
-	vec4 diffuse_SM_atlas_total = (tempTex_sm * vPassBiasClipCoord);
+	vec4 diffuse_DM_atlas_total = (tempTex_dm * gPosition);
+	vec4 diffuse_SM_atlas_total = (tempTex_sm * gPosition);
 
 	vec4 total = (diffuse_DM_atlas_total + diffuse_SM_atlas_total) * vec4(.5, .5, .5, 1.0);
-	//total.a = 1;
+	total.a = gTexcoord.w;
 
 	rtFragColor = total;
 
