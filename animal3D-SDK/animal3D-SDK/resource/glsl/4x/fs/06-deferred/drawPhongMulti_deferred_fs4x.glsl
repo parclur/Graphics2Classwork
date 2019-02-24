@@ -64,8 +64,8 @@ in vec4 vNormal;
 in vec2 vTexcoord;
 
 // (2) declare uniforms for textures (diffuse, specular)
-uniform sampler2D tex_atlas_dm[]; // diffuse sample
-uniform sampler2D tex_atlas_sm[]; // specular sample
+uniform sampler2D tex_dm[]; // diffuse sample
+uniform sampler2D tex_sm[]; // specular sample
 
 // (3) temporary values for textures
 vec4 tempTex_dm;
@@ -127,8 +127,8 @@ void main()
 	gDepth = texture(uImage7, vPassTexcoord).x; // (2)
 
 	//(3) sample textures and store as temporary values
-	tempTex_dm = texture(tex_atlas_dm[0], gTexcoord);
-	tempTex_sm = texture(tex_atlas_sm[0], gTexcoord);
+	tempTex_dm = texture(tex_dm[0], gTexcoord);
+	tempTex_sm = texture(tex_sm[0], gTexcoord);
 
 	// (7) calculate Phong shading for all lights
 	for(int i = 0; i < max_Lights; i++)
