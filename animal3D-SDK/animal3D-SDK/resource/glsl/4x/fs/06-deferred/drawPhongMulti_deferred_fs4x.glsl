@@ -1,3 +1,5 @@
+// This file was modified by Claire Yeash and Zach Phillips with permission of the author
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 

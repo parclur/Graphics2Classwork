@@ -1,3 +1,5 @@
+// This file was modified by Claire Yeash and Zach Phillips with permission of the author
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -71,7 +73,6 @@ void main()
 	// DUMMY OUTPUT: all fragments are FADED CYAN
 	//rtFragColor = tempTex_dm * tempTex_sm * gPosition;
 
-	//Pretty sure this is wrong
 	vec4 diffuse_DM_atlas_total = (tempTex_dm * gPosition);
 	vec4 diffuse_SM_atlas_total = (tempTex_sm * gPosition);
 

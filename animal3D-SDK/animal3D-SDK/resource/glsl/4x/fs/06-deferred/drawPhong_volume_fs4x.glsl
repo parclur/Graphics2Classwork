@@ -1,3 +1,5 @@
+// This file was modified by Claire Yeash and Zach Phillips with permission of the author
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -209,6 +211,7 @@ vec3 specularCalculations(int lightNumber)
 
 void main()
 {
+	// (5) compute screen-space coordinate for current light
 	vec4 clipSpace = vPassBiasClipCoord / vPassBiasClipCoord.w;
 
 	// (2) declare varyings for light volume geometry
@@ -230,6 +233,7 @@ void main()
 	// use alpha channel from diffuse sample for final alpha
 	//rtFragColor = vec4(phongShading * tempTex_dm.rgb * tempTex_sm.rgb, tempTex_dm.a * tempTex_sm.a);
 
+	// use the correct targets
 	rtDiffuseShading = vec4(diffuseCalculations(vPassInstanceID), 1.0);
 	rtSpecularShading = vec4(specularCalculations(vPassInstanceID), 1.0);
 
