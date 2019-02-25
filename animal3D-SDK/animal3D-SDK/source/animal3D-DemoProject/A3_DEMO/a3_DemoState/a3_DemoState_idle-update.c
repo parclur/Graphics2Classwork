@@ -61,9 +61,10 @@ inline void a3demo_applyScale_internal(a3_DemoSceneObject *sceneObject, a3real4x
 
 
 //-----------------------------------------------------------------------------
-// UPDATE
+// UPDATE SUB-ROUTINES
 
-void a3demo_update(a3_DemoState *demoState, a3f64 dt)
+// update for main render pipeline
+void a3demo_update_main(a3_DemoState *demoState, a3f64 dt)
 {
 	a3ui32 i;
 
@@ -118,7 +119,7 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 	// do simple animation
 	if (useVerticalY)
 	{
-		for (i = 0, currentSceneObject = demoState->sphereObject; 
+		for (i = 0, currentSceneObject = demoState->sphereObject;
 			i < 4; ++i, ++currentSceneObject)
 		{
 			currentSceneObject->euler.y += dr;
@@ -127,7 +128,7 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 	}
 	else
 	{
-		for (i = 0, currentSceneObject = demoState->sphereObject; 
+		for (i = 0, currentSceneObject = demoState->sphereObject;
 			i < 4; ++i, ++currentSceneObject)
 		{
 			currentSceneObject->euler.z += dr;
@@ -176,7 +177,7 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 		a3real4Real4x4Product(pointLight->viewPos.v, cameraObject->modelMatInv.m, pointLight->worldPos.v);
 	}
 
-	for (i = 0, pointLight = demoState->deferredPointLight + i, 
+	for (i = 0, pointLight = demoState->deferredPointLight + i,
 		lightMVPptr = demoState->deferredLightMVP + i,
 		lightMVPBptr = demoState->deferredLightMVPB + i;
 		i < demoState->deferredLightCount;
@@ -251,6 +252,103 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 	a3demo_applyScale_internal(demoState->cylinderObject, scaleMat.m);
 	a3demo_applyScale_internal(demoState->torusObject, scaleMat.m);
 	a3demo_applyScale_internal(demoState->teapotObject, scaleMat.m);
+}
+
+
+// update for curve drawing
+void a3demo_update_curve(a3_DemoState *demoState, a3f64 dt)
+{
+	a3ui32 i;
+
+
+	// active camera
+	a3_DemoCamera *camera = demoState->camera + demoState->activeCamera;
+	a3_DemoSceneObject *cameraObject = camera->sceneObject;
+	a3_DemoSceneObject *currentSceneObject;
+
+
+	// update scene objects
+	for (i = 0; i < demoStateMaxCount_sceneObject; ++i)
+		a3demo_updateSceneObject(demoState->sceneObject + i, 0);
+	for (i = 0; i < demoStateMaxCount_cameraObject; ++i)
+		a3demo_updateSceneObject(demoState->cameraObject + i, 1);
+	for (i = 0; i < demoStateMaxCount_lightObject; ++i)
+		a3demo_updateSceneObject(demoState->lightObject + i, 1);
+
+	// update cameras/projectors
+	for (i = 0; i < demoStateMaxCount_projector; ++i)
+		a3demo_updateCameraViewProjection(demoState->camera + i);
+
+
+	// simple animation controller
+	if (demoState->curveWaypointCount > 1 && demoState->updateAnimation)
+	{
+		// time step for controller
+		demoState->curveSegmentTime += (a3real)dt;
+
+		// if we surpass the time for one segment
+		if (demoState->curveSegmentTime >= demoState->curveSegmentDuration)
+		{
+			demoState->curveSegmentTime -= demoState->curveSegmentDuration;
+			demoState->curveSegmentIndex = (demoState->curveSegmentIndex + 1) % (demoState->curveWaypointCount - 1);
+		}
+
+		// in any case calculate interpolation param
+		demoState->curveSegmentParam = demoState->curveSegmentTime * demoState->curveSegmentDurationInv;
+
+		// interpolate object position
+		// ****TO-DO: choose interpolation algorithm from below
+		currentSceneObject = demoState->curveFollowObject;
+	/*
+		// lerp
+		a3real3Lerp(currentSceneObject->position.v,
+			demoState->curveWaypoint[demoState->curveSegmentIndex + 0].v,
+			demoState->curveWaypoint[demoState->curveSegmentIndex + 1].v,
+			demoState->curveSegmentParam);
+		
+		// Catmull-Rom
+		a3real3CatmullRom(currentSceneObject->position.v,
+			demoState->curveWaypoint[a3maximum(0, (a3i32)demoState->curveSegmentIndex - 1)].v,
+			demoState->curveWaypoint[demoState->curveSegmentIndex + 0].v,
+			demoState->curveWaypoint[demoState->curveSegmentIndex + 1].v,
+			demoState->curveWaypoint[a3minimum(demoState->curveSegmentIndex + 2, demoState->curveWaypointCount - 1)].v,
+			demoState->curveSegmentParam);
+	*/	
+		// cubic Hermite
+		a3real3HermiteControl(currentSceneObject->position.v,
+			demoState->curveWaypoint[demoState->curveSegmentIndex + 0].v,
+			demoState->curveWaypoint[demoState->curveSegmentIndex + 1].v,
+			demoState->curveHandle[demoState->curveSegmentIndex + 0].v,
+			demoState->curveHandle[demoState->curveSegmentIndex + 1].v,
+			demoState->curveSegmentParam);
+		
+	}
+
+	// fill curve uniform buffers
+	a3bufferFill(demoState->ubo_curveWaypoint, 0, demoState->curveWaypointCount * sizeof(a3vec4), demoState->curveWaypoint->v, 0);
+	a3bufferFill(demoState->ubo_curveHandle, 0, demoState->curveWaypointCount * sizeof(a3vec4), demoState->curveHandle->v, 0);
+	demoState->ubo_curveWaypoint->used[0] = 0;
+	demoState->ubo_curveHandle->used[0] = 0;
+}
+
+
+//-----------------------------------------------------------------------------
+// UPDATE
+
+void a3demo_update(a3_DemoState *demoState, a3f64 dt)
+{
+	switch (demoState->demoMode)
+	{
+		// main render pipeline
+	case 0:
+		a3demo_update_main(demoState, dt);
+		break;
+
+		// curve drawing
+	case 1:
+		a3demo_update_curve(demoState, dt);
+		break;
+	}
 }
 
 

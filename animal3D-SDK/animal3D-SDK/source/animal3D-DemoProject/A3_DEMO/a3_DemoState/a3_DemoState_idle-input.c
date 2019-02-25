@@ -34,9 +34,9 @@
 
 
 //-----------------------------------------------------------------------------
-// HANDLE INPUT
+// INPUT SUB-ROUTINES
 
-void a3demo_input(a3_DemoState *demoState, a3f64 dt)
+void a3demo_input_main(a3_DemoState *demoState, a3f64 dt)
 {
 	a3real ctrlRotateSpeed = 1.0f;
 	a3real azimuth = 0.0f;
@@ -102,6 +102,25 @@ void a3demo_input(a3_DemoState *demoState, a3f64 dt)
 				demoState->verticalAxis ? azimuth : a3realZero,
 				demoState->verticalAxis ? a3realZero : azimuth);
 		}
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+// INPUT
+
+void a3demo_input(a3_DemoState *demoState, a3f64 dt)
+{
+	switch (demoState->demoMode)
+	{
+		// main render pipeline
+	case 0:
+		a3demo_input_main(demoState, dt);
+		break;
+
+		// curve drawing
+	case 1:
+		break;
 	}
 }
 

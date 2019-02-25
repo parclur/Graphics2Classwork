@@ -68,8 +68,10 @@ void a3demo_initScene(a3_DemoState *demoState)
 
 	// cameras
 	a3demo_setCameraSceneObject(demoState->sceneCamera, demoState->mainCameraObject);
+	a3demo_setCameraSceneObject(demoState->curveCamera, demoState->topDownCameraObject);
 	a3demo_setCameraSceneObject(demoState->projectorLight, demoState->mainLightObject);
 	a3demo_initCamera(demoState->sceneCamera);
+	a3demo_initCamera(demoState->curveCamera);
 	a3demo_initCamera(demoState->projectorLight);
 
 	// camera params
@@ -86,6 +88,10 @@ void a3demo_initScene(a3_DemoState *demoState)
 	camera->ctrlZoomSpeed = 5.0f;
 	camera->sceneObject->position = sceneCameraStartPos;
 	camera->sceneObject->euler = sceneCameraStartEuler;
+
+	// top-down scene camera
+	camera = demoState->curveCamera + 0;
+	camera->fovy = 20.0f;
 
 	// other projectors
 	camera = demoState->projectorLight + 0;
@@ -114,11 +120,10 @@ void a3demo_initScene(a3_DemoState *demoState)
 
 
 	// demo modes
-	demoState->demoModeCount = 1;
-	demoState->demoMode = 0;
+	demoState->demoModeCount = 2;
+	demoState->demoMode = 1;
 
-	// modes/pipelines: 
-	// A: deferred + bloom
+	// demo mode A: deferred + bloom
 	//	 1) scene
 	//		a) color buffer 0 (shading/position)
 	//		b) color buffer 1 (normal)
@@ -143,8 +148,12 @@ void a3demo_initScene(a3_DemoState *demoState)
 	for (i = 0; i < demoStateMaxSubModes; ++i)
 		demoState->demoOutputCount[0][i] = 1;
 	demoState->demoSubModeCount[0] = demoStateMaxSubModes;
-	demoState->demoOutputCount[0][0] = 4;
+	demoState->demoOutputCount[0][0] = 5;
 	demoState->demoOutputCount[0][1] = 2;
+
+	// demo mode B: curve drawing
+	demoState->demoSubMode[1] = 1;
+	demoState->demoOutputMode[1][0] = 2;
 
 
 	// initialize other objects and settings
@@ -158,10 +167,10 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->additionalPostProcessing = 0;
 	demoState->previewIntermediatePostProcessing = 0;
 	demoState->stencilTest = 0;
-	demoState->projectiveTexturing = 0;
-	demoState->shadowMapping = 0;
 	demoState->singleForwardLight = 0;
+	demoState->displayTangentBases = 0;
 	demoState->lightingPipelineMode = demoStatePipelineMode_forward;
+	demoState->forwardShadingMode = demoStateForwardPipelineMode_Phong_manip;
 
 
 	// lights
@@ -275,6 +284,13 @@ void a3demo_initScene(a3_DemoState *demoState)
 		demoState->cylinderObject->position.y = +6.0f;
 		demoState->teapotObject->position.y = -6.0f;
 	}
+
+
+	// animation stuff
+	demoState->curveSegmentDuration = a3realTwo;
+	demoState->curveSegmentDurationInv = a3recip(demoState->curveSegmentDuration);
+	demoState->curveSegmentTime = demoState->curveSegmentParam = a3realZero;
+	demoState->curveSegmentIndex = 0;
 }
 
 

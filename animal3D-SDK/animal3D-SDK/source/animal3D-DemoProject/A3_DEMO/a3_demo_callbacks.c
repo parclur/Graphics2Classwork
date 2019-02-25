@@ -61,6 +61,127 @@ inline void a3demo_initializeText(a3_TextRenderer *text)
 
 
 //-----------------------------------------------------------------------------
+// callback sub-routines
+
+inline void a3demoCB_keyCharPress_main(a3_DemoState *demoState, a3i32 asciiKey,
+	const a3ui32 demoSubMode, const a3ui32 demoOutput,
+	const a3ui32 demoSubModeCount, const a3ui32 demoOutputCount)
+{
+	switch (asciiKey)
+	{
+// toggle active camera
+//	case 'v':
+//		demoState->activeCamera = (demoState->activeCamera + 1) % demoStateMaxCount_cameraObject;
+//		break;
+//	case 'c':
+//		demoState->activeCamera = (demoState->activeCamera - 1 + demoStateMaxCount_cameraObject) % demoStateMaxCount_cameraObject;
+//		break;
+
+		// toggle skybox
+	case 'b':
+		demoState->displaySkybox = 1 - demoState->displaySkybox;
+		break;
+
+		// toggle hidden volumes
+	case 'h':
+		demoState->displayHiddenVolumes = 1 - demoState->displayHiddenVolumes;
+		break;
+
+		// additional post-processing
+	case 'n':
+		demoState->additionalPostProcessing = 1 - demoState->additionalPostProcessing;
+		break;
+
+		// preview post-processing passes
+	case 'r':
+		demoState->previewIntermediatePostProcessing = 1 - demoState->previewIntermediatePostProcessing;
+		if (!demoState->previewIntermediatePostProcessing &&
+			demoSubMode > demoStateRenderPass_composite &&
+			demoSubMode < demoStateRenderPass_bloom_blend)
+			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_bloom_blend;
+		break;
+
+		// toggle pipeline overlay
+	case 'o':
+		demoState->displayPipeline = 1 - demoState->displayPipeline;
+		break;
+
+		// toggle stencil test
+	case 'i':
+		demoState->stencilTest = 1 - demoState->stencilTest;
+		break;
+
+		// toggle single light only or decrease light count
+	case 'l':
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+		{
+			demoState->singleForwardLight = 1 - demoState->singleForwardLight;
+			demoState->forwardLightCount = demoState->singleForwardLight ? 1 : demoStateMaxCount_lightObject;
+		}
+		else if (demoState->deferredLightCount > 0)
+			demoState->deferredLightCount -= 4;
+		break;
+
+		// increase light count
+	case 'L':
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+		{
+		}
+		else if (demoState->deferredLightCount < demoStateMaxCount_lightVolume)
+			demoState->deferredLightCount += 4;
+		break;
+
+		// pipeline mode
+	case 'p':
+		demoState->lightingPipelineMode = (demoState->lightingPipelineMode + 1) % 3;
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
+			demoSubMode > demoStateRenderPass_scene &&
+			demoSubMode < demoStateRenderPass_composite)
+			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
+		break;
+
+		// toggle forward shading mode
+	case 'j':
+		demoState->forwardShadingMode = (demoState->forwardShadingMode + 5) % 6;
+		break;
+	case 'k':
+		demoState->forwardShadingMode = (demoState->forwardShadingMode + 1) % 6;
+		break;
+
+		// toggle tangent bases on vertices
+	case 'B':
+		demoState->displayTangentBases = 1 - demoState->displayTangentBases;
+		break;
+	}
+}
+
+inline void a3demoCB_keyCharHold_main(a3_DemoState *demoState, a3i32 asciiKey)
+{
+	// handle special cases immediately
+	switch (asciiKey)
+	{
+		// decrease light count
+	case 'l':
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+		{
+		}
+		else if (demoState->deferredLightCount > 0)
+			demoState->deferredLightCount -= 4;
+		break;
+
+		// increase light count
+	case 'L':
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+		{
+		}
+		else if (demoState->deferredLightCount < demoStateMaxCount_lightVolume)
+			demoState->deferredLightCount += 4;
+		break;
+	}
+}
+
+
+//-----------------------------------------------------------------------------
 // callback prototypes
 // NOTE: do not move to header; they should be private to this file
 // NOTE: you may name these functions whatever you like, just be sure to 
@@ -288,14 +409,21 @@ A3DYLIBSYMBOL void a3demoCB_windowResize(a3_DemoState *demoState, a3i32 newWindo
 	const a3i32 frameBorder = 64;
 	const a3ui32 frameWidth = newWindowWidth + frameBorder + frameBorder;
 	const a3ui32 frameHeight = newWindowHeight + frameBorder + frameBorder;
-	const a3real aspect = (a3real)frameWidth / (a3real)frameHeight;
+	const a3real windowAspect = (a3real)newWindowWidth / (a3real)newWindowHeight;
+	const a3real frameAspect = (a3real)frameWidth / (a3real)frameHeight;
 
 	// copy new values to demo state
-	demoState->frameBorder = frameBorder;
 	demoState->windowWidth = newWindowWidth;
 	demoState->windowHeight = newWindowHeight;
+	demoState->windowWidthInv = a3recip((a3real)newWindowWidth);
+	demoState->windowHeightInv = a3recip((a3real)newWindowHeight);
+	demoState->windowAspect = windowAspect;
 	demoState->frameWidth = frameWidth;
 	demoState->frameHeight = frameHeight;
+	demoState->frameWidthInv = a3recip((a3real)frameWidth);
+	demoState->frameHeightInv = a3recip((a3real)frameHeight);
+	demoState->frameAspect = frameAspect;
+	demoState->frameBorder = frameBorder;
 
 	// framebuffers should be initialized or re-initialized here 
 	//	since they are likely dependent on the window size
@@ -309,7 +437,7 @@ A3DYLIBSYMBOL void a3demoCB_windowResize(a3_DemoState *demoState, a3i32 newWindo
 	// initialize cameras dependent on viewport
 	for (i = 0, camera = demoState->camera + i; i < demoStateMaxCount_cameraObject; ++i, ++camera)
 	{
-		camera->aspect = aspect;
+		camera->aspect = frameAspect;
 		a3demo_updateCameraProjection(camera);
 	}
 }
@@ -339,6 +467,11 @@ A3DYLIBSYMBOL void a3demoCB_keyRelease(a3_DemoState *demoState, a3i32 virtualKey
 // NOTE: there is no release counterpart
 A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey)
 {
+	a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode];
+	const a3ui32 demoSubModeCount = demoState->demoSubModeCount[demoState->demoMode];
+	const a3ui32 demoOutput = demoState->demoOutputMode[demoState->demoMode][demoSubMode];
+	const a3ui32 demoOutputCount = demoState->demoOutputCount[demoState->demoMode][demoSubMode];
+
 	// persistent state update
 	a3keyboardSetStateASCII(demoState->keyboard, (a3byte)asciiKey);
 
@@ -376,17 +509,15 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 
 
 		// change pipeline mode
-	case '.': {
+	case '.':
 		demoState->demoMode = (demoState->demoMode + 1) % demoState->demoModeCount;
-	}	break;
-	case ',': {
+		break;
+	case ',':
 		demoState->demoMode = (demoState->demoMode + demoState->demoModeCount - 1) % demoState->demoModeCount;
-	}	break;
+		break;
 
 		// change pipeline stage
-	case '>': {
-		const a3ui32 demoSubModeCount = demoState->demoSubModeCount[demoState->demoMode];
-		a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode];
+	case '>':
 		demoSubMode = demoState->demoSubMode[demoState->demoMode] = (demoSubMode + 1) % demoSubModeCount;
 		if (!demoState->previewIntermediatePostProcessing &&
 			demoSubMode > demoStateRenderPass_composite &&
@@ -396,10 +527,8 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 			demoSubMode > demoStateRenderPass_scene &&
 			demoSubMode < demoStateRenderPass_composite)
 			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
-	}	break;
-	case '<': {
-		const a3ui32 demoSubModeCount = demoState->demoSubModeCount[demoState->demoMode];
-		a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode];
+		break;
+	case '<':
 		demoSubMode = demoState->demoSubMode[demoState->demoMode] = (demoSubMode + demoSubModeCount - 1) % demoSubModeCount;
 		if (!demoState->previewIntermediatePostProcessing &&
 			demoSubMode > demoStateRenderPass_composite &&
@@ -409,36 +538,20 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 			demoSubMode > demoStateRenderPass_scene &&
 			demoSubMode < demoStateRenderPass_composite)
 			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_scene;
-	}	break;
+		break;
 
 		// change stage output
-	case '}': {
-		const a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode], demoSubModeCount = demoState->demoSubModeCount[demoState->demoMode];
-		const a3ui32 demoOutput = demoState->demoOutputMode[demoState->demoMode][demoSubMode], demoOutputCount = demoState->demoOutputCount[demoState->demoMode][demoSubMode];
+	case '}':
 		demoState->demoOutputMode[demoState->demoMode][demoSubMode] = (demoOutput + 1) % demoOutputCount;
-	}	break;
-	case '{': {
-		const a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode], demoSubModeCount = demoState->demoSubModeCount[demoState->demoMode];
-		const a3ui32 demoOutput = demoState->demoOutputMode[demoState->demoMode][demoSubMode], demoOutputCount = demoState->demoOutputCount[demoState->demoMode][demoSubMode];
+		break;
+	case '{':
 		demoState->demoOutputMode[demoState->demoMode][demoSubMode] = (demoOutput + demoOutputCount - 1) % demoOutputCount;
-	}	break;
+		break;
 
-		// toggle active camera
-	case 'v':
-		demoState->activeCamera = (demoState->activeCamera + 1) % demoStateMaxCount_cameraObject;
-		break;
-	case 'c':
-		demoState->activeCamera = (demoState->activeCamera - 1 + demoStateMaxCount_cameraObject) % demoStateMaxCount_cameraObject;
-		break;
 
 		// toggle grid
 	case 'g':
 		demoState->displayGrid = 1 - demoState->displayGrid;
-		break;
-
-		// toggle skybox
-	case 'b':
-		demoState->displaySkybox = 1 - demoState->displaySkybox;
 		break;
 
 		// toggle world axes
@@ -451,81 +564,26 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 		demoState->displayObjectAxes = 1 - demoState->displayObjectAxes;
 		break;
 
-		// toggle hidden volumes
-	case 'h':
-		demoState->displayHiddenVolumes = 1 - demoState->displayHiddenVolumes;
-		break;
 
 		// update animation
 	case 'm':
 		demoState->updateAnimation = 1 - demoState->updateAnimation;
 		break;
+	}
 
-		// additional post-processing
-	case 'n':
-		demoState->additionalPostProcessing = 1 - demoState->additionalPostProcessing;
+
+	// callback for current mode
+	switch (demoState->demoMode)
+	{
+		// main render pipeline
+	case 0:
+		a3demoCB_keyCharPress_main(demoState, asciiKey,
+			demoSubMode, demoOutput, demoSubModeCount, demoOutputCount);
 		break;
 
-		// preview post-processing passes
-	case 'r': {
-		const a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode];
-		demoState->previewIntermediatePostProcessing = 1 - demoState->previewIntermediatePostProcessing;
-		if (!demoState->previewIntermediatePostProcessing &&
-			demoSubMode > demoStateRenderPass_composite &&
-			demoSubMode < demoStateRenderPass_bloom_blend)
-			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_bloom_blend;
-	}	break;
-
-		// toggle pipeline overlay
-	case 'o':
-		demoState->displayPipeline = 1 - demoState->displayPipeline;
+		// curve drawing
+	case 1:
 		break;
-
-		// toggle stencil test
-	case 'i':
-		demoState->stencilTest = 1 - demoState->stencilTest;
-		break;
-
-		// toggle projective texturing
-	case 'j':
-		demoState->projectiveTexturing = 1 - demoState->projectiveTexturing;
-		break;
-
-		// toggle shadow mapping
-	case 'k':
-		demoState->shadowMapping = 1 - demoState->shadowMapping;
-		break;
-
-		// toggle single light only or decrease light count
-	case 'l':
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
-		{
-			demoState->singleForwardLight = 1 - demoState->singleForwardLight;
-			demoState->forwardLightCount = demoState->singleForwardLight ? 1 : demoStateMaxCount_lightObject;
-		}
-		else if (demoState->deferredLightCount > 0)
-			demoState->deferredLightCount -= 4;
-		break;
-
-		// increase light count
-	case 'L':
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
-		{
-		}
-		else if (demoState->deferredLightCount < demoStateMaxCount_lightVolume)
-			demoState->deferredLightCount += 4;
-		break;
-
-		// pipeline mode
-	case 'p': {
-		const a3ui32 demoSubMode = demoState->demoSubMode[demoState->demoMode];
-		demoState->lightingPipelineMode = (demoState->lightingPipelineMode + 1) % 3;
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
-			demoSubMode > demoStateRenderPass_scene &&
-			demoSubMode < demoStateRenderPass_composite)
-			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
-	}	break;
-
 	}
 }
 
@@ -535,25 +593,17 @@ A3DYLIBSYMBOL void a3demoCB_keyCharHold(a3_DemoState *demoState, a3i32 asciiKey)
 	// persistent state update
 	a3keyboardSetStateASCII(demoState->keyboard, (a3byte)asciiKey);
 
-	// handle special cases immediately
-	switch (asciiKey)
+
+	// callback for current mode
+	switch (demoState->demoMode)
 	{
-		// decrease light count
-	case 'l':
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
-		{
-		}
-		else if (demoState->deferredLightCount > 0)
-			demoState->deferredLightCount -= 4;
+		// main render pipeline
+	case 0:
+		a3demoCB_keyCharHold_main(demoState, asciiKey);
 		break;
 
-		// increase light count
-	case 'L':
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
-		{
-		}
-		else if (demoState->deferredLightCount < demoStateMaxCount_lightVolume)
-			demoState->deferredLightCount += 4;
+		// curve drawing
+	case 1:
 		break;
 	}
 }
@@ -564,6 +614,33 @@ A3DYLIBSYMBOL void a3demoCB_mouseClick(a3_DemoState *demoState, a3i32 button, a3
 	// persistent state update
 	a3mouseSetState(demoState->mouse, (a3_MouseButton)button, a3input_down);
 	a3mouseSetPosition(demoState->mouse, cursorX, cursorY);
+
+	// curve waypoint placement
+	if (demoState->demoMode == 1)
+	{
+		if (button == a3mouse_left)
+		{
+			if (demoState->curveWaypointCount < demoStateMaxCount_curveWaypoint)
+			{
+				// set up new waypoint by unprojecting mouse position in NDC
+				a3vec4 pos = {
+					+((a3real)(cursorX + demoState->frameBorder) * demoState->frameWidthInv * a3realTwo - a3realOne),
+					-((a3real)(cursorY + demoState->frameBorder) * demoState->frameHeightInv * a3realTwo - a3realOne),
+					a3realZero, a3realOne
+				};
+				a3real4Real4x4MulR(demoState->curveCamera->projectionMatInv.m, pos.v);
+				demoState->curveWaypoint[demoState->curveWaypointCount] = pos;
+				demoState->curveHandle[demoState->curveWaypointCount] = pos;
+				++demoState->curveWaypointCount;
+			}
+		}
+		else if (button == a3mouse_right)
+		{
+			// delete previous waypoint by simply decrementing the count
+			if (demoState->curveWaypointCount > 0)
+				--demoState->curveWaypointCount;
+		}
+	}
 }
 
 // mouse button is double-clicked
@@ -589,7 +666,7 @@ A3DYLIBSYMBOL void a3demoCB_mouseWheel(a3_DemoState *demoState, a3i32 delta, a3i
 	a3mouseSetStateWheel(demoState->mouse, (a3_MouseWheelState)delta);
 	a3mouseSetPosition(demoState->mouse, cursorX, cursorY);
 
-//	if (demoState->demoMode == 0)
+	if (demoState->demoMode == 0)
 	{
 		// can use this to change zoom
 		// zoom should be faster farther away
@@ -605,6 +682,23 @@ A3DYLIBSYMBOL void a3demoCB_mouseMove(a3_DemoState *demoState, a3i32 cursorX, a3
 {
 	// persistent state update
 	a3mouseSetPosition(demoState->mouse, cursorX, cursorY);
+
+	// curve waypoint placement
+	if (demoState->demoMode == 1)
+	{
+		// if left is down, placing waypoint
+		if (demoState->mouse->btn.btn[a3mouse_left])
+		{
+			// get cursor position in NDC
+			a3vec4 pos = {
+				+((a3real)(cursorX + demoState->frameBorder) * demoState->frameWidthInv * a3realTwo - a3realOne),
+				-((a3real)(cursorY + demoState->frameBorder) * demoState->frameHeightInv * a3realTwo - a3realOne),
+				a3realZero, a3realOne
+			};
+			a3real4Real4x4MulR(demoState->curveCamera->projectionMatInv.m, pos.v);
+			demoState->curveHandle[demoState->curveWaypointCount - 1] = pos;
+		}
+	}
 }
 
 // mouse leaves window

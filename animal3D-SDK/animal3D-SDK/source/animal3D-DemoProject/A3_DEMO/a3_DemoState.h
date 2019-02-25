@@ -63,9 +63,9 @@ extern "C"
 	enum a3_DemoStateObjectMaxCounts
 	{
 		demoStateMaxCount_sceneObject = 8,
-		demoStateMaxCount_cameraObject = 1,
+		demoStateMaxCount_cameraObject = 2,
 		demoStateMaxCount_lightObject = 4,
-		demoStateMaxCount_projector = 2,
+		demoStateMaxCount_projector = 3,
 
 		demoStateMaxCount_lightVolumeBlock = 4,
 		demoStateMaxCount_lightVolumePerBlock = a3index_countMaxShort / sizeof(a3_DemoPointLight),
@@ -73,7 +73,7 @@ extern "C"
 
 		demoStateMaxCount_timer = 1,
 		demoStateMaxCount_drawDataBuffer = 1,
-		demoStateMaxCount_vertexArray = 4,
+		demoStateMaxCount_vertexArray = 8,
 		demoStateMaxCount_drawable = 16,
 		demoStateMaxCount_shaderProgram = 32,
 
@@ -81,15 +81,17 @@ extern "C"
 		demoStateMaxCount_framebuffer = 4,
 		demoStateMaxCount_framebufferDouble = 8,
 
-		demoStateMaxCount_uniformBuffer = 4 * demoStateMaxCount_lightVolumeBlock,
+		demoStateMaxCount_uniformBuffer = 2 + 3 * demoStateMaxCount_lightVolumeBlock,
+
+		demoStateMaxCount_curveWaypoint = 32,
 	};
 
 	// additional counters for demo modes
 	enum a3_DemoStateModeCounts
 	{
-		demoStateMaxModes = 1,
+		demoStateMaxModes = 2,
 		demoStateMaxSubModes = 14,
-		demoStateMaxOutputModes = 4,
+		demoStateMaxOutputModes = 5,
 	};
 
 	
@@ -131,6 +133,17 @@ extern "C"
 		demoStatePipelineMode_deferredLighting,
 	};
 
+	// forward pipeline modes
+	enum a3_DemoStateForwardPipelineModeNames
+	{
+		demoStateForwardPipelineMode_Phong,
+		demoStateForwardPipelineMode_Phong_projective,
+		demoStateForwardPipelineMode_Phong_shadowmap,
+		demoStateForwardPipelineMode_Phong_shadowmap_projective,
+		demoStateForwardPipelineMode_Phong_manip,
+		demoStateForwardPipelineMode_nonphoto,
+	};
+
 
 //-----------------------------------------------------------------------------
 
@@ -151,7 +164,9 @@ extern "C"
 
 		// window and full-frame dimensions
 		a3ui32 windowWidth, windowHeight;
+		a3real windowWidthInv, windowHeightInv, windowAspect;
 		a3ui32 frameWidth, frameHeight;
+		a3real frameWidthInv, frameHeightInv, frameAspect;
 		a3i32 frameBorder;
 
 
@@ -182,10 +197,15 @@ extern "C"
 		a3ui32 demoModeCount, demoSubModeCount[demoStateMaxModes], demoOutputCount[demoStateMaxModes][demoStateMaxSubModes];
 
 		// toggle grid in scene and axes superimposed, as well as other mods
-		a3boolean displayGrid, displaySkybox, displayWorldAxes, displayObjectAxes, displayHiddenVolumes, displayPipeline;
-		a3boolean updateAnimation, additionalPostProcessing, previewIntermediatePostProcessing;
-		a3boolean stencilTest, projectiveTexturing, shadowMapping, singleForwardLight;
+		a3boolean displayGrid, displayWorldAxes, displayObjectAxes, displayTangentBases;
+		a3boolean displaySkybox, displayHiddenVolumes, displayPipeline;
+		a3boolean additionalPostProcessing, previewIntermediatePostProcessing;
+		a3boolean stencilTest, singleForwardLight;
 		a3boolean lightingPipelineMode;
+		a3boolean updateAnimation;
+
+		// lighting modes
+		a3ui32 forwardShadingMode;
 
 		// grid properties
 		a3mat4 gridTransform;
@@ -211,6 +231,14 @@ extern "C"
 		};
 
 
+		// animation stuff
+		a3vec4 curveWaypoint[demoStateMaxCount_curveWaypoint], curveHandle[demoStateMaxCount_curveWaypoint];
+		a3ui32 curveWaypointCount;
+		a3ui32 curveSegmentIndex;
+		a3real curveSegmentDuration, curveSegmentDurationInv;
+		a3real curveSegmentTime, curveSegmentParam;
+
+
 		//---------------------------------------------------------------------
 		// object arrays: organized as anonymous unions for two reasons: 
 		//	1. easy to manage entire sets of the same type of object using the 
@@ -221,6 +249,7 @@ extern "C"
 		union {
 			a3_DemoSceneObject sceneObject[demoStateMaxCount_sceneObject];
 			struct {
+				// main scene objects
 				a3_DemoSceneObject
 					skyboxObject[1],
 					planeObject[1],
@@ -228,6 +257,10 @@ extern "C"
 					cylinderObject[1],
 					torusObject[1],
 					teapotObject[1];
+
+				// curve-drawing objects
+				a3_DemoSceneObject
+					curveFollowObject[1];
 			};
 		};
 		union {
@@ -235,6 +268,8 @@ extern "C"
 			struct {
 				a3_DemoSceneObject
 					mainCameraObject[1];
+				a3_DemoSceneObject
+					topDownCameraObject[1];
 			};
 		};
 		union {
@@ -252,6 +287,8 @@ extern "C"
 			struct {
 				a3_DemoCamera
 					sceneCamera[1];						// scene viewing cameras
+				a3_DemoCamera
+					curveCamera[1];						// top-down drawing camera
 				a3_DemoCamera
 					projectorLight[1];					// other projectors
 			};
@@ -285,7 +322,8 @@ extern "C"
 					vao_position[1],							// VAO for vertex format with only position
 					vao_position_color[1],						// VAO for vertex format with position and color
 					vao_position_texcoord[1],					// VAO for vertex format with position and UVs
-					vao_position_texcoord_normal[1];			// VAO for vertex format with position, UVs and normal
+					vao_position_texcoord_normal[1],			// VAO for vertex format with position, UVs and normal
+					vao_tangentBasis[1];						// VAO for vertex format with full tangent basis
 			};
 		};
 
@@ -341,6 +379,11 @@ extern "C"
 					prog_drawPhongMulti_deferred[1],			// perform deferred Phong shading
 					prog_drawPhong_volume[1],					// render one light volume with Phong
 					prog_drawDeferredLightingComposite[1];		// composite deferred lighting
+				a3_DemoStateShaderProgram
+					prog_drawPhongMulti_manip[1],				// manipulate triangle before shading
+					prog_drawTangentBasis[1],					// render complete tangent basis as lines
+					prog_drawCurveSegment[1],					// draw a curve segment between waypoints
+					prog_drawCurveHandles[1];					// draw curve waypoints/handles
 			};
 		};
 
@@ -397,6 +440,11 @@ extern "C"
 					ubo_transformMVP[demoStateMaxCount_lightVolumeBlock],
 					ubo_transformMVPB[demoStateMaxCount_lightVolumeBlock],
 					ubo_pointLight[demoStateMaxCount_lightVolumeBlock];
+
+				// curve uniform buffers
+				a3_UniformBuffer
+					ubo_curveWaypoint[1],
+					ubo_curveHandle[1];
 			};
 		};
 
