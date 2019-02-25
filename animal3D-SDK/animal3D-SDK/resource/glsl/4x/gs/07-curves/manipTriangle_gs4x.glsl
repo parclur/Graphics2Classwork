@@ -34,7 +34,39 @@ layout (triangle_strip, max_vertices = 3) out;
 
 uniform mat4 uP;
 
+//received from "passPhongAttributes_transform_vs"
+in vbPassDataBlock
+{
+	vec4 vPosition;
+	vec4 vNormal;
+	vec2 vTexcoord;
+} vPassData_in[];
+
+//sending to "drawPhongMulti_fs"
+out vbPassDataBlock
+{
+	vec4 vPosition;
+	vec4 vNormal;
+	vec2 vTexcoord;
+} vPassData_out;
+
+int maxVertices = 3;
+
 void main()
 {
-	
+	const float explodeSz = 0.5;
+
+	//try inverting, try bloating, try duplicating, try rotating, try wireframe
+	for (int i = 0; i < maxVertices; i++)
+	{
+		//vPassData_out.vPosition = vPassData_in[i].vPosition;
+		vPassData_out.vPosition = vPassData_in[i].vPosition + normalize(vPassData_in[i].vNormal) * explodeSz;
+		vPassData_out.vNormal = vPassData_in[i].vNormal;
+		vPassData_out.vTexcoord = vPassData_in[i].vTexcoord;
+		//gl_Position = gl_in[i].gl_Position;
+		gl_Position = uP * vPassData_out.vPosition;
+		EmitVertex();
+	}
+
+	EndPrimitive();
 }
