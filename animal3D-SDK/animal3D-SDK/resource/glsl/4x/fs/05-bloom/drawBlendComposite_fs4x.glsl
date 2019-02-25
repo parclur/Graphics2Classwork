@@ -1,3 +1,5 @@
+//This file was modified by Claire Yeash and Zach Phillips with permission of the author.
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -33,9 +35,16 @@
 in vec2 vPassTexcoord;
 
 uniform sampler2D uImage0;
+uniform sampler2D uImage1;
+uniform sampler2D uImage2;
+uniform sampler2D uImage3;
 
 layout (location = 0) out vec4 rtFragColor;
 
+vec4 sample0;
+vec4 sample1;
+vec4 sample2;
+vec4 sample3;
 
 void main()
 {
@@ -43,7 +52,11 @@ void main()
 //	rtFragColor = vec4(0.5, 0.0, 1.0, 1.0);
 
 	// DEBUGGING
-	vec4 sample0 = texture(uImage0, vPassTexcoord);
-//	rtFragColor = vec4(vPassTexcoord, 0.0, 1.0);
-	rtFragColor = sample0;
+	sample0 = texture(uImage0, vPassTexcoord);
+	sample1 = texture(uImage1, vPassTexcoord);
+	sample2 = texture(uImage2, vPassTexcoord);
+	sample3 = texture(uImage3, vPassTexcoord);
+
+	// Bloom optimization for compositing; inverts, multiply, invert result; Thanks Dan!
+	rtFragColor = 1 - (1-sample0)*(1-sample1)*(1-sample2)*(1-sample3); //screen(sample0, sample1, sample2, sample3);
 }
