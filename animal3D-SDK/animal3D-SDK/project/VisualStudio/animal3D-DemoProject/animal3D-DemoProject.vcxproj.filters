@@ -82,6 +82,12 @@
     <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\06-deferred">
       <UniqueIdentifier>{609f10e1-54b0-40a2-97dc-4cc96ce3acc7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\vs\07-curves">
+      <UniqueIdentifier>{ffb55754-cea6-4cbb-9753-f41b3f80ad97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\gs\07-curves">
+      <UniqueIdentifier>{ab6ae752-7464-4255-8b08-25664da7b920}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_src_win\main_dll.c">
@@ -213,6 +219,27 @@
     </None>
     <None Include="..\..\..\resource\glsl\4x\vs\06-deferred\passBiasClipCoord_transform_instanced_vs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\vs\06-deferred</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\vs\passthru_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\vs\07-curves\passTangentBasis_transform_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\07-curves</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\vs\07-curves\passInstanceID_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\07-curves</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\gs\07-curves\drawCurveHandles_gs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\gs\07-curves</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\gs\07-curves\drawCurveSegment_gs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\gs\07-curves</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\gs\07-curves\drawTangentBasis_gs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\gs\07-curves</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\gs\07-curves\manipTriangle_gs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\gs\07-curves</Filter>
     </None>
   </ItemGroup>
 </Project>

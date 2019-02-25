@@ -49,7 +49,7 @@ extern "C"
 	enum a3_DemoShaderProgramMaxCounts
 	{
 		demoStateMaxCount_shaderProgramUniform = 32,
-		demoStateMaxCount_shaderProgramUniformBlock = 4,
+		demoStateMaxCount_shaderProgramUniformBlock = 8,
 	};
 
 
@@ -124,6 +124,11 @@ extern "C"
 					ubTransformMVP,
 					ubTransformMVPB,
 					ubPointLight;
+
+				// curve uniform blocks
+				a3i32
+					ubCurveWaypoint,
+					ubCurveHandle;
 			};
 		};
 	};

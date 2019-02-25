@@ -35,6 +35,7 @@
 
 // OpenGL
 #ifdef _WIN32
+#include <gl/glew.h>
 #include <Windows.h>
 #include <GL/GL.h>
 #else	// !_WIN32
@@ -112,9 +113,262 @@ inline a3real4x4r a3demo_quickTransposedZeroBottomRow(a3real4x4p m_out, const a3
 }
 
 
-// forward declare text render functions
-void a3demo_render_controls(const a3_DemoState *demoState);
-void a3demo_render_data(const a3_DemoState *demoState);
+//-----------------------------------------------------------------------------
+// RENDER TEXT
+
+// controls for main render pipeline
+void a3demo_render_main_controls(const a3_DemoState *demoState,
+	const a3ui32 demoSubMode, const a3ui32 demoOutput,
+	const a3ui32 demoSubModeCount, const a3ui32 demoOutputCount)
+{
+	// display mode info
+	const a3byte *modeText = "Lighting & post-processing pipeline";
+	const a3byte *subModeText[demoStateMaxSubModes] = {
+		"Scene",
+		"Phong light volumes",
+		"Full composite (skybox, lighting, UI)",
+		"Bright pass 1/2",
+		"Blur pass H 1/2",
+		"Blur pass V 1/2",
+		"Bright pass 1/4",
+		"Blur pass H 1/4",
+		"Blur pass V 1/4",
+		"Bright pass 1/8",
+		"Blur pass H 1/8",
+		"Blur pass V 1/8",
+		"Blending (bloom composite)",
+		"Shadow map (supplementary)",
+	};
+	const a3byte *outputText[demoStateMaxSubModes][demoStateMaxOutputModes] = {
+		{
+			"Color buffer 0 (scene): position g-buffer or forward shading",
+			"Color buffer 1 (scene): normal g-buffer",
+			"Color buffer 2 (scene): texcoord g-buffer",
+			"Color buffer 3 (scene): geometry overlays",
+			"Depth buffer (scene)",
+		},
+		{
+			"Color buffer 0 (lighting): diffuse shading",
+			"Color buffer 1 (lighting): specular shading",
+		},
+		{
+			"Color buffer (compositing)",
+		},
+		{
+			"Color buffer (post-processing)",
+		},
+		{
+			"Color buffer (post-processing)",
+		},
+		{
+			"Color buffer (post-processing)",
+		},
+		{
+			"Color buffer (post-processing)",
+		},
+		{
+			"Color buffer (post-processing)",
+		},
+		{
+			"Color buffer (post-processing)",
+		},
+		{
+			"Color buffer (post-processing)",
+		},
+		{
+			"Color buffer (post-processing)",
+		},
+		{
+			"Color buffer (post-processing)",
+		},
+		{
+			"Color buffer (post-processing)",
+		},
+		{
+			"Depth buffer (shadow map)",
+		},
+	};
+	const a3byte *pipelineName[] = {
+		"Forward lighting",
+		"Deferred shading",
+		"Deferred lighting",
+	};
+	const a3byte *forwardShadingName[] = {
+		"Phong shading",
+		"Phong shading + projective texturing",
+		"Phong shading + shadow mapping",
+		"Phong shading + shadow + projective",
+		"Phong shading + geometry manipulation",
+		"Non-photorealistic shading",
+	};
+
+	// text color
+	const a3vec4 col = { a3realOne, a3realZero, a3realOne, a3realOne };
+
+	// amount to offset text as each line is rendered
+	a3f32 textAlign = -0.98f;
+	a3f32 textOffset = 1.00f;
+	a3f32 textDepth = -1.00f;
+	const a3f32 textOffsetDelta = -0.08f;
+
+	// modes
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"Demo mode (%u / %u) (',' prev | next '.'): %s", demoState->demoMode + 1, demoState->demoModeCount, modeText);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"    Sub-mode (%u / %u) ('<' | '>'): %s", demoSubMode + 1, demoSubModeCount, subModeText[demoSubMode]);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"        Output (%u / %u) ('{' | '}'): %s", demoOutput + 1, demoOutputCount, outputText[demoSubMode][demoOutput]);
+
+	// pipeline mode
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"PIPELINE MODE (toggle 'p') %s", pipelineName[demoState->lightingPipelineMode]);
+	if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+	{
+		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+			"    LIGHT COUNT (toggle 'l') %d", demoState->forwardLightCount);
+		if (demoState->lightingPipelineMode == demoStatePipelineMode_forward)
+			a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+				"    FORWARD SHADING MODE ('j' | 'k') %s", forwardShadingName[demoState->forwardShadingMode]);
+		else
+			textOffset += textOffsetDelta;
+	}
+	else
+	{
+		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+			"    LIGHT COUNT (+/- 'L'/'l') %d", demoState->deferredLightCount);
+		textOffset += textOffsetDelta;
+	}
+
+	// toggles
+//	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+//		"ACTIVE CAMERA ('c' | 'v'): %d / %d", demoState->activeCamera + 1, demoStateMaxCount_cameraObject);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"GRID in scene (toggle 'g') %d | SKYBOX backdrop ('b') %d", demoState->displayGrid, demoState->displaySkybox);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"WORLD AXES (toggle 'x') %d | OBJECT AXES ('z') %d | TANGENT BASES ('B') %d", demoState->displayWorldAxes, demoState->displayObjectAxes, demoState->displayTangentBases);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"HIDDEN VOLUMES (toggle 'h') %d ", demoState->displayHiddenVolumes);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"ANIMATION updates (toggle 'm') %d", demoState->updateAnimation);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"ADDITIONAL POST-PROCESSING (toggle 'n') %d", demoState->additionalPostProcessing);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"PREVIEW POST-PROCESSING PASSES (toggle 'r') %d", demoState->previewIntermediatePostProcessing);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"PIPELINE overlay (toggle 'o') %d", demoState->displayPipeline);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"STENCIL TEST (toggle 'i') %d", demoState->stencilTest);
+
+
+	//  move down
+	textOffset = -0.5f;
+
+	// display controls
+	if (a3XboxControlIsConnected(demoState->xcontrol))
+	{
+		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+			"Xbox controller camera control: ");
+		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+			"    Left joystick = rotate | Right joystick, triggers = move");
+	}
+	else
+	{
+		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+			"Keyboard/mouse camera control: ");
+		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+			"    Left click & drag = rotate | WASDEQ = move | wheel = zoom");
+	}
+
+	// global controls
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"Toggle text display:        't' (toggle) | 'T' (alloc/dealloc) ");
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"Reload all shader programs: 'P' ****CHECK CONSOLE FOR ERRORS!**** ");
+}
+
+
+// controls for curve-drawing mode
+void a3demo_render_curve_controls(const a3_DemoState *demoState)
+{
+	// display mode info
+	const a3byte *modeText = "Curve drawing";
+
+	// text color
+	const a3vec4 col = { a3realOne, a3realZero, a3realOne, a3realOne };
+
+	// amount to offset text as each line is rendered
+	a3f32 textAlign = -0.98f;
+	a3f32 textOffset = 1.00f;
+	a3f32 textDepth = -1.00f;
+	const a3f32 textOffsetDelta = -0.08f;
+
+	// modes
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"Demo mode (%u / %u) (',' prev | next '.'): %s", demoState->demoMode + 1, demoState->demoModeCount, modeText);
+//	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+//		"    Sub-mode (%u / %u) ('<' | '>'): %s", demoSubMode + 1, demoSubModeCount, subModeText[demoSubMode]);
+//	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+//		"        Output (%u / %u) ('{' | '}'): %s", demoOutput + 1, demoOutputCount, outputText[demoSubMode][demoOutput]);
+
+	// toggles
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"GRID in scene (toggle 'g') %d", demoState->displayGrid);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"WORLD AXES (toggle 'x') %d | OBJECT AXES ('z') %d", demoState->displayWorldAxes, demoState->displayObjectAxes);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"ANIMATION updates (toggle 'm') %d", demoState->updateAnimation);
+
+
+	//  move down
+	textOffset = -0.5f;
+
+	// display controls
+	if (a3XboxControlIsConnected(demoState->xcontrol))
+	{
+		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+			"Xbox controller not supported in this mode!");
+	}
+	else
+	{
+		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+			"Keyboard/mouse camera control: ");
+		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+			"    Left click & drag = place waypoint | Right click = delete waypoint");
+	}
+
+	// global controls
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"Toggle text display:        't' (toggle) | 'T' (alloc/dealloc) ");
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"Reload all shader programs: 'P' ****CHECK CONSOLE FOR ERRORS!**** ");
+}
+
+
+// scene data (HUD)
+void a3demo_render_data(const a3_DemoState *demoState)
+{
+	// text color
+	const a3vec4 col = { a3realOne, a3realZero, a3realOne, a3realOne };
+
+	// amount to offset text as each line is rendered
+	a3f32 textAlign = -0.98f;
+	a3f32 textOffset = 1.00f;
+	a3f32 textDepth = -1.00f;
+	const a3f32 textOffsetDelta = -0.08f;
+
+	// move down
+	textOffset = +0.9f;
+
+	// display some data
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"t_render = %+.4lf ", demoState->renderTimer->totalTime);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"dt_render = %.4lf ", demoState->renderTimer->previousTick);
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"fps_actual = %.4lf ", __a3recipF64(demoState->renderTimer->previousTick));
+	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+		"fps_target = %.4lf ", (a3f64)demoState->renderTimer->ticks / demoState->renderTimer->totalTime);
+}
 
 
 //-----------------------------------------------------------------------------
@@ -170,16 +424,18 @@ void a3demo_stencilTest(const a3_DemoState *demoState)
 }
 
 
-//-----------------------------------------------------------------------------
-// RENDER
-
-void a3demo_render(const a3_DemoState *demoState)
+// sub-routine for rendering the demo state (main render pipeline)
+void a3demo_render_main(const a3_DemoState *demoState,
+	const a3ui32 demoSubMode, const a3ui32 demoOutput,
+	const a3ui32 demoSubModeCount, const a3ui32 demoOutputCount)
 {
+	// pointers
 	const a3_VertexDrawable *currentDrawable;
 	const a3_DemoStateShaderProgram *currentDemoProgram;
 	const a3_Framebuffer *writeFBO, *readFBO;
 	const a3_FramebufferDouble *writeDFBO, *readDFBO;
 
+	// indices
 	a3ui32 i, j, k;
 
 	// RGB
@@ -195,7 +451,7 @@ void a3demo_render(const a3_DemoState *demoState)
 		{ 0.5f, 0.5f, 0.5f, 1.0f },	// solid grey
 		{ 0.5f, 0.5f, 0.5f, 0.5f },	// translucent grey
 	};
-	const a3real 
+	const a3real
 		*const red = rgba4[0].v, *const green = rgba4[1].v, *const blue = rgba4[2].v,
 		*const cyan = rgba4[3].v, *const magenta = rgba4[4].v, *const yellow = rgba4[5].v,
 		*const orange = rgba4[6].v, *const skyblue = rgba4[7].v,
@@ -221,12 +477,6 @@ void a3demo_render(const a3_DemoState *demoState)
 	// current scene object being rendered, for convenience
 	const a3_DemoSceneObject *currentSceneObject, *endSceneObject;
 
-	// display mode for current pipeline
-	// ensures we don't go through the whole pipeline if not needed
-	const a3ui32 demoMode = demoState->demoMode, demoPipelineCount = demoState->demoModeCount;
-	const a3ui32 demoSubMode = demoState->demoSubMode[demoMode], demoPassCount = demoState->demoSubModeCount[demoMode];
-	const a3ui32 demoOutput = demoState->demoOutputMode[demoMode][demoSubMode], demoOutputCount = demoState->demoOutputCount[demoMode][demoSubMode];
-
 
 	// temp light data
 	a3vec4 lightPos_eye[demoStateMaxCount_lightObject];
@@ -237,8 +487,8 @@ void a3demo_render(const a3_DemoState *demoState)
 	// temp texture pointers for scene objects
 	const a3_Texture *tex_dm[] = {
 		demoState->tex_stone_dm,
-		demoState->tex_earth_dm, 
-		demoState->tex_stone_dm, 
+		demoState->tex_earth_dm,
+		demoState->tex_stone_dm,
 		demoState->tex_mars_dm,
 		demoState->tex_checker,
 	};
@@ -257,6 +507,17 @@ void a3demo_render(const a3_DemoState *demoState)
 		demoState->atlas_stone,
 		demoState->atlas_mars,
 		demoState->atlas_checker,
+	};
+
+
+	// forward shading programs
+	const a3_DemoStateShaderProgram *forwardPipelineShadingProgram[] = {
+		demoState->prog_drawPhongMulti,
+		demoState->prog_drawPhongMulti_projtex,
+		demoState->prog_drawPhongMulti_shadowmap,
+		demoState->prog_drawPhongMulti_shadowmap_projtex,
+		demoState->prog_drawPhongMulti_manip,
+		demoState->prog_drawNonPhotoMulti,
 	};
 
 
@@ -326,7 +587,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	// activate framebuffer
 	writeFBO = demoState->fbo_scene;
 	a3framebufferActivate(writeFBO);
-	
+
 	// clear buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -368,27 +629,20 @@ void a3demo_render(const a3_DemoState *demoState)
 	//	- draw
 
 	// support multiple geometry passes
-	for (i = 0, j = 1; i < j; ++i)
+	for (i = 0, j = 2; i < j; ++i)
 	{
 		// select forward algorithm
 		switch (i)
 		{
 			// forward pass
-		case 0:
+		case 0: {
 			// pipeline
 			switch (demoState->lightingPipelineMode)
 			{
 				// forward
 			case demoStatePipelineMode_forward:
 				// select program based on settings
-				if (demoState->shadowMapping && demoState->projectiveTexturing)
-					currentDemoProgram = demoState->prog_drawPhongMulti_shadowmap_projtex;
-				else if (demoState->shadowMapping)
-					currentDemoProgram = demoState->prog_drawPhongMulti_shadowmap;
-				else if (demoState->projectiveTexturing)
-					currentDemoProgram = demoState->prog_drawPhongMulti_projtex;
-				else
-					currentDemoProgram = demoState->prog_drawPhongMulti;
+				currentDemoProgram = forwardPipelineShadingProgram[demoState->forwardShadingMode];
 				a3shaderProgramActivate(currentDemoProgram->program);
 
 				// send shared data: 
@@ -446,9 +700,9 @@ void a3demo_render(const a3_DemoState *demoState)
 				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uP, 1, camera->projectionMat.mm);
 
 				// individual object requirements: 
-				//	- modelviewprojection
 				//	- modelview
 				//	- modelview for normals
+				//	- atlas transform
 				for (k = 0, currentDrawable = demoState->draw_plane,
 					currentSceneObject = demoState->planeObject, endSceneObject = demoState->teapotObject;
 					currentSceneObject <= endSceneObject;
@@ -468,15 +722,43 @@ void a3demo_render(const a3_DemoState *demoState)
 				}
 				break;
 			}
+		}	break;
 			// end geometry pass
-			break;
-
 
 			// additional geometry passes
-		case 1:
+		case 1: {
+			// draw this pass on the fourth color attachment of the active FBO
+			// this allows us to use the current depth buffer
+			const a3ui32 axesDrawBuffer[] = {
+				GL_COLOR_ATTACHMENT3,
+			};
+			glDrawBuffers(1, axesDrawBuffer);
 
+			// use axes program
+			currentDemoProgram = demoState->prog_drawTangentBasis;
+			a3shaderProgramActivate(currentDemoProgram->program);
+
+			// send shared data: 
+			//	- projection matrix
+			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uP, 1, camera->projectionMat.mm);
+
+			// individual object requirements: 
+			//	- modelview
+			for (k = 0, currentDrawable = demoState->draw_plane,
+				currentSceneObject = demoState->planeObject, endSceneObject = demoState->teapotObject;
+				currentSceneObject <= endSceneObject;
+				++k, ++currentDrawable, ++currentSceneObject)
+			{
+				// send data
+				a3real4x4Product(modelViewMat.m, cameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
+				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
+
+				// draw
+				a3vertexDrawableActivateAndRender(currentDrawable);
+			}
+
+		}	break;
 			// end geometry pass
-			break;
 		}
 	}
 
@@ -585,7 +867,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	// MIDGROUND: SCENE
 	// draw FSQ with texturing or some compositing/post effect shader
 	// this is also considered the first post-processing pass
-	
+
 	// activate program
 	currentDemoProgram = pipelineCompositeProgram[demoState->lightingPipelineMode];
 	a3shaderProgramActivate(currentDemoProgram->program);
@@ -727,8 +1009,8 @@ void a3demo_render(const a3_DemoState *demoState)
 
 		// is it possible to remove redundant code, e.g. program already activated?
 		//	(its actual behavior can be modified by the uniforms!)
-	//	currentDemoProgram = demoState->prog_drawBlurGaussian;
-	//	a3shaderProgramActivate(currentDemoProgram->program);
+		//	currentDemoProgram = demoState->prog_drawBlurGaussian;
+		//	a3shaderProgramActivate(currentDemoProgram->program);
 		pixelSzInv.x = -a3recip(readDFBO->frameWidth);	// a3realZero;
 		pixelSzInv.y = +a3recip(readDFBO->frameHeight);
 		a3shaderUniformSendFloat(a3unif_vec2, currentDemoProgram->uPixelSz, 1, pixelSzInv.v);
@@ -939,7 +1221,7 @@ void a3demo_render(const a3_DemoState *demoState)
 		break;
 	}
 
-	
+
 	// final display: activate desired final program and draw FSQ
 	if (demoState->additionalPostProcessing && demoSubMode != demoStateRenderPass_shadow)
 	{
@@ -984,6 +1266,21 @@ void a3demo_render(const a3_DemoState *demoState)
 		break;
 	}
 
+
+	// tangent bases
+	glEnable(GL_BLEND);
+	if (demoState->displayTangentBases)
+	{
+		currentDrawable = demoState->draw_unitquad;
+		currentDemoProgram = demoState->prog_drawTexture;
+		a3shaderProgramActivate(currentDemoProgram->program);
+		a3framebufferBindColorTexture(demoState->fbo_scene, a3tex_unit00, 3);	// axes output
+		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, a3identityMat4.mm);
+		a3vertexDrawableActivateAndRender(currentDrawable);
+	}
+	glDisable(GL_BLEND);
+
+
 	// hidden volumes
 	if (demoState->displayHiddenVolumes)
 	{
@@ -998,10 +1295,9 @@ void a3demo_render(const a3_DemoState *demoState)
 		a3vertexDrawableActivateAndRender(currentDrawable);
 	}
 
+
 	// superimpose axes
 	// draw coordinate axes in front of everything
-	glDisable(GL_DEPTH_TEST);
-
 	currentDemoProgram = demoState->prog_drawColorAttrib;
 	a3shaderProgramActivate(currentDemoProgram->program);
 	currentDrawable = demoState->draw_axes;
@@ -1020,9 +1316,9 @@ void a3demo_render(const a3_DemoState *demoState)
 	if (demoState->displayObjectAxes)
 	{
 		// scene objects
-		for (k = 0, 
-			currentSceneObject = demoState->planeObject, endSceneObject = demoState->teapotObject; 
-			currentSceneObject <= endSceneObject; 
+		for (k = 0,
+			currentSceneObject = demoState->planeObject, endSceneObject = demoState->teapotObject;
+			currentSceneObject <= endSceneObject;
 			++k, ++currentSceneObject)
 		{
 			a3real4x4Product(modelViewProjectionMat.m, camera->viewProjectionMat.m, currentSceneObject->modelMat.m);
@@ -1036,240 +1332,215 @@ void a3demo_render(const a3_DemoState *demoState)
 		a3vertexDrawableRenderActive();
 	}
 
+
 	// pipeline
 	if (demoState->displayPipeline)
 	{
 		// ****TO-DO (optional): prepare and display pipeline overlay
 
 	}
+}
 
-	glEnable(GL_DEPTH_TEST);
-	
+
+// sub-routine for rendering the demo state (main render pipeline)
+void a3demo_render_curve(const a3_DemoState *demoState)
+{
+	// pointers
+	const a3_VertexDrawable *currentDrawable;
+	const a3_DemoStateShaderProgram *currentDemoProgram;
+	const a3_Framebuffer *writeFBO, *readFBO;
+
+	// indices
+//	a3ui32 i, j, k;
+	a3ui32 k;
+
+	// final model matrix and full matrix stack
+	a3mat4 modelViewProjectionMat = a3identityMat4;// , modelViewMat = a3identityMat4;
+
+	// camera used for rendering
+	const a3_DemoCamera *camera = demoState->curveCamera;
+	const a3_DemoSceneObject *cameraObject = camera->sceneObject;
+
+	// current scene object being rendered, for convenience
+	const a3_DemoSceneObject *currentSceneObject, *endSceneObject;
+
+	// colors
+	const a3vec4 curveColor = { a3realOne, a3realHalf, a3realZero, a3realOne };
+	const a3vec4 handleColor = { a3realZero, a3realHalf, a3realOne, a3realOne };
+
+
+	// activate scene fbo
+	writeFBO = demoState->fbo_scene;
+	a3framebufferActivate(writeFBO);
+
+	// clear
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// draw grid aligned to world
+	if (demoState->displayGrid)
+	{
+		currentDemoProgram = demoState->prog_drawColorUnif;
+		a3shaderProgramActivate(currentDemoProgram->program);
+		currentDrawable = demoState->draw_grid;
+		modelViewProjectionMat = camera->viewProjectionMat;
+		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+		a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, a3oneVec4.v);
+		a3vertexDrawableActivateAndRender(currentDrawable);
+	}
+
+
+	// draw curve follower
+	currentDemoProgram = demoState->prog_drawTexture;
+	a3shaderProgramActivate(currentDemoProgram->program);
+	currentSceneObject = demoState->curveFollowObject;
+	currentDrawable = demoState->draw_sphere;
+	a3real4x4Product(modelViewProjectionMat.m, camera->viewProjectionMat.m, currentSceneObject->modelMat.m);
+	a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+	a3textureActivate(demoState->tex_checker, a3tex_unit00);
+	a3vertexDrawableActivateAndRender(currentDrawable);
+
+
+	// draw curve segments
+	currentDrawable = demoState->dummyDrawable;
+	a3vertexDrawableActivate(currentDrawable);
+
+	currentDemoProgram = demoState->prog_drawCurveSegment;
+	a3shaderProgramActivate(currentDemoProgram->program);
+	modelViewProjectionMat = camera->viewProjectionMat;
+	a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+	a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, curveColor.v);
+	a3shaderUniformBufferActivate(demoState->ubo_curveWaypoint, 0);
+	a3shaderUniformBufferActivate(demoState->ubo_curveHandle, 1);
+	if (demoState->curveWaypointCount > 0)
+		a3vertexDrawableRenderActiveInstanced(demoState->curveWaypointCount - 1);
+
+	currentDemoProgram = demoState->prog_drawCurveHandles;
+	a3shaderProgramActivate(currentDemoProgram->program);
+	modelViewProjectionMat = camera->viewProjectionMat;
+	a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+	a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, handleColor.v);
+	a3shaderUniformBufferActivate(demoState->ubo_curveWaypoint, 0);
+	a3shaderUniformBufferActivate(demoState->ubo_curveHandle, 1);
+	a3vertexDrawableRenderActiveInstanced(demoState->curveWaypointCount);
+
+
+	// display scene fbo
+	a3framebufferDeactivateSetViewport(a3fbo_depthDisable,
+		-demoState->frameBorder, -demoState->frameBorder, demoState->frameWidth, demoState->frameHeight);
+	readFBO = demoState->fbo_scene;
+	a3framebufferBindColorTexture(readFBO, a3tex_unit00, 0);
+
+	// simply display texture
+	glDisable(GL_BLEND);
+	currentDrawable = demoState->draw_unitquad;
+	currentDemoProgram = demoState->prog_drawTexture;
+	a3shaderProgramActivate(currentDemoProgram->program);
+	a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, a3identityMat4.mm);
+	a3vertexDrawableActivateAndRender(currentDrawable);
+
+
+	// superimpose axes
+	// draw coordinate axes in front of everything
+	currentDemoProgram = demoState->prog_drawColorAttrib;
+	a3shaderProgramActivate(currentDemoProgram->program);
+	currentDrawable = demoState->draw_axes;
+	a3vertexDrawableActivate(currentDrawable);
+
+	// center of world from current viewer
+	// also draw other viewer/viewer-like object in scene
+	if (demoState->displayWorldAxes)
+	{
+		modelViewProjectionMat = camera->viewProjectionMat;
+		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+		a3vertexDrawableRenderActive();
+	}
+
+	// individual objects
+	if (demoState->displayObjectAxes)
+	{
+		// scene objects
+		for (k = 0,
+			currentSceneObject = demoState->curveFollowObject, endSceneObject = demoState->curveFollowObject;
+			currentSceneObject <= endSceneObject;
+			++k, ++currentSceneObject)
+		{
+			a3real4x4Product(modelViewProjectionMat.m, camera->viewProjectionMat.m, currentSceneObject->modelMat.m);
+			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+			a3vertexDrawableRenderActive();
+		}
+
+		// other objects
+		a3real4x4Product(modelViewProjectionMat.m, camera->viewProjectionMat.m, demoState->projectorLight->sceneObject->modelMat.m);
+		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+		a3vertexDrawableRenderActive();
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+// RENDER
+
+void a3demo_render(const a3_DemoState *demoState)
+{
+	// display mode for current pipeline
+	// ensures we don't go through the whole pipeline if not needed
+	const a3ui32 demoMode = demoState->demoMode, demoModeCount = demoState->demoModeCount;
+	const a3ui32 demoSubMode = demoState->demoSubMode[demoMode], demoSubModeCount = demoState->demoSubModeCount[demoMode];
+	const a3ui32 demoOutput = demoState->demoOutputMode[demoMode][demoSubMode], demoOutputCount = demoState->demoOutputCount[demoMode][demoSubMode];
+
+
+	// choose render sub-routine for the current mode
+	switch (demoMode)
+	{
+		// main render pipeline
+	case 0:
+		a3demo_render_main(demoState, demoSubMode, demoOutput, demoSubModeCount, demoOutputCount);
+		break;
+
+		// curve drawing
+	case 1:
+		a3demo_render_curve(demoState);
+		break;
+	}
 
 
 	// deactivate things
 	a3vertexDrawableDeactivate();
 	a3shaderProgramDeactivate();
+	a3framebufferDeactivateSetViewport(a3fbo_depthDisable, 0, 0, demoState->windowWidth, demoState->windowHeight);
 	a3textureDeactivate(a3tex_unit00);
 
 
 	// text
 	if (demoState->textInit)
 	{
-		// set viewport to window size and disable depth
-		glViewport(0, 0, demoState->windowWidth, demoState->windowHeight);
-		glDisable(GL_DEPTH_TEST);
-
 		// choose text render mode
 		switch (demoState->textMode)
 		{
+			// controls for current mode
 		case 1:
-			a3demo_render_controls(demoState);
+			// choose text sub-routine based on pipeline
+			switch (demoMode)
+			{
+				// main render pipeline
+			case 0:
+				a3demo_render_main_controls(demoState, 
+					demoSubMode, demoOutput, demoSubModeCount, demoOutputCount);
+				break;
+
+				// curve drawing
+			case 1:
+				a3demo_render_curve_controls(demoState);
+				break;
+			}
 			break;
+
+			// general data
 		case 2: 
 			a3demo_render_data(demoState);
 			break;
 		}
-
-		// re-enable depth
-		glEnable(GL_DEPTH_TEST);
 	}
-}
-
-
-//-----------------------------------------------------------------------------
-// RENDER TEXT
-
-// controls
-void a3demo_render_controls(const a3_DemoState *demoState)
-{
-	// display mode info
-	const a3byte *modeText[demoStateMaxModes] = {
-		"Lighting & post-processing pipeline",
-	};
-	const a3byte *subModeText[demoStateMaxModes][demoStateMaxSubModes] = {
-		{
-			"Scene",
-			"Phong light volumes",
-			"Full composite (skybox, lighting, UI)",
-			"Bright pass 1/2",
-			"Blur pass H 1/2",
-			"Blur pass V 1/2",
-			"Bright pass 1/4",
-			"Blur pass H 1/4",
-			"Blur pass V 1/4",
-			"Bright pass 1/8",
-			"Blur pass H 1/8",
-			"Blur pass V 1/8",
-			"Blending (bloom composite)",
-			"Shadow map (supplementary)",
-		},
-	};
-	const a3byte *outputText[demoStateMaxModes][demoStateMaxSubModes][demoStateMaxOutputModes] = {
-		{
-			{
-				"Color buffer 0 (scene): position g-buffer or forward shading",
-				"Color buffer 1 (scene): normal g-buffer",
-				"Color buffer 2 (scene): texcoord g-buffer",
-				"Depth buffer (scene)",
-			},
-			{
-				"Color buffer 0 (lighting): diffuse shading",
-				"Color buffer 1 (lighting): specular shading",
-			},
-			{
-				"Color buffer (compositing)",
-			},
-			{
-				"Color buffer (post-processing)",
-			},
-			{
-				"Color buffer (post-processing)",
-			},
-			{
-				"Color buffer (post-processing)",
-			},
-			{
-				"Color buffer (post-processing)",
-			},
-			{
-				"Color buffer (post-processing)",
-			},
-			{
-				"Color buffer (post-processing)",
-			},
-			{
-				"Color buffer (post-processing)",
-			},
-			{
-				"Color buffer (post-processing)",
-			},
-			{
-				"Color buffer (post-processing)",
-			},
-			{
-				"Color buffer (post-processing)",
-			},
-			{
-				"Depth buffer (shadow map)",
-			},
-		},
-	};
-	const a3byte *pipelineName[] = {
-		"Forward lighting",
-		"Deferred shading",
-		"Deferred lighting",
-	};
-
-	// current modes
-	const a3ui32 demoMode = demoState->demoMode, demoPipelineCount = demoState->demoModeCount;
-	const a3ui32 demoSubMode = demoState->demoSubMode[demoMode], demoPassCount = demoState->demoSubModeCount[demoMode];
-	const a3ui32 demoOutput = demoState->demoOutputMode[demoMode][demoSubMode], demoOutputCount = demoState->demoOutputCount[demoMode][demoSubMode];
-
-	// text color
-	const a3vec4 col = { a3realOne, a3realZero, a3realOne, a3realOne };
-
-	// amount to offset text as each line is rendered
-	a3f32 textAlign = -0.98f;
-	a3f32 textOffset = 1.00f;
-	a3f32 textDepth = -1.00f;
-	const a3f32 textOffsetDelta = -0.08f;
-
-	// modes
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"Demo mode (%u / %u) (',' prev | next '.'): %s", demoMode + 1, demoPipelineCount, modeText[demoMode]);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"    Sub-mode (%u / %u) ('<' | '>'): %s", demoSubMode + 1, demoPassCount, subModeText[demoMode][demoSubMode]);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"        Output (%u / %u) ('{' | '}'): %s", demoOutput + 1, demoOutputCount, outputText[demoMode][demoSubMode][demoOutput]);
-
-	// toggles
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"ACTIVE CAMERA ('c' | 'v'): %d / %d", demoState->activeCamera + 1, demoStateMaxCount_cameraObject);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"GRID in scene (toggle 'g') %d | SKYBOX backdrop ('b') %d", demoState->displayGrid, demoState->displaySkybox);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"WORLD AXES (toggle 'x') %d | OBJECT AXES ('z') %d", demoState->displayWorldAxes, demoState->displayObjectAxes);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"HIDDEN VOLUMES (toggle 'h') %d ", demoState->displayHiddenVolumes);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"ANIMATION updates (toggle 'm') %d", demoState->updateAnimation);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"ADDITIONAL POST-PROCESSING (toggle 'n') %d", demoState->additionalPostProcessing);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"PREVIEW POST-PROCESSING PASSES (toggle 'r') %d", demoState->previewIntermediatePostProcessing);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"PIPELINE overlay (toggle 'o') %d", demoState->displayPipeline);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"STENCIL TEST (toggle 'i') %d", demoState->stencilTest);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"PIPELINE MODE (toggle 'p') %s", pipelineName[demoState->lightingPipelineMode]);
-
-	if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
-	{
-		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-			"    LIGHT COUNT (toggle 'l') %d", demoState->forwardLightCount);
-		if (demoState->lightingPipelineMode == demoStatePipelineMode_forward)
-			a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-				"PROJECTIVE (toggle 'j') %d | SHADOW MAPPING (toggle 'k') %d", demoState->projectiveTexturing, demoState->shadowMapping);
-	}
-	else
-	{
-		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-			"    LIGHT COUNT (+/- 'L'/'l') %d", demoState->deferredLightCount);
-	}
-
-
-	//  move down
-	textOffset = -0.5f;
-
-	// display controls
-	if (a3XboxControlIsConnected(demoState->xcontrol))
-	{
-		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-			"Xbox controller camera control: ");
-		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-			"    Left joystick = rotate | Right joystick, triggers = move");
-	}
-	else
-	{
-		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-			"Keyboard/mouse camera control: ");
-		a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-			"    Left click & drag = rotate | WASDEQ = move | wheel = zoom");
-	}
-
-	// global controls
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"Toggle text display:        't' (toggle) | 'T' (alloc/dealloc) ");
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"Reload all shader programs: 'P' ****CHECK CONSOLE FOR ERRORS!**** ");
-}
-
-// scene data (HUD)
-void a3demo_render_data(const a3_DemoState *demoState)
-{
-	// text color
-	const a3vec4 col = { a3realOne, a3realZero, a3realOne, a3realOne };
-
-	// amount to offset text as each line is rendered
-	a3f32 textAlign = -0.98f;
-	a3f32 textOffset = 1.00f;
-	a3f32 textDepth = -1.00f;
-	const a3f32 textOffsetDelta = -0.08f;
-
-	// move down
-	textOffset = +0.9f;
-
-	// display some data
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"t_render = %+.4lf ", demoState->renderTimer->totalTime);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"dt_render = %.4lf ", demoState->renderTimer->previousTick);
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"fps_actual = %.4lf ", __a3recipF64(demoState->renderTimer->previousTick));
-	a3textDraw(demoState->text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"fps_target = %.4lf ", (a3f64)demoState->renderTimer->ticks / demoState->renderTimer->totalTime);
 }
 
 
