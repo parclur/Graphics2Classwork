@@ -252,6 +252,27 @@ void a3demo_update_main(a3_DemoState *demoState, a3f64 dt)
 	a3demo_applyScale_internal(demoState->cylinderObject, scaleMat.m);
 	a3demo_applyScale_internal(demoState->torusObject, scaleMat.m);
 	a3demo_applyScale_internal(demoState->teapotObject, scaleMat.m);
+
+
+	// simple animation controller
+	if (demoState->targetCount && demoState->updateAnimation)
+	{
+		// time step for controller
+		demoState->targetTime += (a3real)dt;
+
+		// if we surpass the time for one target
+		if (demoState->targetTime >= demoState->targetDuration)
+		{
+			demoState->targetTime -= demoState->targetDuration;
+			demoState->targetIndexPrev = demoState->targetIndex;
+			demoState->targetIndex = demoState->targetIndexNext;
+			demoState->targetIndexNext = demoState->targetIndexNextNext;
+			demoState->targetIndexNextNext = (demoState->targetIndexNextNext + 1) % demoState->targetCount;
+		}
+
+		// in any case calculate interpolation param
+		demoState->targetParam = demoState->targetTime * demoState->targetDurationInv;
+	}
 }
 
 

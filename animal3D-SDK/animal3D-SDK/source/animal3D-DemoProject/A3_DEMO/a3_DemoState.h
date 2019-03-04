@@ -83,7 +83,9 @@ extern "C"
 
 		demoStateMaxCount_uniformBuffer = 2 + 3 * demoStateMaxCount_lightVolumeBlock,
 
+		// misc
 		demoStateMaxCount_curveWaypoint = 32,
+		demoStateMaxCount_morphTargetPerModel = 5,
 	};
 
 	// additional counters for demo modes
@@ -141,6 +143,7 @@ extern "C"
 		demoStateForwardPipelineMode_Phong_shadowmap,
 		demoStateForwardPipelineMode_Phong_shadowmap_projective,
 		demoStateForwardPipelineMode_Phong_manip,
+		demoStateForwardPipelineMode_Phong_morph,
 		demoStateForwardPipelineMode_nonphoto,
 	};
 
@@ -205,7 +208,7 @@ extern "C"
 		a3boolean updateAnimation;
 
 		// lighting modes
-		a3ui32 forwardShadingMode;
+		a3ui32 forwardShadingMode, forwardShadingModeCount;
 
 		// grid properties
 		a3mat4 gridTransform;
@@ -237,6 +240,17 @@ extern "C"
 		a3ui32 curveSegmentIndex;
 		a3real curveSegmentDuration, curveSegmentDurationInv;
 		a3real curveSegmentTime, curveSegmentParam;
+
+		// morph targets
+		a3ui32 targetCount;
+		union {
+			a3ui32 targetIndexList[4];
+			struct {
+				a3ui32 targetIndex, targetIndexNext, targetIndexNextNext, targetIndexPrev;
+			};
+		};
+		a3real targetDuration, targetDurationInv;
+		a3real targetTime, targetParam;
 
 
 		//---------------------------------------------------------------------
@@ -323,7 +337,8 @@ extern "C"
 					vao_position_color[1],						// VAO for vertex format with position and color
 					vao_position_texcoord[1],					// VAO for vertex format with position and UVs
 					vao_position_texcoord_normal[1],			// VAO for vertex format with position, UVs and normal
-					vao_tangentBasis[1];						// VAO for vertex format with full tangent basis
+					vao_tangentBasis[1],						// VAO for vertex format with full tangent basis
+					vao_tangentBasis_morph5[1];					// VAO for vertex format with multiple partial tangent bases for morphing
 			};
 		};
 
@@ -344,6 +359,8 @@ extern "C"
 					draw_cylinder[1],							// procedural cylinder
 					draw_torus[1],								// procedural torus
 					draw_teapot[1];								// can't not have a Utah teapot
+				a3_VertexDrawable
+					draw_teapot_morph[1];						// morphing teapot model
 			};
 		};
 
@@ -384,6 +401,9 @@ extern "C"
 					prog_drawTangentBasis[1],					// render complete tangent basis as lines
 					prog_drawCurveSegment[1],					// draw a curve segment between waypoints
 					prog_drawCurveHandles[1];					// draw curve waypoints/handles
+				a3_DemoStateShaderProgram
+					prog_drawPhongMulti_morph[1],				// Phong shading on a morphing object
+					prog_drawTangentBasis_morph[1];				// tangent basis for morphing object
 			};
 		};
 

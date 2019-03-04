@@ -199,6 +199,7 @@ void a3demo_render_main_controls(const a3_DemoState *demoState,
 		"Phong shading + shadow mapping",
 		"Phong shading + shadow + projective",
 		"Phong shading + geometry manipulation",
+		"Phong shading + morph target animation",
 		"Non-photorealistic shading",
 	};
 
@@ -509,6 +510,16 @@ void a3demo_render_main(const a3_DemoState *demoState,
 		demoState->atlas_checker,
 	};
 
+	// temp drawable pointers
+	const a3_VertexDrawable *drawable[] = {
+		demoState->draw_plane,
+		demoState->draw_sphere,
+		demoState->draw_cylinder,
+		demoState->draw_torus,
+		demoState->forwardShadingMode != demoStateForwardPipelineMode_Phong_morph ? 
+			demoState->draw_teapot : demoState->draw_teapot_morph,
+	};
+
 
 	// forward shading programs
 	const a3_DemoStateShaderProgram *forwardPipelineShadingProgram[] = {
@@ -517,6 +528,7 @@ void a3demo_render_main(const a3_DemoState *demoState,
 		demoState->prog_drawPhongMulti_shadowmap,
 		demoState->prog_drawPhongMulti_shadowmap_projtex,
 		demoState->prog_drawPhongMulti_manip,
+		demoState->prog_drawPhongMulti_morph,
 		demoState->prog_drawNonPhotoMulti,
 	};
 
@@ -560,14 +572,15 @@ void a3demo_render_main(const a3_DemoState *demoState,
 	a3shaderProgramActivate(currentDemoProgram->program);
 
 	glCullFace(GL_FRONT);
-	for (k = 0, currentDrawable = demoState->draw_plane,
+	for (k = 0,
 		currentSceneObject = demoState->planeObject, endSceneObject = demoState->teapotObject;
 		currentSceneObject <= endSceneObject;
-		++k, ++currentDrawable, ++currentSceneObject)
+		++k, ++currentSceneObject)
 	{
 		// calculate and use projector MVP, save for later (no bias yet)
 		a3real4x4Product(modelViewProjectionBiasMat[k].m, demoState->projectorLight->viewProjectionMat.m, currentSceneObject->modelMat.m);
 		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionBiasMat[k].mm);
+		currentDrawable = drawable[k];
 		a3vertexDrawableActivateAndRender(currentDrawable);
 	}
 	glCullFace(GL_BACK);
@@ -649,6 +662,7 @@ void a3demo_render_main(const a3_DemoState *demoState,
 				//	- projection matrix
 				//	- light data
 				//	- activate shared textures including atlases if using
+				//	- shared animation data
 				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uP, 1, camera->projectionMat.mm);
 				a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uLightCt, 1, &demoState->forwardLightCount);
 				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uLightPos, demoState->forwardLightCount, lightPos_eye->v);
@@ -659,15 +673,21 @@ void a3demo_render_main(const a3_DemoState *demoState,
 				a3textureActivate(demoState->tex_ramp_sm, a3tex_unit05);
 				a3textureActivate(demoState->tex_earth_dm, a3tex_unit06);
 				a3framebufferBindDepthTexture(demoState->fbo_shadowmap, a3tex_unit07);
+				if (demoState->forwardShadingMode == demoStateForwardPipelineMode_Phong_morph)
+				{
+					a3shaderUniformSendInt(a3unif_vec4, currentDemoProgram->uIndex, 1, demoState->targetIndexList);
+					a3shaderUniformSendFloat(a3unif_single, currentDemoProgram->uTime, 1, &demoState->targetParam);
+				}
 
 				// individual object requirements: 
 				//	- modelviewprojection
 				//	- modelview
 				//	- modelview for normals
-				for (k = 0, currentDrawable = demoState->draw_plane,
+				//	- per-object animation data
+				for (k = 0,
 					currentSceneObject = demoState->planeObject, endSceneObject = demoState->teapotObject;
 					currentSceneObject <= endSceneObject;
-					++k, ++currentDrawable, ++currentSceneObject)
+					++k, ++currentSceneObject)
 				{
 					// send data
 					a3real4x4Product(modelViewMat.m, cameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
@@ -684,6 +704,7 @@ void a3demo_render_main(const a3_DemoState *demoState,
 					a3textureActivate(tex_sm[k], a3tex_unit01);
 
 					// draw
+					currentDrawable = drawable[k];
 					a3vertexDrawableActivateAndRender(currentDrawable);
 				}
 				break;
@@ -697,16 +718,23 @@ void a3demo_render_main(const a3_DemoState *demoState,
 
 				// send shared data: 
 				//	- projection matrix
+				//	- shared animation data
 				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uP, 1, camera->projectionMat.mm);
+				if (demoState->forwardShadingMode == demoStateForwardPipelineMode_Phong_morph)
+				{
+					a3shaderUniformSendInt(a3unif_vec4, currentDemoProgram->uIndex, 1, demoState->targetIndexList);
+					a3shaderUniformSendFloat(a3unif_single, currentDemoProgram->uTime, 1, &demoState->targetParam);
+				}
 
 				// individual object requirements: 
 				//	- modelview
 				//	- modelview for normals
 				//	- atlas transform
-				for (k = 0, currentDrawable = demoState->draw_plane,
+				//	- per-object animation data
+				for (k = 0,
 					currentSceneObject = demoState->planeObject, endSceneObject = demoState->teapotObject;
 					currentSceneObject <= endSceneObject;
-					++k, ++currentDrawable, ++currentSceneObject)
+					++k, ++currentSceneObject)
 				{
 					// send data
 					a3real4x4Product(modelViewMat.m, cameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
@@ -718,6 +746,7 @@ void a3demo_render_main(const a3_DemoState *demoState,
 					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uAtlas, 1, atlasTransformPtr[k]->mm);
 
 					// draw
+					currentDrawable = drawable[k];
 					a3vertexDrawableActivateAndRender(currentDrawable);
 				}
 				break;
@@ -735,25 +764,34 @@ void a3demo_render_main(const a3_DemoState *demoState,
 			glDrawBuffers(1, axesDrawBuffer);
 
 			// use axes program
-			currentDemoProgram = demoState->prog_drawTangentBasis;
+			currentDemoProgram = demoState->forwardShadingMode != demoStateForwardPipelineMode_Phong_morph ? 
+				demoState->prog_drawTangentBasis : demoState->prog_drawTangentBasis_morph;
 			a3shaderProgramActivate(currentDemoProgram->program);
 
 			// send shared data: 
 			//	- projection matrix
+			//	- shared animation data
 			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uP, 1, camera->projectionMat.mm);
+			if (demoState->forwardShadingMode == demoStateForwardPipelineMode_Phong_morph)
+			{
+				a3shaderUniformSendInt(a3unif_vec4, currentDemoProgram->uIndex, 1, demoState->targetIndexList);
+				a3shaderUniformSendFloat(a3unif_single, currentDemoProgram->uTime, 1, &demoState->targetParam);
+			}
 
 			// individual object requirements: 
 			//	- modelview
-			for (k = 0, currentDrawable = demoState->draw_plane,
+			//	- per-object animation data
+			for (k = 0,
 				currentSceneObject = demoState->planeObject, endSceneObject = demoState->teapotObject;
 				currentSceneObject <= endSceneObject;
-				++k, ++currentDrawable, ++currentSceneObject)
+				++k, ++currentSceneObject)
 			{
 				// send data
 				a3real4x4Product(modelViewMat.m, cameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
 				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
 
 				// draw
+				currentDrawable = drawable[k];
 				a3vertexDrawableActivateAndRender(currentDrawable);
 			}
 
