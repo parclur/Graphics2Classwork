@@ -89,6 +89,13 @@ inline a3real4x4r a3demo_setAtlasTransform_internal(a3real4x4p m_out,
 // utility to load geometry
 void a3demo_loadGeometry(a3_DemoState *demoState)
 {
+	// tmp descriptor for loaded model
+	typedef struct a3_TAG_DEMOSTATELOADEDMODEL {
+		const a3byte *filePath;
+		const a3real *transform;
+		a3_ModelLoaderFlag flag;
+	} a3_DemoStateLoadedModel;
+
 	// static model transformations
 	static const a3mat4 downscale20x = {
 		+0.05f, 0.0f, 0.0f, 0.0f,
@@ -103,26 +110,34 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	a3_VertexDrawable *currentDrawable;
 	a3ui32 sharedVertexStorage = 0, sharedIndexStorage = 0;
 	a3ui32 numVerts = 0;
-	a3ui32 i;
+	a3ui32 i, j;
 
 
 	// file streaming (if requested)
 	a3_FileStream fileStream[1] = { 0 };
-	const a3byte *const geometryStream = "./data/geom_data_gpro_curves.dat";
+	const a3byte *const geometryStream = "./data/geom_data_gpro_morphing.dat";
 
 	// geometry data
 	a3_GeometryData displayShapesData[4] = { 0 };
 	a3_GeometryData hiddenShapesData[1] = { 0 };
 	a3_GeometryData proceduralShapesData[4] = { 0 };
 	a3_GeometryData loadedModelsData[1] = { 0 };
+	a3_GeometryData morphTargetData[1][demoStateMaxCount_morphTargetPerModel] = { 0 };
 	const a3ui32 displayShapesCount = sizeof(displayShapesData) / sizeof(a3_GeometryData);
 	const a3ui32 hiddenShapesCount = sizeof(hiddenShapesData) / sizeof(a3_GeometryData);
 	const a3ui32 proceduralShapesCount = sizeof(proceduralShapesData) / sizeof(a3_GeometryData);
 	const a3ui32 loadedModelsCount = sizeof(loadedModelsData) / sizeof(a3_GeometryData);
+	const a3ui32 morphTargetCount = sizeof(morphTargetData) / sizeof(a3_GeometryData);
+	const a3ui32 morphModelsCount = morphTargetCount / demoStateMaxCount_morphTargetPerModel;
 
 	// common index format
 	a3_IndexFormatDescriptor sceneCommonIndexFormat[1] = { 0 };
 	a3ui32 bufferOffset, *const bufferOffsetPtr = &bufferOffset;
+
+	// vertex format and descriptors for morphing models
+	a3_VertexFormatDescriptor morphVertexFormat[1] = { 0 };
+	a3_VertexAttributeDescriptor morphVertexAttrib[a3attrib_nameMax] = { 0 };
+	a3_VertexAttributeDataDescriptor morphVertexAttribData[a3attrib_nameMax] = { 0 };
 
 
 	// procedural scene objects
@@ -147,6 +162,10 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		for (i = 0; i < loadedModelsCount; ++i)
 			a3fileStreamReadObject(fileStream, loadedModelsData + i, (a3_FileStreamReadFunc)a3geometryLoadDataBinary);
 
+		// morphing model objects
+		for (i = 0; i < morphTargetCount; ++i)
+			a3fileStreamReadObject(fileStream, morphTargetData + i, (a3_FileStreamReadFunc)a3geometryLoadDataBinary);
+
 		// done
 		a3fileStreamClose(fileStream);
 	}
@@ -157,15 +176,19 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		a3_ProceduralGeometryDescriptor displayShapes[4] = { a3geomShape_none };
 		a3_ProceduralGeometryDescriptor hiddenShapes[1] = { a3geomShape_none };
 		a3_ProceduralGeometryDescriptor proceduralShapes[4] = { a3geomShape_none };
-		const a3byte *loadedShapesFile[1] = {
-			"../../../../resource/obj/teapot/teapot.obj",
+		const a3_DemoStateLoadedModel loadedShapes[1] = {
+			{ "../../../../resource/obj/teapot/teapot.obj", downscale20x.mm, a3model_calculateVertexTangents }
 		};
-		const a3_ModelLoaderFlag loadedShapesFlag[1] = {
-			a3model_calculateVertexTangents,
+		const a3_DemoStateLoadedModel morphShapes[1][demoStateMaxCount_morphTargetPerModel] = {
+			{
+				{ "../../../../resource/obj/teapot_morph/teapot.obj", downscale20x.mm, a3model_calculateVertexTangents },
+				{ "../../../../resource/obj/teapot_morph/teapot0.obj", downscale20x.mm, a3model_calculateVertexTangents },
+				{ "../../../../resource/obj/teapot_morph/teapot1.obj", downscale20x.mm, a3model_calculateVertexTangents },
+				{ "../../../../resource/obj/teapot_morph/teapot2.obj", downscale20x.mm, a3model_calculateVertexTangents },
+				{ "../../../../resource/obj/teapot_morph/teapot3.obj", downscale20x.mm, a3model_calculateVertexTangents },
+			},
 		};
-		const a3real *loadedShapesTransform[1] = {
-			downscale20x.mm,
-		};
+
 		const a3ubyte lightVolumeSlices = 8, lightVolumeStacks = 6;
 		const a3real lightVolumeRadius = a3realOne;
 
@@ -206,13 +229,45 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		// objects loaded from mesh files
 		for (i = 0; i < loadedModelsCount; ++i)
 		{
-			a3modelLoadOBJ(loadedModelsData + i, loadedShapesFile[i], loadedShapesFlag[i], loadedShapesTransform[i]);
+			a3modelLoadOBJ(loadedModelsData + i, loadedShapes[i].filePath, loadedShapes[i].flag, loadedShapes[i].transform);
 			a3fileStreamWriteObject(fileStream, loadedModelsData + i, (a3_FileStreamWriteFunc)a3geometrySaveDataBinary);
 		}
+
+		// morphing objects loaded from mesh files
+		for (i = 0; i < morphModelsCount; ++i)
+			for (j = 0; j < demoStateMaxCount_morphTargetPerModel; ++j)
+			{
+				a3modelLoadOBJ(morphTargetData[i] + j, morphShapes[i][j].filePath, morphShapes[i][j].flag, morphShapes[i][j].transform);
+				a3fileStreamWriteObject(fileStream, morphTargetData[i] + j, (a3_FileStreamWriteFunc)a3geometrySaveDataBinary);
+			}
 		
 		// done
 		a3fileStreamClose(fileStream);
 	}
+
+
+	// manually set up additional vertex formats (e.g. morphing models)
+	// manually set up vertex format data (e.g. pull data from morphing models)
+	//	- position, normal, tangent x5; last one is texcoord
+	//	- keep like attributes in sequence so they can be read as array in VS
+	for (i = 0, j = demoStateMaxCount_morphTargetPerModel; i < j; ++i)
+	{
+		// attrib descriptors
+		a3vertexAttribCreateDescriptor(morphVertexAttrib + i, (a3_VertexAttributeName)(i), a3attrib_vec3);
+		a3vertexAttribCreateDescriptor(morphVertexAttrib + i + j, (a3_VertexAttributeName)(i + j), a3attrib_vec3);
+		a3vertexAttribCreateDescriptor(morphVertexAttrib + i + j * 2, (a3_VertexAttributeName)(i + j * 2), a3attrib_vec3);
+
+		// data descriptors
+		a3vertexAttribDataCreateDescriptor(morphVertexAttribData + i, (a3_VertexAttributeName)(i), morphTargetData[0][i].attribData[a3attrib_geomPosition]);
+		a3vertexAttribDataCreateDescriptor(morphVertexAttribData + i + j, (a3_VertexAttributeName)(i + j), morphTargetData[0][i].attribData[a3attrib_geomNormal]);
+		a3vertexAttribDataCreateDescriptor(morphVertexAttribData + i + j * 2, (a3_VertexAttributeName)(i + j * 2), morphTargetData[0][i].attribData[a3attrib_geomTangent]);
+	}
+	// common attributes (e.g. texcoord)
+	a3vertexAttribCreateDescriptor(morphVertexAttrib + j * 3, (a3_VertexAttributeName)(j * 3), a3attrib_vec2);
+	a3vertexAttribDataCreateDescriptor(morphVertexAttribData + j * 3, (a3_VertexAttributeName)(j * 3), morphTargetData[0][0].attribData[a3attrib_geomTexcoord]);
+
+	// create format
+	a3vertexCreateFormatDescriptor(morphVertexFormat, morphVertexAttrib, a3attrib_nameMax);
 
 
 	// GPU data upload process: 
@@ -243,6 +298,11 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		sharedVertexStorage += a3geometryGetVertexBufferSize(loadedModelsData + i);
 		numVerts += loadedModelsData[i].numVertices;
 	}
+	for (i = 0; i < morphModelsCount; ++i)
+	{
+		sharedVertexStorage += a3vertexStorageSpaceRequired(morphVertexFormat, morphTargetData[i]->numVertices);
+		numVerts += morphTargetData[i]->numVertices;
+	}
 
 
 	// common index format required for shapes that share vertex formats
@@ -256,7 +316,8 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		sharedIndexStorage += a3indexStorageSpaceRequired(sceneCommonIndexFormat, proceduralShapesData[i].numIndices);
 	for (i = 0; i < loadedModelsCount; ++i)
 		sharedIndexStorage += a3indexStorageSpaceRequired(sceneCommonIndexFormat, loadedModelsData[i].numIndices);
-
+	for (i = 0; i < morphModelsCount; ++i)
+		sharedIndexStorage += a3indexStorageSpaceRequired(sceneCommonIndexFormat, morphTargetData[i]->numIndices);
 
 	// create shared buffer
 	vbo_ibo = demoState->vbo_staticSceneObjectDrawBuffer;
@@ -304,6 +365,14 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, proceduralShapesData + 3, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 	currentDrawable = demoState->draw_teapot;
 	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, loadedModelsData + 0, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+
+	// morphing objects: manually configure with partial tangent basis and duplicate attributes
+	vao = demoState->vao_tangentBasis_morph5;
+	a3vertexArrayCreateDescriptor(vao, "vao:tangentBasis-morph5", vbo_ibo, morphVertexFormat, sharedVertexStorage);
+	currentDrawable = demoState->draw_teapot_morph;
+	a3indexBufferStore(vbo_ibo, sceneCommonIndexFormat, morphTargetData[0]->indexData, morphTargetData[0]->numIndices, 0, &sharedIndexStorage, 0);
+	sharedVertexStorage += a3vertexBufferStore(vbo_ibo, morphVertexFormat, morphVertexAttribData, morphTargetData[0]->numVertices, 0);
+	a3vertexDrawableCreateIndexed(currentDrawable, vao, vbo_ibo, sceneCommonIndexFormat, a3prim_triangles, sharedIndexStorage, morphTargetData[0]->numIndices);
 
 
 	// release data when done
@@ -363,7 +432,8 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 		// generic images
 		"uImage0","uImage1","uImage2","uImage3","uImage4","uImage5","uImage6","uImage7",
 
-		// common global
+		// common general
+		"uIndex",
 		"uTime",
 	};
 
@@ -416,6 +486,9 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			a3_DemoStateShader
 				passTangentBasis_transform_vs[1],
 				passInstanceID_vs[1];
+			// 08-morphing
+			a3_DemoStateShader
+				passTangentBasis_transform_morph_vs[1];
 
 			// geometry shaders
 			// 07-curves
@@ -456,6 +529,9 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 				drawPhongMulti_deferred_fs[1],
 				drawPhong_volume_fs[1],
 				drawDeferredLightingComposite_fs[1];
+			// 08-morphing
+			a3_DemoStateShader
+				drawPhongMulti_nm_fs[1];
 		};
 	} shaderList = {
 		{
@@ -479,15 +555,17 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			{ { { 0 },	"shdr-vs:pass-Phong-atlas",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/06-deferred/e/passPhongAttribs_transform_atlas_vs4x.glsl" } } },
 			{ { { 0 },	"shdr-vs:pass-biasclip",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/06-deferred/e/passBiasClipCoord_transform_instanced_vs4x.glsl" } } },
 			// 07-curves
-			{ { { 0 },	"shdr-vs:pass-tangent-basis",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/07-curves/passTangentBasis_transform_vs4x.glsl" } } },
-			{ { { 0 },	"shdr-vs:pass-instance-id",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/07-curves/passInstanceID_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-tangent-basis",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/07-curves/e/passTangentBasis_transform_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-instance-id",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/07-curves/e/passInstanceID_vs4x.glsl" } } },
+			// 08-morphing
+			{ { { 0 },	"shdr-vs:pass-tangent-morph",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/08-morphing/passTangentBasis_transform_morph_vs4x.glsl" } } },
 
 			// gs
 			// 07-curves
-			{ { { 0 },	"shdr-gs:manip-triangle",		a3shader_geometry,	1,{ "../../../../resource/glsl/4x/gs/07-curves/manipTriangle_gs4x.glsl" } } },
-			{ { { 0 },	"shdr-gs:draw-tangent-basis",	a3shader_geometry,	1,{ "../../../../resource/glsl/4x/gs/07-curves/drawTangentBasis_gs4x.glsl" } } },
-			{ { { 0 },	"shdr-gs:draw-curve-segment",	a3shader_geometry,	1,{ "../../../../resource/glsl/4x/gs/07-curves/drawCurveSegment_gs4x.glsl" } } },
-			{ { { 0 },	"shdr-gs:draw-curve-handles",	a3shader_geometry,	1,{ "../../../../resource/glsl/4x/gs/07-curves/drawCurveHandles_gs4x.glsl" } } },
+			{ { { 0 },	"shdr-gs:manip-triangle",		a3shader_geometry,	1,{ "../../../../resource/glsl/4x/gs/07-curves/e/manipTriangle_gs4x.glsl" } } },
+			{ { { 0 },	"shdr-gs:draw-tangent-basis",	a3shader_geometry,	1,{ "../../../../resource/glsl/4x/gs/07-curves/e/drawTangentBasis_gs4x.glsl" } } },
+			{ { { 0 },	"shdr-gs:draw-curve-segment",	a3shader_geometry,	1,{ "../../../../resource/glsl/4x/gs/07-curves/e/drawCurveSegment_gs4x.glsl" } } },
+			{ { { 0 },	"shdr-gs:draw-curve-handles",	a3shader_geometry,	1,{ "../../../../resource/glsl/4x/gs/07-curves/e/drawCurveHandles_gs4x.glsl" } } },
 
 			// fs
 			// base
@@ -514,6 +592,8 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			{ { { 0 },	"shdr-fs:draw-Phong-deferred",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/06-deferred/e/drawPhongMulti_deferred_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-Phong-volume",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/06-deferred/e/drawPhong_volume_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-deferltcomp",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/06-deferred/e/drawDeferredLightingComposite_fs4x.glsl" } } },
+			// 08-morphing
+			{ { { 0 },	"shdr-fs:draw-Phong-nm",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/08-morphing/drawPhongMulti_nm_fs4x.glsl" } } },
 		}
 	};
 	a3_DemoStateShader *const shaderListPtr = (a3_DemoStateShader *)(&shaderList), *shaderPtr;
@@ -684,6 +764,19 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawCurveHandles_gs->shader);
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorUnif_fs->shader);
 
+	// 08-morphing programs: 
+	// Phong shading with morph animation
+	currentDemoProg = demoState->prog_drawPhongMulti_morph;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-morph");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTangentBasis_transform_morph_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawPhongMulti_nm_fs->shader);
+	// tangent basis with morph animation
+	currentDemoProg = demoState->prog_drawTangentBasis_morph;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-tangent-morph");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTangentBasis_transform_morph_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawTangentBasis_gs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorAttrib_fs->shader);
+
 
 	// activate a primitive for validation
 	// makes sure the specified geometry can draw using programs
@@ -800,6 +893,8 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultTexUnits + 7);
 
 		// common general
+		if ((uLocation = currentDemoProg->uIndex) >= 0)
+			a3shaderUniformSendInt(a3unif_single, uLocation, 1, defaultInt);
 		if ((uLocation = currentDemoProg->uTime) >= 0)
 			a3shaderUniformSendDouble(a3unif_single, uLocation, 1, defaultDouble);
 

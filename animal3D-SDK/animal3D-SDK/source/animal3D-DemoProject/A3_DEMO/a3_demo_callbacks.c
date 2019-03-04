@@ -69,7 +69,29 @@ inline void a3demoCB_keyCharPress_main(a3_DemoState *demoState, a3i32 asciiKey,
 {
 	switch (asciiKey)
 	{
-// toggle active camera
+		// sub-modes
+	case '>':
+		if (!demoState->previewIntermediatePostProcessing &&
+			demoSubMode > demoStateRenderPass_composite &&
+			demoSubMode < demoStateRenderPass_bloom_blend)
+			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_bloom_blend;
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
+			demoSubMode > demoStateRenderPass_scene &&
+			demoSubMode < demoStateRenderPass_composite)
+			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
+		break;
+	case '<':
+		if (!demoState->previewIntermediatePostProcessing &&
+			demoSubMode > demoStateRenderPass_composite &&
+			demoSubMode < demoStateRenderPass_bloom_blend)
+			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
+		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
+			demoSubMode > demoStateRenderPass_scene &&
+			demoSubMode < demoStateRenderPass_composite)
+			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_scene;
+		break;
+
+		// toggle active camera
 //	case 'v':
 //		demoState->activeCamera = (demoState->activeCamera + 1) % demoStateMaxCount_cameraObject;
 //		break;
@@ -142,10 +164,10 @@ inline void a3demoCB_keyCharPress_main(a3_DemoState *demoState, a3i32 asciiKey,
 
 		// toggle forward shading mode
 	case 'j':
-		demoState->forwardShadingMode = (demoState->forwardShadingMode + 5) % 6;
+		demoState->forwardShadingMode = (demoState->forwardShadingMode + demoState->forwardShadingModeCount - 1) % demoState->forwardShadingModeCount;
 		break;
 	case 'k':
-		demoState->forwardShadingMode = (demoState->forwardShadingMode + 1) % 6;
+		demoState->forwardShadingMode = (demoState->forwardShadingMode + 1) % demoState->forwardShadingModeCount;
 		break;
 
 		// toggle tangent bases on vertices
@@ -519,25 +541,9 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 		// change pipeline stage
 	case '>':
 		demoSubMode = demoState->demoSubMode[demoState->demoMode] = (demoSubMode + 1) % demoSubModeCount;
-		if (!demoState->previewIntermediatePostProcessing &&
-			demoSubMode > demoStateRenderPass_composite &&
-			demoSubMode < demoStateRenderPass_bloom_blend)
-			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_bloom_blend;
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
-			demoSubMode > demoStateRenderPass_scene &&
-			demoSubMode < demoStateRenderPass_composite)
-			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
 		break;
 	case '<':
 		demoSubMode = demoState->demoSubMode[demoState->demoMode] = (demoSubMode + demoSubModeCount - 1) % demoSubModeCount;
-		if (!demoState->previewIntermediatePostProcessing &&
-			demoSubMode > demoStateRenderPass_composite &&
-			demoSubMode < demoStateRenderPass_bloom_blend)
-			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
-			demoSubMode > demoStateRenderPass_scene &&
-			demoSubMode < demoStateRenderPass_composite)
-			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_scene;
 		break;
 
 		// change stage output
