@@ -1,3 +1,4 @@
+//Edited by Zach Phillips and Claire Yeash with permission from the author
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -17,7 +18,7 @@
 /*
 	animal3D SDK: Minimal 3D Animation Framework
 	By Daniel S. Buckstein
-	
+
 	passTangentBasis_transform_vs4x.glsl
 	Transform and pass complete tangent basis.
 */
@@ -32,37 +33,35 @@
 //	5) transform and pass tangent basis
 //	6) set final clip-space position
 
-// What are tangent basis??
-// M = [ T B N P ]; // Tangent, Bitangent, Normal, Position
+//What is a TangentBasis
+//Curves have binormals, planes have bitangents  (because they act like a tangent, not a normal)
+// m = [4] = {Tangent, Bitangent, Normal, Position}
 
-// (1)
-layout (location = 10)	in vec3 aTangent;
-layout (location = 11)	in vec3 aBitangent;
-layout (location = 2)	in vec3 aNormal;
-layout (location = 0)	in vec4 aPosition;
+//found in VertexDescriptors.h
+layout(location = 10)	in vec3 aTangent;	//(1)
+layout(location = 11)	in vec3 aBitangent;	//(1)
+layout(location = 2)	in vec3 aNormal;	//(1)
+layout(location = 0)	in vec4 aPosition;	//(1)
 
-// (2)
-uniform mat4 uMV, uP;
+uniform mat4 uMV, uP; //(2)
 
-// (3)
-out mat4 vPassTangentBasis;
+out mat4 vPassTangentBasis; //(3)
 
 void main()
 {
-	// DUMMY OUTPUT: directly assign input position to output position
-	//gl_Position = aPosition;
+	//stuff everything in a matrix, then * by MV matrix
 
+	//need the 0.0 to make sure we FILL columns 
 	// (4)
 	mat4 tangentBasis = mat4(
 		aTangent, 0.0,
 		aBitangent, 0.0,
 		aNormal, 0.0,
-		aPosition
-	);
+		aPosition);
 
-	// (5)
-	vPassTangentBasis = uMV * tangentBasis; 
+	//in Eye space
+	vPassTangentBasis = uMV * tangentBasis; //(5)
 
-	// (6)
-	gl_Position = uP * vPassTangentBasis[3];
+	//Projection * position = clip space
+	gl_Position = uP * vPassTangentBasis[3]; //(6)
 }
