@@ -88,6 +88,12 @@
     <Filter Include="Resource Files\A3_DEMO\glsl\4x\gs\07-curves">
       <UniqueIdentifier>{ab6ae752-7464-4255-8b08-25664da7b920}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\vs\08-morphing">
+      <UniqueIdentifier>{b1738edd-6524-4339-94d9-035442db89b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\08-morphing">
+      <UniqueIdentifier>{5bc411e5-6242-40f3-a5f5-4be289de32ef}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_src_win\main_dll.c">
@@ -240,6 +246,12 @@
     </None>
     <None Include="..\..\..\resource\glsl\4x\gs\07-curves\manipTriangle_gs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\gs\07-curves</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\vs\08-morphing\passTangentBasis_transform_morph_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\08-morphing</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\08-morphing\drawPhongMulti_nm_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\08-morphing</Filter>
     </None>
   </ItemGroup>
 </Project>
