@@ -48,7 +48,7 @@ extern "C"
 	// maximum number of uniforms in a program
 	enum a3_DemoShaderProgramMaxCounts
 	{
-		demoStateMaxCount_shaderProgramUniform = 32,
+		demoStateMaxCount_shaderProgramUniform = 64,
 		demoStateMaxCount_shaderProgramUniformBlock = 8,
 	};
 
@@ -110,7 +110,8 @@ extern "C"
 					uImage0, uImage1, uImage2, uImage3, uImage4, uImage5, uImage6, uImage7;
 
 				a3i32
-					// common global uniforms
+					// common general uniforms
+					uIndex,						// indices
 					uTime;						// time
 			};
 		};

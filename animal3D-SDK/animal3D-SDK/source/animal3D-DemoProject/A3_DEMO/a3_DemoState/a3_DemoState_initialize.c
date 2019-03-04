@@ -121,7 +121,7 @@ void a3demo_initScene(a3_DemoState *demoState)
 
 	// demo modes
 	demoState->demoModeCount = 2;
-	demoState->demoMode = 1;
+	demoState->demoMode = 0;
 
 	// demo mode A: deferred + bloom
 	//	 1) scene
@@ -170,7 +170,11 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->singleForwardLight = 0;
 	demoState->displayTangentBases = 0;
 	demoState->lightingPipelineMode = demoStatePipelineMode_forward;
-	demoState->forwardShadingMode = demoStateForwardPipelineMode_Phong_manip;
+
+
+	// shading mode
+	demoState->forwardShadingMode = demoStateForwardPipelineMode_Phong_morph;
+	demoState->forwardShadingModeCount = 7;
 
 
 	// lights
@@ -291,6 +295,16 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->curveSegmentDurationInv = a3recip(demoState->curveSegmentDuration);
 	demoState->curveSegmentTime = demoState->curveSegmentParam = a3realZero;
 	demoState->curveSegmentIndex = 0;
+
+	// morph targets
+	demoState->targetDuration = a3realOneHalf;
+	demoState->targetDurationInv = a3recip(demoState->targetDuration);
+	demoState->targetTime = demoState->targetParam = a3realZero;
+	demoState->targetCount = demoStateMaxCount_morphTargetPerModel;
+	demoState->targetIndex = 0;
+	demoState->targetIndexNext = (demoState->targetIndex + 1) % demoState->targetCount;
+	demoState->targetIndexNextNext = (demoState->targetIndexNext + 1) % demoState->targetCount;
+	demoState->targetIndexPrev = (demoState->targetIndex + demoState->targetCount - 1) % demoState->targetCount;
 }
 
 
