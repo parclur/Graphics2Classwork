@@ -169,11 +169,6 @@ inline void a3demoCB_keyCharPress_main(a3_DemoState *demoState, a3i32 asciiKey,
 	case 'k':
 		demoState->forwardShadingMode = (demoState->forwardShadingMode + 1) % demoState->forwardShadingModeCount;
 		break;
-
-		// toggle tangent bases on vertices
-	case 'B':
-		demoState->displayTangentBases = 1 - demoState->displayTangentBases;
-		break;
 	}
 }
 
@@ -200,6 +195,108 @@ inline void a3demoCB_keyCharHold_main(a3_DemoState *demoState, a3i32 asciiKey)
 			demoState->deferredLightCount += 4;
 		break;
 	}
+}
+
+
+inline void a3demoCB_keyCharHold_skeletal(a3_DemoState *demoState, a3i32 asciiKey)
+{
+	// individual DOF editing
+	if (demoState->editingJoint)
+	{
+		a3_HierarchyNodePose *currentNodePose = demoState->hierarchyState_skel[demoState->editSkeletonIndex].poseGroup->pose[0].nodePose + demoState->editJointIndex;
+		const a3_HierarchyPoseFlag currentPoseFlag = demoState->hierarchyPoseFlag_skel[demoState->editSkeletonIndex][demoState->editJointIndex];
+		const a3boolean doesRotate = currentPoseFlag & a3poseFlag_rotate;
+		const a3boolean doesTranslate = currentPoseFlag & a3poseFlag_translate;
+		const a3real rotateRate = a3realHalf;
+		const a3real translateRate = a3realQuarter;
+
+		switch (asciiKey)
+		{
+			// sub rotate x
+		case '1':
+			if (doesRotate)
+				currentNodePose->orientation.x = a3trigValid_sind(currentNodePose->orientation.x - rotateRate);
+			break;
+			// add rotate x
+		case '!':
+			if (doesRotate)
+				currentNodePose->orientation.x = a3trigValid_sind(currentNodePose->orientation.x + rotateRate);
+			break;
+			// sub rotate y
+		case '2':
+			if (doesRotate)
+				currentNodePose->orientation.y = a3trigValid_sind(currentNodePose->orientation.y - rotateRate);
+			break;
+			// add rotate y
+		case '@':
+			if (doesRotate)
+				currentNodePose->orientation.y = a3trigValid_sind(currentNodePose->orientation.y + rotateRate);
+			break;
+			// sub rotate z
+		case '3':
+			if (doesRotate)
+				currentNodePose->orientation.z = a3trigValid_sind(currentNodePose->orientation.z - rotateRate);
+			break;
+			// add rotate z
+		case '#':
+			if (doesRotate)
+				currentNodePose->orientation.z = a3trigValid_sind(currentNodePose->orientation.z + rotateRate);
+			break;
+
+			// sub translate x
+		case '4':
+			if (doesTranslate)
+				currentNodePose->translation.x -= translateRate;
+			break;
+			// add translate x
+		case '$':
+			if (doesTranslate)
+				currentNodePose->translation.x += translateRate;
+			break;
+			// sub translate y
+		case '5':
+			if (doesTranslate)
+				currentNodePose->translation.y -= translateRate;
+			break;
+			// add translate y
+		case '%':
+			if (doesTranslate)
+				currentNodePose->translation.y += translateRate;
+			break;
+			// sub translate z
+		case '6':
+			if (doesTranslate)
+				currentNodePose->translation.z -= translateRate;
+			break;
+			// add translate z
+		case '^':
+			if (doesTranslate)
+				currentNodePose->translation.z += translateRate;
+			break;
+		}
+	}
+}
+
+inline void a3demoCB_keyCharPress_skeletal(a3_DemoState *demoState, a3i32 asciiKey)
+{
+	switch (asciiKey)
+	{
+	case '0':
+		demoState->editingJoint = 1 - demoState->editingJoint;
+		break;
+
+	case ')':
+		if (demoState->editingJoint)
+			demoState->editJointIndex = (demoState->editJointIndex + 1) % demoState->hierarchy_skel[demoState->editSkeletonIndex].numNodes;
+		break;
+	case '(':
+		if (demoState->editingJoint)
+			demoState->editJointIndex = (demoState->editJointIndex + demoState->hierarchy_skel[demoState->editSkeletonIndex].numNodes - 1) % demoState->hierarchy_skel[demoState->editSkeletonIndex].numNodes;
+		break;
+	}
+
+	// call editing control
+	a3demoCB_keyCharHold_skeletal(demoState, asciiKey);
 }
 
 
@@ -251,6 +348,7 @@ extern "C"
 A3DYLIBSYMBOL a3_DemoState *a3demoCB_load(a3_DemoState *demoState, a3boolean hotbuild)
 {
 	const a3ui32 stateSize = a3demo_getPersistentStateSize();
+	const a3ui32 trigSamplesPerDegree = 4;
 	
 	// do any re-allocation tasks
 	if (demoState && hotbuild)
@@ -264,8 +362,10 @@ A3DYLIBSYMBOL a3_DemoState *a3demoCB_load(a3_DemoState *demoState, a3boolean hot
 		memset(demoState, 0, stateSize);
 		*demoState = copy;
 
+		// call refresh to re-link pointers in case demo state address changed
 		a3demo_refresh(demoState);
-		a3trigInitSetTables(4, demoState->trigTable);
+		a3demo_initSceneRefresh(demoState);
+		a3trigInitSetTables(trigSamplesPerDegree, demoState->trigTable);
 	}
 
 	// do any initial allocation tasks
@@ -278,7 +378,7 @@ A3DYLIBSYMBOL a3_DemoState *a3demoCB_load(a3_DemoState *demoState, a3boolean hot
 		memset(demoState, 0, stateSize);
 
 		// set up trig table (A3DM)
-		a3trigInit(4, demoState->trigTable);
+		a3trigInit(trigSamplesPerDegree, demoState->trigTable);
 
 		// initialize state variables
 		// e.g. timer, thread, etc.
@@ -312,6 +412,9 @@ A3DYLIBSYMBOL a3_DemoState *a3demoCB_load(a3_DemoState *demoState, a3boolean hot
 		// textures
 		a3demo_loadTextures(demoState);
 
+		// animation
+		a3demo_loadAnimation(demoState);
+
 		// scene objects
 		a3demo_initScene(demoState);
 	}
@@ -342,6 +445,7 @@ A3DYLIBSYMBOL a3_DemoState *a3demoCB_unload(a3_DemoState *demoState, a3boolean h
 		a3demo_unloadShaders(demoState);
 		a3demo_unloadTextures(demoState);
 		a3demo_unloadFramebuffers(demoState);
+		a3demo_unloadAnimation(demoState);
 
 		// validate unload
 		a3demo_validateUnload(demoState);
@@ -570,6 +674,11 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 		demoState->displayObjectAxes = 1 - demoState->displayObjectAxes;
 		break;
 
+		// toggle tangent bases on vertices or other
+	case 'B':
+		demoState->displayTangentBases = 1 - demoState->displayTangentBases;
+		break;
+
 
 		// update animation
 	case 'm':
@@ -582,13 +691,18 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 	switch (demoState->demoMode)
 	{
 		// main render pipeline
-	case 0:
+	case demoStateMode_main:
 		a3demoCB_keyCharPress_main(demoState, asciiKey,
 			demoSubMode, demoOutput, demoSubModeCount, demoOutputCount);
 		break;
 
 		// curve drawing
-	case 1:
+	case demoStateMode_curves:
+		break;
+
+		// skeletal
+	case demoStateMode_skeletal:
+		a3demoCB_keyCharPress_skeletal(demoState, asciiKey);
 		break;
 	}
 }
@@ -604,12 +718,17 @@ A3DYLIBSYMBOL void a3demoCB_keyCharHold(a3_DemoState *demoState, a3i32 asciiKey)
 	switch (demoState->demoMode)
 	{
 		// main render pipeline
-	case 0:
+	case demoStateMode_main:
 		a3demoCB_keyCharHold_main(demoState, asciiKey);
 		break;
 
 		// curve drawing
-	case 1:
+	case demoStateMode_curves:
+		break;
+
+		// skeletal
+	case demoStateMode_skeletal:
+		a3demoCB_keyCharHold_skeletal(demoState, asciiKey);
 		break;
 	}
 }
@@ -622,8 +741,9 @@ A3DYLIBSYMBOL void a3demoCB_mouseClick(a3_DemoState *demoState, a3i32 button, a3
 	a3mouseSetPosition(demoState->mouse, cursorX, cursorY);
 
 	// curve waypoint placement
-	if (demoState->demoMode == 1)
+	switch (demoState->demoMode)
 	{
+	case demoStateMode_curves:
 		if (button == a3mouse_left)
 		{
 			if (demoState->curveWaypointCount < demoStateMaxCount_curveWaypoint)
@@ -646,6 +766,7 @@ A3DYLIBSYMBOL void a3demoCB_mouseClick(a3_DemoState *demoState, a3i32 button, a3
 			if (demoState->curveWaypointCount > 0)
 				--demoState->curveWaypointCount;
 		}
+		break;
 	}
 }
 
@@ -668,18 +789,24 @@ A3DYLIBSYMBOL void a3demoCB_mouseRelease(a3_DemoState *demoState, a3i32 button, 
 // mouse wheel is turned
 A3DYLIBSYMBOL void a3demoCB_mouseWheel(a3_DemoState *demoState, a3i32 delta, a3i32 cursorX, a3i32 cursorY)
 {
+	// controlled camera when zooming
+	a3_DemoCamera *camera;
+
 	// persistent state update
 	a3mouseSetStateWheel(demoState->mouse, (a3_MouseWheelState)delta);
 	a3mouseSetPosition(demoState->mouse, cursorX, cursorY);
 
-	if (demoState->demoMode == 0)
+	switch (demoState->demoMode)
 	{
+	case demoStateMode_main:
+	case demoStateMode_skeletal:
 		// can use this to change zoom
 		// zoom should be faster farther away
-		a3_DemoCamera *camera = demoState->camera + demoState->activeCamera;
+		camera = demoState->camera + demoState->activeCamera;
 		camera->fovy -= camera->ctrlZoomSpeed * (camera->fovy / a3realOneEighty) * (a3f32)delta;
 		camera->fovy = a3clamp(camera->ctrlZoomSpeed, a3realOneEighty - camera->ctrlZoomSpeed, camera->fovy);
 		a3demo_updateCameraProjection(camera);
+		break;
 	}
 }
 
@@ -690,8 +817,9 @@ A3DYLIBSYMBOL void a3demoCB_mouseMove(a3_DemoState *demoState, a3i32 cursorX, a3
 	a3mouseSetPosition(demoState->mouse, cursorX, cursorY);
 
 	// curve waypoint placement
-	if (demoState->demoMode == 1)
+	switch (demoState->demoMode)
 	{
+	case demoStateMode_curves:
 		// if left is down, placing waypoint
 		if (demoState->mouse->btn.btn[a3mouse_left])
 		{
@@ -704,6 +832,7 @@ A3DYLIBSYMBOL void a3demoCB_mouseMove(a3_DemoState *demoState, a3i32 cursorX, a3
 			a3real4Real4x4MulR(demoState->curveCamera->projectionMatInv.m, pos.v);
 			demoState->curveHandle[demoState->curveWaypointCount - 1] = pos;
 		}
+		break;
 	}
 }
 

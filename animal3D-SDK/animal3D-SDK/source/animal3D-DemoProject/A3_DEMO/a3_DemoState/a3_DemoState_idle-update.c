@@ -212,13 +212,13 @@ void a3demo_update_main(a3_DemoState *demoState, a3f64 dt)
 			// upload data for current light set
 			tmpBlockLightCount = a3minimum(tmpLightCount, demoStateMaxCount_lightVolumePerBlock);
 			demoState->deferredLightCountPerBlock[i] = tmpBlockLightCount;
-			a3bufferFill(demoState->ubo_transformMVP + i, 0, tmpBlockLightCount * sizeof(a3mat4), lightMVPptr, 0);
-			a3bufferFill(demoState->ubo_transformMVPB + i, 0, tmpBlockLightCount * sizeof(a3mat4), lightMVPBptr, 0);
+			a3bufferFill(demoState->ubo_transformMVP_light + i, 0, tmpBlockLightCount * sizeof(a3mat4), lightMVPptr, 0);
+			a3bufferFill(demoState->ubo_transformMVPB_light + i, 0, tmpBlockLightCount * sizeof(a3mat4), lightMVPBptr, 0);
 			a3bufferFill(demoState->ubo_pointLight + i, 0, tmpBlockLightCount * sizeof(a3_DemoPointLight), pointLight, 0);
 
 			// reset used flag so we can always fill buffers
-			demoState->ubo_transformMVP[i].used[0] = 0;
-			demoState->ubo_transformMVPB[i].used[0] = 0;
+			demoState->ubo_transformMVP_light[i].used[0] = 0;
+			demoState->ubo_transformMVPB_light[i].used[0] = 0;
 			demoState->ubo_pointLight[i].used[0] = 0;
 		}
 	}
@@ -353,6 +353,164 @@ void a3demo_update_curve(a3_DemoState *demoState, a3f64 dt)
 }
 
 
+// update for skeletal animation
+void a3demo_update_skeletal(a3_DemoState *demoState, a3f64 dt)
+{
+	a3ui32 i, j;
+
+	const a3f32 dr = demoState->updateAnimation ? (a3f32)dt * 15.0f : 0.0f;
+
+	const a3i32 useVerticalY = demoState->verticalAxis;
+
+	// model transformations (if needed)
+	const a3mat4 convertY2Z = {
+		+1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, +1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, +1.0f,
+	};
+	const a3mat4 convertZ2Y = {
+		+1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, -1.0f, 0.0f,
+		0.0f, +1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, +1.0f,
+	};
+	const a3mat4 convertZ2X = {
+		0.0f, 0.0f, -1.0f, 0.0f,
+		0.0f, +1.0f, 0.0f, 0.0f,
+		+1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, +1.0f,
+	};
+
+
+	// bias matrix
+	const a3mat4 bias = {
+		0.5f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.5f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f,
+	};
+
+
+	// tmp matrix for scale
+//	a3mat4 scaleMat = a3identityMat4;
+
+	// active camera
+	a3_DemoCamera *camera = demoState->camera + demoState->activeCamera;
+	a3_DemoSceneObject *cameraObject = camera->sceneObject;
+//	a3_DemoSceneObject *currentSceneObject;
+
+
+	// other objects
+	a3_HierarchyState *currentHierarchyState;
+	const a3_HierarchyPoseGroup *currentHierarchyPoseGroup;
+	const a3_Hierarchy *currentHierarchy;
+
+
+	// update scene objects
+	for (i = 0; i < demoStateMaxCount_sceneObject; ++i)
+		a3demo_updateSceneObject(demoState->sceneObject + i, 0);
+	for (i = 0; i < demoStateMaxCount_cameraObject; ++i)
+		a3demo_updateSceneObject(demoState->cameraObject + i, 1);
+	for (i = 0; i < demoStateMaxCount_lightObject; ++i)
+		a3demo_updateSceneObject(demoState->lightObject + i, 1);
+
+	// update cameras/projectors
+	for (i = 0; i < demoStateMaxCount_projector; ++i)
+		a3demo_updateCameraViewProjection(demoState->camera + i);
+
+
+	// apply corrections if required
+	// grid
+	demoState->gridTransform = useVerticalY ? convertZ2Y : a3identityMat4;
+
+	// skybox position
+	demoState->skyboxObject->modelMat.v3 = camera->sceneObject->modelMat.v3;
+
+
+	// grid lines highlight
+	// if Y axis is up, give it a greenish hue
+	// if Z axis is up, a bit of blue
+	demoState->gridColor = a3wVec4;
+	if (useVerticalY)
+		demoState->gridColor.g = 0.25f;
+	else
+		demoState->gridColor.b = 0.25f;
+
+
+	// update animation: 
+	//	-> copy pose from set to state (pro tip: seems pointless but it is not)
+	//	-> convert the current pose to transforms
+	//	-> forward kinematics
+	//	-> skinning matrices
+	currentHierarchyState = demoState->hierarchyState_skel + demoState->editSkeletonIndex;
+	currentHierarchyPoseGroup = currentHierarchyState->poseGroup;
+	currentHierarchy = currentHierarchyPoseGroup->hierarchy;
+
+	a3hierarchyPoseCopy(currentHierarchyState->localPose,
+		currentHierarchyPoseGroup->pose + 0, currentHierarchy->numNodes);
+	a3hierarchyPoseConvert(currentHierarchyState->localSpace,
+		currentHierarchyState->localPose, currentHierarchy->numNodes, 0);
+	a3kinematicsSolveForward(demoState->hierarchyState_skel);
+//	a3hierarchyStateUpdateObjectBindToCurrent(currentHierarchyState, ???);
+
+
+	// update buffers: 
+	//	-> calculate and store bone transforms
+	//	-> calculate and store joint transforms
+	//	-> calculate and store skinning transforms
+	{
+		a3mat4 modelViewProjectionMat, localModelViewProjectionMat[128];
+		
+		// update common MVP
+		a3real4x4Product(modelViewProjectionMat.m, camera->viewProjectionMat.m, demoState->skeletonObject->modelMat.m);
+
+		// calculate and send bone transforms
+		// need to make the bone point from parent to current
+		a3real4x4SetScale(localModelViewProjectionMat[0].m, a3realZero);
+		a3real4x4ConcatR(modelViewProjectionMat.m, localModelViewProjectionMat[0].m);
+		for (i = 1; i < currentHierarchy->numNodes; ++i)
+		{
+			j = currentHierarchy->nodes[i].parentIndex;
+			localModelViewProjectionMat[i] = currentHierarchyState->objectSpace->transform[j];
+			a3real3Diff(localModelViewProjectionMat[i].v2.v,
+				currentHierarchyState->objectSpace->transform[i].v3.v,
+				currentHierarchyState->objectSpace->transform[j].v3.v);
+			a3real3CrossUnit(localModelViewProjectionMat[i].v0.v,
+				(a3isNotNearZero(localModelViewProjectionMat[i].m20) || a3isNotNearZero(localModelViewProjectionMat[i].m21)) ? a3zVec3.v : a3yVec3.v,
+				localModelViewProjectionMat[i].v2.v);
+			a3real3CrossUnit(localModelViewProjectionMat[i].v1.v,
+				localModelViewProjectionMat[i].v2.v,
+				localModelViewProjectionMat[i].v0.v);
+			a3real4x4ConcatR(modelViewProjectionMat.m, localModelViewProjectionMat[i].m);
+		}
+		a3bufferFill(demoState->ubo_transformLMVP_bone, 0, currentHierarchy->numNodes * sizeof(a3mat4), localModelViewProjectionMat, 0);
+
+		// calculate and send joint transforms
+		for (i = 0; i < currentHierarchy->numNodes; ++i)
+		{
+			a3real4x4SetScale(localModelViewProjectionMat[i].m, 0.2f);
+			a3real4x4ConcatR(currentHierarchyState->objectSpace->transform[i].m, localModelViewProjectionMat[i].m);
+			a3real4x4ConcatR(modelViewProjectionMat.m, localModelViewProjectionMat[i].m);
+		}
+		a3bufferFill(demoState->ubo_transformLMVP_joint, 0, currentHierarchy->numNodes * sizeof(a3mat4), localModelViewProjectionMat, 0);
+		
+		// calculate and send skinning matrices
+		for (i = 0; i < currentHierarchy->numNodes; ++i)
+		{
+			localModelViewProjectionMat[i] = currentHierarchyState->objectSpaceBindToCurrent->transform[i];
+			a3real4x4ConcatR(modelViewProjectionMat.m, localModelViewProjectionMat[i].m);
+		}
+		a3bufferFill(demoState->ubo_transformBindPoseToCurrentPose_joint, 0, currentHierarchy->numNodes * sizeof(a3mat4), localModelViewProjectionMat, 0);
+
+		// reset used flags
+		demoState->ubo_transformLMVP_bone->used[0] = 0;
+		demoState->ubo_transformLMVP_joint->used[0] = 0;
+		demoState->ubo_transformBindPoseToCurrentPose_joint->used[0] = 0;
+	}
+}
+
+
 //-----------------------------------------------------------------------------
 // UPDATE
 
@@ -361,13 +519,18 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 	switch (demoState->demoMode)
 	{
 		// main render pipeline
-	case 0:
+	case demoStateMode_main:
 		a3demo_update_main(demoState, dt);
 		break;
 
 		// curve drawing
-	case 1:
+	case demoStateMode_curves:
 		a3demo_update_curve(demoState, dt);
+		break;
+
+		// skeletal
+	case demoStateMode_skeletal:
+		a3demo_update_skeletal(demoState, dt);
 		break;
 	}
 }

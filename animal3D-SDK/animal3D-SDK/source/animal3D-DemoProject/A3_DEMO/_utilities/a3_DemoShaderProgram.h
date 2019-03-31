@@ -49,7 +49,7 @@ extern "C"
 	enum a3_DemoShaderProgramMaxCounts
 	{
 		demoStateMaxCount_shaderProgramUniform = 64,
-		demoStateMaxCount_shaderProgramUniformBlock = 8,
+		demoStateMaxCount_shaderProgramUniformBlock = 16,
 	};
 
 
@@ -120,16 +120,25 @@ extern "C"
 		union {
 			a3i32 uniformBlockLocation[demoStateMaxCount_shaderProgramUniformBlock];
 			struct {
+				// transformation uniform blocks
+				a3i32
+					ubTransformLMVPB,	// local-model-view-projection-bias
+					ubTransformLMVP,	// local-model-view-projection
+					ubTransformMVPB,	// model-view-projection-bias
+					ubTransformMVP;		// model-view-projection
+
 				// lighting uniform blocks
 				a3i32
-					ubTransformMVP,
-					ubTransformMVPB,
 					ubPointLight;
 
 				// curve uniform blocks
 				a3i32
 					ubCurveWaypoint,
 					ubCurveHandle;
+
+				// skeletal uniform blocks
+				a3i32
+					ubTransformBindPoseToCurrentPose;
 			};
 		};
 	};

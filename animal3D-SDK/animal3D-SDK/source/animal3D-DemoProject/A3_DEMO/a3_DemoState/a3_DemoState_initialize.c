@@ -58,6 +58,10 @@ void a3demo_initScene(a3_DemoState *demoState)
 	};
 
 
+	// refresh scene objects
+	a3demo_initSceneRefresh(demoState);
+
+
 	// all objects
 	for (i = 0; i < demoStateMaxCount_sceneObject; ++i)
 		a3demo_initSceneObject(demoState->sceneObject + i);
@@ -67,9 +71,6 @@ void a3demo_initScene(a3_DemoState *demoState)
 		a3demo_initSceneObject(demoState->lightObject + i);
 
 	// cameras
-	a3demo_setCameraSceneObject(demoState->sceneCamera, demoState->mainCameraObject);
-	a3demo_setCameraSceneObject(demoState->curveCamera, demoState->topDownCameraObject);
-	a3demo_setCameraSceneObject(demoState->projectorLight, demoState->mainLightObject);
 	a3demo_initCamera(demoState->sceneCamera);
 	a3demo_initCamera(demoState->curveCamera);
 	a3demo_initCamera(demoState->projectorLight);
@@ -120,8 +121,8 @@ void a3demo_initScene(a3_DemoState *demoState)
 
 
 	// demo modes
-	demoState->demoModeCount = 2;
-	demoState->demoMode = 0;
+	demoState->demoModeCount = 3;
+	demoState->demoMode = 2;
 
 	// demo mode A: deferred + bloom
 	//	 1) scene
@@ -152,8 +153,12 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->demoOutputCount[0][1] = 2;
 
 	// demo mode B: curve drawing
-	demoState->demoSubMode[1] = 1;
-	demoState->demoOutputMode[1][0] = 2;
+	demoState->demoSubModeCount[1] = 1;
+	demoState->demoOutputCount[1][0] = 2;
+
+	// demo mode C: skeletal
+	demoState->demoSubModeCount[2] = 1;
+	demoState->demoOutputCount[2][0] = 2;
 
 
 	// initialize other objects and settings
@@ -305,6 +310,28 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->targetIndexNext = (demoState->targetIndex + 1) % demoState->targetCount;
 	demoState->targetIndexNextNext = (demoState->targetIndexNext + 1) % demoState->targetCount;
 	demoState->targetIndexPrev = (demoState->targetIndex + demoState->targetCount - 1) % demoState->targetCount;
+
+
+	// skeleton
+	if (demoState->verticalAxis)
+	{
+		demoState->skeletonObject->position.z = -4.0f;
+		demoState->skeletonObject->euler.x = -90.0f;
+		demoState->skeletonObject->euler.z = +180.0f;
+	}
+	else
+	{
+		demoState->skeletonObject->position.y = +4.0f;
+		demoState->skeletonObject->euler.z = +180.0f;
+	}
+}
+
+// refresh non-asset scene objects (e.g. re-link pointers)
+void a3demo_initSceneRefresh(a3_DemoState *demoState)
+{
+	a3demo_setCameraSceneObject(demoState->sceneCamera, demoState->mainCameraObject);
+	a3demo_setCameraSceneObject(demoState->curveCamera, demoState->topDownCameraObject);
+	a3demo_setCameraSceneObject(demoState->projectorLight, demoState->mainLightObject);
 }
 
 
