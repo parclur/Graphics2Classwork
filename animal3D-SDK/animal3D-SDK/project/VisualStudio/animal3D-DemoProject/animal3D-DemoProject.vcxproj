@@ -197,12 +197,18 @@
     <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\a3_DemoState\a3_DemoState_loading.c" />
     <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\a3_DemoState\a3_DemoState_unloading.c" />
     <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\a3_demo_callbacks.c" />
+    <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_animation\a3_Hierarchy.c" />
+    <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_animation\a3_HierarchyState.c" />
+    <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_animation\a3_Kinematics.c" />
     <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_graphics\a3_RenderPipeline.c" />
     <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_utilities\a3_DemoSceneObject.c" />
     <ClCompile Include="_src_win\main_dll.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\a3_DemoState.h" />
+    <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_animation\a3_Hierarchy.h" />
+    <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_animation\a3_HierarchyState.h" />
+    <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_animation\a3_Kinematics.h" />
     <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_graphics\a3_RenderPipeline.h" />
     <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_utilities\a3_DemoSceneObject.h" />
     <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_utilities\a3_DemoShaderProgram.h" />
@@ -240,6 +246,7 @@
     <None Include="..\..\..\resource\glsl\4x\vs\07-curves\passInstanceID_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\07-curves\passTangentBasis_transform_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\08-morphing\passTangentBasis_transform_morph_vs4x.glsl" />
+    <None Include="..\..\..\resource\glsl\4x\vs\09-skeletal\passTangentBasis_transform_skin_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\passColor_transform_instanced_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\passColor_transform_vs4x.glsl" />
     <None Include="..\..\..\resource\glsl\4x\vs\passthru_transform_instanced_vs4x.glsl" />

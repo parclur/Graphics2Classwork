@@ -114,12 +114,14 @@ void a3demo_input(a3_DemoState *demoState, a3f64 dt)
 	switch (demoState->demoMode)
 	{
 		// main render pipeline
-	case 0:
+		// skeletal
+	case demoStateMode_main:
+	case demoStateMode_skeletal:
 		a3demo_input_main(demoState, dt);
 		break;
 
 		// curve drawing
-	case 1:
+	case demoStateMode_curves:
 		break;
 	}
 }

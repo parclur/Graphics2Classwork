@@ -83,6 +83,18 @@ inline a3real4x4r a3demo_setAtlasTransform_internal(a3real4x4p m_out,
 }
 
 
+// initialize dummy drawable
+inline void a3demo_initDummyDrawable_internal(a3_DemoState *demoState)
+{
+	// dummy drawable for point drawing: copy any of the existing ones, 
+	//	set vertex count to 1 and primitive to points (0x0000)
+	// DO NOT RELEASE THIS DRAWABLE; it is a managed stand-in!!!
+	*demoState->dummyDrawable = *demoState->draw_grid;
+	demoState->dummyDrawable->primitive = 0;
+	demoState->dummyDrawable->count = 1;
+}
+
+
 //-----------------------------------------------------------------------------
 // LOADING
 
@@ -115,10 +127,10 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 
 	// file streaming (if requested)
 	a3_FileStream fileStream[1] = { 0 };
-	const a3byte *const geometryStream = "./data/geom_data_gpro_morphing.dat";
+	const a3byte *const geometryStream = "./data/geom_data_gpro_skeletal.dat";
 
 	// geometry data
-	a3_GeometryData displayShapesData[4] = { 0 };
+	a3_GeometryData displayShapesData[6] = { 0 };
 	a3_GeometryData hiddenShapesData[1] = { 0 };
 	a3_GeometryData proceduralShapesData[4] = { 0 };
 	a3_GeometryData loadedModelsData[1] = { 0 };
@@ -173,7 +185,7 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	else if (!demoState->streaming || a3fileStreamOpenWrite(fileStream, geometryStream))
 	{
 		// create new data
-		a3_ProceduralGeometryDescriptor displayShapes[4] = { a3geomShape_none };
+		a3_ProceduralGeometryDescriptor displayShapes[6] = { a3geomShape_none };
 		a3_ProceduralGeometryDescriptor hiddenShapes[1] = { a3geomShape_none };
 		a3_ProceduralGeometryDescriptor proceduralShapes[4] = { a3geomShape_none };
 		const a3_DemoStateLoadedModel loadedShapes[1] = {
@@ -193,11 +205,13 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		const a3real lightVolumeRadius = a3realOne;
 
 		// static scene procedural objects
-		//	(display shapes, grid, axes, skybox, unit quad)
-		a3proceduralCreateDescriptorPlane(displayShapes + 0, a3geomFlag_wireframe, a3geomAxis_default, 20.0f, 20.0f, 20, 20);
-		a3proceduralCreateDescriptorAxes(displayShapes + 1, a3geomFlag_wireframe, 0.0f, 1);
-		a3proceduralCreateDescriptorBox(displayShapes + 2, a3geomFlag_texcoords, 100.0f, 100.0f, 100.0f, 1, 1, 1);
-		a3proceduralCreateDescriptorPlane(displayShapes + 3, a3geomFlag_texcoords, a3geomAxis_default, 2.0f, 2.0f, 1, 1);
+		//	(display shapes, axes, grid, bones, skybox, unit quad)
+		a3proceduralCreateDescriptorAxes(displayShapes + 0, a3geomFlag_wireframe, 0.0f, 1);
+		a3proceduralCreateDescriptorPlane(displayShapes + 1, a3geomFlag_wireframe, a3geomAxis_default, 20.0f, 20.0f, 20, 20);
+		a3proceduralCreateDescriptorCone(displayShapes + 2, a3geomFlag_wireframe, a3geomAxis_default, 0.1f, 1.0f, 4, 1, 1);
+		a3proceduralCreateDescriptorDiamond(displayShapes + 3, a3geomFlag_wireframe, a3geomAxis_default, 0.5f, 1.0f, 4, 1);
+		a3proceduralCreateDescriptorBox(displayShapes + 4, a3geomFlag_texcoords, 100.0f, 100.0f, 100.0f, 1, 1, 1);
+		a3proceduralCreateDescriptorPlane(displayShapes + 5, a3geomFlag_texcoords, a3geomAxis_default, 2.0f, 2.0f, 1, 1);
 		for (i = 0; i < displayShapesCount; ++i)
 		{
 			a3proceduralGenerateGeometryData(displayShapesData + i, displayShapes + i, 0);
@@ -329,25 +343,29 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 	// grid: position attribute only
 	// overlay objects are also just position
 	vao = demoState->vao_position;
-	a3geometryGenerateVertexArray(vao, "vao:pos", displayShapesData + 0, vbo_ibo, sharedVertexStorage);
+	a3geometryGenerateVertexArray(vao, "vao:pos", displayShapesData + 1, vbo_ibo, sharedVertexStorage);
 	currentDrawable = demoState->draw_grid;
-	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 0, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 1, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	currentDrawable = demoState->draw_bone;
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 2, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	currentDrawable = demoState->draw_joint;
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 3, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 	currentDrawable = demoState->draw_pointlight;
 	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, hiddenShapesData + 0, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 
 	// axes: position and color
 	vao = demoState->vao_position_color;
-	a3geometryGenerateVertexArray(vao, "vao:pos+col", displayShapesData + 1, vbo_ibo, sharedVertexStorage);
+	a3geometryGenerateVertexArray(vao, "vao:pos+col", displayShapesData + 0, vbo_ibo, sharedVertexStorage);
 	currentDrawable = demoState->draw_axes;
-	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 1, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 0, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 
 	// skybox, unit quad: position and texture coordinates
 	vao = demoState->vao_position_texcoord;
-	a3geometryGenerateVertexArray(vao, "vao:pos+tex", displayShapesData + 2, vbo_ibo, sharedVertexStorage);
+	a3geometryGenerateVertexArray(vao, "vao:pos+tex", displayShapesData + 4, vbo_ibo, sharedVertexStorage);
 	currentDrawable = demoState->draw_skybox;
-	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 2, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 4, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 	currentDrawable = demoState->draw_unitquad;
-	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 3, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
+	sharedVertexStorage += a3geometryGenerateDrawable(currentDrawable, displayShapesData + 5, vao, vbo_ibo, sceneCommonIndexFormat, 0, 0);
 
 	// scene objects: position, texture coordinates and normal
 	//	alternatively, complete tangent basis
@@ -386,12 +404,8 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 		a3geometryReleaseData(loadedModelsData + i);
 
 
-	// dummy drawable for point drawing: copy any of the existing ones, 
-	//	set vertex count to 1 and primitive to points (0x0000)
-	// DO NOT RELEASE THIS DRAWABLE; it is a managed stand-in!!!
-	*demoState->dummyDrawable = *demoState->draw_grid;
-	demoState->dummyDrawable->primitive = 0;
-	demoState->dummyDrawable->count = 1;
+	// dummy
+	a3demo_initDummyDrawable_internal(demoState);
 }
 
 
@@ -439,14 +453,21 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 
 	// list of uniform block names: align with uniform block list in demo struct!
 	const a3byte *uniformBlockNames[demoStateMaxCount_shaderProgramUniformBlock] = {
-		// lighting uniform blocks
-		"ubTransformMVP",
+		// transformation uniform blocks
+		"ubTransformLMVPB",
+		"ubTransformLMVP",
 		"ubTransformMVPB",
+		"ubTransformMVP",
+
+		// lighting uniform blocks
 		"ubPointLight",
 
 		// curve uniform blocks
 		"ubCurveWaypoint",
 		"ubCurveHandle",
+
+		// skeletal uniform blocks
+		"ubTransformBindPoseToCurrentPose",
 	};
 
 
@@ -489,6 +510,9 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			// 08-morphing
 			a3_DemoStateShader
 				passTangentBasis_transform_morph_vs[1];
+			// 09-skeletal
+			a3_DemoStateShader
+				passTangentBasis_transform_skin_vs[1];
 
 			// geometry shaders
 			// 07-curves
@@ -544,8 +568,8 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			{ { { 0 },	"shdr-vs:passthru",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passthru_vs4x.glsl" } } },
 			{ { { 0 },	"shdr-vs:passthru-trans",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passthru_transform_vs4x.glsl" } } },
 			{ { { 0 },	"shdr-vs:pass-col-trans",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passColor_transform_vs4x.glsl" } } },
-			{ { { 0 },	"shdr-vs:passthru-trans-inst",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passthru_transform_instanced_vs4x.glsl" } } },
-			{ { { 0 },	"shdr-vs:pass-col-trans-inst",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/e/passColor_transform_instanced_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:passthru-trans-inst",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/passthru_transform_instanced_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-col-trans-inst",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/passColor_transform_instanced_vs4x.glsl" } } },
 			// 02-shading
 			{ { { 0 },	"shdr-vs:pass-tex",				a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/02-shading/e/passTexcoord_transform_vs4x.glsl" } } },
 			{ { { 0 },	"shdr-vs:pass-Phong",			a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/02-shading/e/passPhongAttribs_transform_vs4x.glsl" } } },
@@ -558,7 +582,9 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			{ { { 0 },	"shdr-vs:pass-tangent-basis",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/07-curves/e/passTangentBasis_transform_vs4x.glsl" } } },
 			{ { { 0 },	"shdr-vs:pass-instance-id",		a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/07-curves/e/passInstanceID_vs4x.glsl" } } },
 			// 08-morphing
-			{ { { 0 },	"shdr-vs:pass-tangent-morph",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/08-morphing/passTangentBasis_transform_morph_vs4x.glsl" } } },
+			{ { { 0 },	"shdr-vs:pass-tangent-morph",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/08-morphing/e/passTangentBasis_transform_morph_vs4x.glsl" } } },
+			// 09-skeletal
+			{ { { 0 },	"shdr-vs:pass-tangent-skin",	a3shader_vertex  ,	1,{ "../../../../resource/glsl/4x/vs/09-skeletal/passTangentBasis_transform_skin_vs4x.glsl" } } },
 
 			// gs
 			// 07-curves
@@ -593,7 +619,7 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			{ { { 0 },	"shdr-fs:draw-Phong-volume",	a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/06-deferred/e/drawPhong_volume_fs4x.glsl" } } },
 			{ { { 0 },	"shdr-fs:draw-deferltcomp",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/06-deferred/e/drawDeferredLightingComposite_fs4x.glsl" } } },
 			// 08-morphing
-			{ { { 0 },	"shdr-fs:draw-Phong-nm",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/08-morphing/drawPhongMulti_nm_fs4x.glsl" } } },
+			{ { { 0 },	"shdr-fs:draw-Phong-nm",		a3shader_fragment,	1,{ "../../../../resource/glsl/4x/fs/08-morphing/e/drawPhongMulti_nm_fs4x.glsl" } } },
 		}
 	};
 	a3_DemoStateShader *const shaderListPtr = (a3_DemoStateShader *)(&shaderList), *shaderPtr;
@@ -636,12 +662,12 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	// uniform color program with instancing
 	currentDemoProg = demoState->prog_drawColorUnif_instanced;
 	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-unif-inst");
-	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passthru_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passthru_transform_instanced_vs->shader);
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorUnif_fs->shader);
 	// color attrib program with instancing
 	currentDemoProg = demoState->prog_drawColorAttrib_instanced;
 	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-col-attr-inst");
-	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passColor_transform_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passColor_transform_instanced_vs->shader);
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorAttrib_fs->shader);
 
 	// 02-shading programs: 
@@ -776,7 +802,20 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTangentBasis_transform_morph_vs->shader);
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawTangentBasis_gs->shader);
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorAttrib_fs->shader);
-
+/*
+	// 09-skeletal programs: 
+	// Phong shading with skeletal animation
+	currentDemoProg = demoState->prog_drawPhongMulti_skin;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-skin");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTangentBasis_transform_skin_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawPhongMulti_nm_fs->shader);
+	// tangent basis with skeletal animation
+	currentDemoProg = demoState->prog_drawTangentBasis_skin;
+	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-tangent-skin");
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTangentBasis_transform_skin_vs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawTangentBasis_gs->shader);
+	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawColorAttrib_fs->shader);
+*/
 
 	// activate a primitive for validation
 	// makes sure the specified geometry can draw using programs
@@ -898,33 +937,48 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 		if ((uLocation = currentDemoProg->uTime) >= 0)
 			a3shaderUniformSendDouble(a3unif_single, uLocation, 1, defaultDouble);
 
-		// lighting uniform blocks
-		if ((uLocation = currentDemoProg->ubTransformMVP) >= 0)
-			a3shaderUniformBlockBind(currentDemoProg->program, uLocation, 0);
+		// transformation uniform blocks
+		if ((uLocation = currentDemoProg->ubTransformLMVPB) >= 0)
+			a3shaderUniformBlockBind(currentDemoProg->program, uLocation, 3);
+		if ((uLocation = currentDemoProg->ubTransformLMVP) >= 0)
+			a3shaderUniformBlockBind(currentDemoProg->program, uLocation, 2);
 		if ((uLocation = currentDemoProg->ubTransformMVPB) >= 0)
 			a3shaderUniformBlockBind(currentDemoProg->program, uLocation, 1);
+		if ((uLocation = currentDemoProg->ubTransformMVP) >= 0)
+			a3shaderUniformBlockBind(currentDemoProg->program, uLocation, 0);
+
+		// lighting uniform blocks
 		if ((uLocation = currentDemoProg->ubPointLight) >= 0)
 			a3shaderUniformBlockBind(currentDemoProg->program, uLocation, 2);
 
 		// curve uniform blocks
-		if ((uLocation = currentDemoProg->ubCurveWaypoint) >= 0)
-			a3shaderUniformBlockBind(currentDemoProg->program, uLocation, 0);
 		if ((uLocation = currentDemoProg->ubCurveHandle) >= 0)
 			a3shaderUniformBlockBind(currentDemoProg->program, uLocation, 1);
+		if ((uLocation = currentDemoProg->ubCurveWaypoint) >= 0)
+			a3shaderUniformBlockBind(currentDemoProg->program, uLocation, 0);
+
+		// skeletal uniform blocks
+		if ((uLocation = currentDemoProg->ubTransformBindPoseToCurrentPose) >= 0)
+			a3shaderUniformBlockBind(currentDemoProg->program, uLocation, 3);
 	}
 
 
 	// set up lighting uniform buffers
 	for (i = 0; i < demoStateMaxCount_lightVolumeBlock; ++i)
 	{
-		a3bufferCreate(demoState->ubo_transformMVP + i, "ubo:transform-mvp", a3buffer_uniform, a3index_countMaxShort, 0);
-		a3bufferCreate(demoState->ubo_transformMVPB + i, "ubo:transform-mvpb", a3buffer_uniform, a3index_countMaxShort, 0);
+		a3bufferCreate(demoState->ubo_transformMVP_light + i, "ubo:transform-mvp", a3buffer_uniform, a3index_countMaxShort, 0);
+		a3bufferCreate(demoState->ubo_transformMVPB_light + i, "ubo:transform-mvpb", a3buffer_uniform, a3index_countMaxShort, 0);
 		a3bufferCreate(demoState->ubo_pointLight + i, "ubo:pointlight", a3buffer_uniform, a3index_countMaxShort, 0);
 	}
 
 	// set up curve uniform buffers
 	a3bufferCreate(demoState->ubo_curveWaypoint, "ubo:curve-waypoint", a3buffer_uniform, a3index_countMaxShort, 0);
 	a3bufferCreate(demoState->ubo_curveHandle, "ubo:curve-handle", a3buffer_uniform, a3index_countMaxShort, 0);
+
+	// set up skeletal uniform buffers
+	a3bufferCreate(demoState->ubo_transformLMVP_bone, "ubo:transform-lmvp-bone", a3buffer_uniform, a3index_countMaxShort, 0);
+	a3bufferCreate(demoState->ubo_transformLMVP_joint, "ubo:transform-lmvp-joint", a3buffer_uniform, a3index_countMaxShort, 0);
+	a3bufferCreate(demoState->ubo_transformBindPoseToCurrentPose_joint, "ubo:transform-bind2curr-joint", a3buffer_uniform, a3index_countMaxShort, 0);
 
 
 	printf("\n\n---------------- LOAD SHADERS FINISHED ---------------- \n");
@@ -1159,7 +1213,262 @@ void a3demo_loadFramebuffers(a3_DemoState *demoState)
 }
 
 
+// utility to load animation
+void a3demo_loadAnimation(a3_DemoState *demoState)
+{
+	// general counters
+	a3ui32 j, p;
+
+	// object pointers
+	a3_Hierarchy *hierarchy;
+	a3_HierarchyState *hierarchyState;
+	a3_HierarchyPoseGroup *hierarchyPoseGroup;
+	a3_HierarchyNodePose *hierarchyNodePose;
+	a3_HierarchyPoseFlag *hierarchyPoseFlag;
+
+	a3_FileStream fileStream[1] = { 0 };
+	const a3byte *const geometryStream = "./data/anim_data_gpro_skeletal.dat";
+
+	// stream animation assets
+	if (demoState->streaming && a3fileStreamOpenRead(fileStream, geometryStream))
+	{
+		// load hierarchy assets
+		hierarchy = demoState->hierarchy_skel;
+		a3hierarchyLoadBinary(hierarchy, fileStream);
+
+		// done
+		a3fileStreamClose(fileStream);
+	}
+	// not streaming or stream doesn't exist
+	else if (!demoState->streaming || a3fileStreamOpenWrite(fileStream, geometryStream))
+	{
+		// manually set up a skeleton
+		// first is the hierarchy: the general non-spatial relationship between bones
+		const a3ui32 jointCount = 32;
+
+		// indices of joints, their parents and branching joints
+		a3ui32 jointIndex = 0;
+		a3i32 jointParentIndex = -1;
+		a3i32 rootJointIndex, upperSpineJointIndex, clavicleJointIndex, pelvisJointIndex;
+
+		// initialize hierarchy
+		hierarchy = demoState->hierarchy_skel;
+		a3hierarchyCreate(hierarchy, jointCount, 0);
+
+		// set up joint relationships
+		jointParentIndex = rootJointIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:root");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:spine_lower");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:spine_mid");
+		jointParentIndex = upperSpineJointIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:spine_upper");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:neck");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:head");
+		jointParentIndex = upperSpineJointIndex;
+		jointParentIndex = clavicleJointIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:clavicle");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:shoulderblade_r");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:shoulder_r");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:elbow_r");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:forearm_r");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:wrist_r");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:hand_r");
+		jointParentIndex = clavicleJointIndex;
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:shoulderblade_l");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:shoulder_l");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:elbow_l");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:forearm_l");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:wrist_l");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:hand_l");
+		jointParentIndex = rootJointIndex;
+		jointParentIndex = pelvisJointIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:pelvis");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:hip_r");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:knee_r");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:shin_r");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:ankle_r");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:foot_r");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:toe_r");
+		jointParentIndex = pelvisJointIndex;
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:hip_l");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:knee_l");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:shin_l");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:ankle_l");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:foot_l");
+		jointParentIndex = a3hierarchySetNode(hierarchy, jointIndex++, jointParentIndex, "skel:toe_l");
+
+		// save hierarchy assets
+		a3hierarchySaveBinary(hierarchy, fileStream);
+
+		// done
+		a3fileStreamClose(fileStream);
+	}
+
+
+	// next set up hierarchy poses
+	demoState->editSkeletonIndex = 0;
+	hierarchy = demoState->hierarchy_skel + demoState->editSkeletonIndex;
+	hierarchyPoseGroup = demoState->hierarchyPoseGroup_skel + demoState->editSkeletonIndex;
+	a3hierarchyPoseGroupCreate(hierarchyPoseGroup, hierarchy, 1);
+	hierarchyPoseFlag = demoState->hierarchyPoseFlag_skel[demoState->editSkeletonIndex];
+
+	// define "bind pose" or the initial transformation 
+	//	description for each joint (not a literal transform)
+	p = 0;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:root");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, 0.0f, 0.0, +3.6f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate | a3poseFlag_translate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:spine_lower");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, -90.0f, -5.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, 0.0f, -0.1f, +0.1f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:spine_mid");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, 0.0f, +10.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +2.0f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:spine_upper");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, 0.0f, -5.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +2.0f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:neck");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +0.5f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:head");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +0.5f, 0.0f, 0.0f);
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:clavicle");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, +90.0f, 0.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -0.1f, +0.1f, 0.0f);
+//	j = a3hierarchyGetNodeIndex(hierarchy, "skel:pelvis");
+//	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+//	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, 0.0f, +0.1f, -0.1f);
+
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:shoulderblade_r");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +0.5f, -0.1f, -0.5f);
+	hierarchyPoseFlag[j] = a3poseFlag_translate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:shoulder_r");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, +30.0f, -10.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +0.5f, 0.0f, +0.5f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:elbow_r");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, 0.0f, +20.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +2.0f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:forearm_r");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +1.0f, 0.0f, 0.0f);
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:wrist_r");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, 0.0f, -10.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +1.0f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:hand_r");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +0.5f, 0.0f, 0.0f);
+
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:shoulderblade_l");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -0.5f, -0.1f, -0.5f);
+	hierarchyPoseFlag[j] = a3poseFlag_translate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:shoulder_l");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, -30.0f, +10.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -0.5f, 0.0f, +0.5f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:elbow_l");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, 0.0f, -20.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -2.0f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:forearm_l");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -1.0f, 0.0f, 0.0f);
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:wrist_l");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, 0.0f, +10.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -1.0f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:hand_l");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -0.5f, 0.0f, 0.0f);
+
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:hip_r");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, +90.0f, +10.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +1.0f, -0.1f, +0.5f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:knee_r");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, 0.0f, -20.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +2.0f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:shin_r");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +1.0f, 0.0f, 0.0f);
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:ankle_r");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, 0.0f, +90.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +1.0f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:foot_r");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, 0.0f, +10.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +0.5f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:toe_r");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, +0.5f, 0.0f, 0.0f);
+
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:hip_l");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, -90.0f, -10.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -1.0f, -0.1f, +0.5f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:knee_l");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, 0.0f, +20.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -2.0f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:shin_l");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -1.0f, 0.0f, 0.0f);
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:ankle_l");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, 0.0f, -90.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -1.0f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:foot_l");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetRotation(hierarchyNodePose, 0.0f, 0.0f, -10.0f, a3true);
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -0.5f, 0.0f, 0.0f);
+	hierarchyPoseFlag[j] = a3poseFlag_rotate;
+	j = a3hierarchyGetNodeIndex(hierarchy, "skel:toe_l");
+	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
+	a3hierarchyNodePoseSetTranslation(hierarchyNodePose, -0.5f, 0.0f, 0.0f);
+
+
+	// finally set up hierarchy states
+	hierarchyPoseGroup = demoState->hierarchyPoseGroup_skel + demoState->editSkeletonIndex;
+	hierarchyState = demoState->hierarchyState_skel + demoState->editSkeletonIndex;
+	a3hierarchyStateCreate(hierarchyState, hierarchyPoseGroup);
+}
+
+
 //-----------------------------------------------------------------------------
+
+// internal utility for refreshing drawable
+inline void a3_refreshDrawable_internal(a3_VertexDrawable *drawable, a3_VertexArrayDescriptor *vertexArray, a3_IndexBuffer *indexBuffer)
+{
+	drawable->vertexArray = vertexArray;
+	if (drawable->indexType)
+		drawable->indexBuffer = indexBuffer;
+}
+
 
 // the handle release callbacks are no longer valid; since the library was 
 //	reloaded, old function pointers are out of scope!
@@ -1182,6 +1491,7 @@ void a3demo_refresh(a3_DemoState *demoState)
 	a3_FramebufferDouble *currentDFBO = demoState->framebuffer_double,
 		*const endDFBO = currentDFBO + demoStateMaxCount_framebufferDouble;
 
+	// set pointers to appropriate release callback for different asset types
 	while (currentBuff < endBuff)
 		a3bufferHandleUpdateReleaseCallback(currentBuff++);
 	while (currentVAO < endVAO)
@@ -1196,6 +1506,40 @@ void a3demo_refresh(a3_DemoState *demoState)
 		a3framebufferHandleUpdateReleaseCallback(currentFBO++);
 	while (currentDFBO < endDFBO)
 		a3framebufferDoubleHandleUpdateReleaseCallback(currentDFBO++);
+
+	// re-link specific object pointers for different asset types
+	currentBuff = demoState->vbo_staticSceneObjectDrawBuffer;
+
+	currentVAO = demoState->vao_position;
+	currentVAO->vertexBuffer = currentBuff;
+	a3_refreshDrawable_internal(demoState->draw_grid, currentVAO, currentBuff);
+	a3_refreshDrawable_internal(demoState->draw_pointlight, currentVAO, currentBuff);
+
+	currentVAO = demoState->vao_position_color;
+	currentVAO->vertexBuffer = currentBuff;
+	a3_refreshDrawable_internal(demoState->draw_axes, currentVAO, currentBuff);
+
+	currentVAO = demoState->vao_position_texcoord;
+	currentVAO->vertexBuffer = currentBuff;
+	a3_refreshDrawable_internal(demoState->draw_skybox, currentVAO, currentBuff);
+	a3_refreshDrawable_internal(demoState->draw_unitquad, currentVAO, currentBuff);
+
+	currentVAO = demoState->vao_tangentBasis;
+	currentVAO->vertexBuffer = currentBuff;
+	a3_refreshDrawable_internal(demoState->draw_plane, currentVAO, currentBuff);
+	a3_refreshDrawable_internal(demoState->draw_sphere, currentVAO, currentBuff);
+	a3_refreshDrawable_internal(demoState->draw_cylinder, currentVAO, currentBuff);
+	a3_refreshDrawable_internal(demoState->draw_torus, currentVAO, currentBuff);
+	a3_refreshDrawable_internal(demoState->draw_teapot, currentVAO, currentBuff);
+
+	currentVAO = demoState->vao_tangentBasis_morph5;
+	currentVAO->vertexBuffer = currentBuff;
+	a3_refreshDrawable_internal(demoState->draw_teapot_morph, currentVAO, currentBuff);
+
+	a3demo_initDummyDrawable_internal(demoState);
+
+	demoState->hierarchyState_skel->poseGroup = demoState->hierarchyPoseGroup_skel;
+	demoState->hierarchyPoseGroup_skel->hierarchy = demoState->hierarchy_skel;
 }
 
 

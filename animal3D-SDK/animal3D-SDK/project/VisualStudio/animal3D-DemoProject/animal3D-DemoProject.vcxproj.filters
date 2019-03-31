@@ -94,6 +94,15 @@
     <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\08-morphing">
       <UniqueIdentifier>{5bc411e5-6242-40f3-a5f5-4be289de32ef}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\A3_DEMO\_demo_animation">
+      <UniqueIdentifier>{58573d48-7f19-4f0b-ad1a-2105a7210dce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common\A3_DEMO\_demo_animation">
+      <UniqueIdentifier>{2343c115-c279-43ce-89ac-37a83a0742b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\vs\09-skeletal">
+      <UniqueIdentifier>{a85ed227-582e-45c7-a27b-00822e24031a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_src_win\main_dll.c">
@@ -126,6 +135,15 @@
     <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_graphics\a3_RenderPipeline.c">
       <Filter>Source Files\common\A3_DEMO\_demo_graphics</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_animation\a3_Hierarchy.c">
+      <Filter>Source Files\common\A3_DEMO\_demo_animation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_animation\a3_HierarchyState.c">
+      <Filter>Source Files\common\A3_DEMO\_demo_animation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_animation\a3_Kinematics.c">
+      <Filter>Source Files\common\A3_DEMO\_demo_animation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\source\animal3D-DemoProject\a3_dylib_config_export.h">
@@ -142,6 +160,15 @@
     </ClInclude>
     <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_graphics\a3_RenderPipeline.h">
       <Filter>Header Files\A3_DEMO\_demo_graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_animation\a3_Hierarchy.h">
+      <Filter>Header Files\A3_DEMO\_demo_animation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_animation\a3_HierarchyState.h">
+      <Filter>Header Files\A3_DEMO\_demo_animation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\animal3D-DemoProject\A3_DEMO\_demo_animation\a3_Kinematics.h">
+      <Filter>Header Files\A3_DEMO\_demo_animation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -252,6 +279,9 @@
     </None>
     <None Include="..\..\..\resource\glsl\4x\fs\08-morphing\drawPhongMulti_nm_fs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\fs\08-morphing</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\vs\09-skeletal\passTangentBasis_transform_skin_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\09-skeletal</Filter>
     </None>
   </ItemGroup>
 </Project>

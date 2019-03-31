@@ -43,6 +43,8 @@
 #include "_utilities/a3_DemoSceneObject.h"
 #include "_utilities/a3_DemoShaderProgram.h"
 
+#include "_demo_animation/a3_Kinematics.h"
+
 
 //-----------------------------------------------------------------------------
 
@@ -81,7 +83,7 @@ extern "C"
 		demoStateMaxCount_framebuffer = 4,
 		demoStateMaxCount_framebufferDouble = 8,
 
-		demoStateMaxCount_uniformBuffer = 2 + 3 * demoStateMaxCount_lightVolumeBlock,
+		demoStateMaxCount_uniformBuffer = 8 + 3 * demoStateMaxCount_lightVolumeBlock,
 
 		// misc
 		demoStateMaxCount_curveWaypoint = 32,
@@ -91,9 +93,17 @@ extern "C"
 	// additional counters for demo modes
 	enum a3_DemoStateModeCounts
 	{
-		demoStateMaxModes = 2,
+		demoStateMaxModes = 3,
 		demoStateMaxSubModes = 14,
 		demoStateMaxOutputModes = 5,
+	};
+
+	// demo mode names
+	enum a3_DemoStateModeNames
+	{
+		demoStateMode_main,
+		demoStateMode_curves,
+		demoStateMode_skeletal,
 	};
 
 	
@@ -253,6 +263,18 @@ extern "C"
 		a3real targetTime, targetParam;
 
 
+		// skeletal objects
+		a3_Hierarchy hierarchy_skel[1];
+		a3_HierarchyState hierarchyState_skel[1];
+		a3_HierarchyPoseGroup hierarchyPoseGroup_skel[1];
+		a3_HierarchyPoseFlag hierarchyPoseFlag_skel[1][128];
+
+		// skeletal controls
+		a3ui32 editSkeletonIndex;
+		a3ui32 editJointIndex;
+		a3boolean editingJoint;
+
+
 		//---------------------------------------------------------------------
 		// object arrays: organized as anonymous unions for two reasons: 
 		//	1. easy to manage entire sets of the same type of object using the 
@@ -275,6 +297,10 @@ extern "C"
 				// curve-drawing objects
 				a3_DemoSceneObject
 					curveFollowObject[1];
+
+				// skeletal objects
+				a3_DemoSceneObject
+					skeletonObject[1];
 			};
 		};
 		union {
@@ -347,8 +373,11 @@ extern "C"
 			a3_VertexDrawable drawable[demoStateMaxCount_drawable];
 			struct {
 				a3_VertexDrawable
+					draw_axes[1];								// coordinate axes at the center of the world
+				a3_VertexDrawable
 					draw_grid[1],								// wireframe ground plane to emphasize scaling
-					draw_axes[1],								// coordinate axes at the center of the world
+					draw_bone[1],								// spike shape for skeletal bone
+					draw_joint[1],								// ball shape for skeletal joint
 					draw_skybox[1],								// skybox cube mesh
 					draw_unitquad[1];							// unit quad (used for fsq)
 				a3_VertexDrawable
@@ -404,6 +433,9 @@ extern "C"
 				a3_DemoStateShaderProgram
 					prog_drawPhongMulti_morph[1],				// Phong shading on a morphing object
 					prog_drawTangentBasis_morph[1];				// tangent basis for morphing object
+				a3_DemoStateShaderProgram
+					prog_drawPhongMulti_skin[1],				// Phong shading on a skinned object
+					prog_drawTangentBasis_skin[1];				// tangent basis for skinned object
 			};
 		};
 
@@ -457,14 +489,20 @@ extern "C"
 			struct {
 				// lighting uniform buffers
 				a3_UniformBuffer
-					ubo_transformMVP[demoStateMaxCount_lightVolumeBlock],
-					ubo_transformMVPB[demoStateMaxCount_lightVolumeBlock],
+					ubo_transformMVP_light[demoStateMaxCount_lightVolumeBlock],
+					ubo_transformMVPB_light[demoStateMaxCount_lightVolumeBlock],
 					ubo_pointLight[demoStateMaxCount_lightVolumeBlock];
 
 				// curve uniform buffers
 				a3_UniformBuffer
 					ubo_curveWaypoint[1],
 					ubo_curveHandle[1];
+
+				// skeletal uniform buffers
+				a3_UniformBuffer
+					ubo_transformLMVP_bone[1],
+					ubo_transformLMVP_joint[1],
+					ubo_transformBindPoseToCurrentPose_joint[1];
 			};
 		};
 
@@ -491,6 +529,7 @@ extern "C"
 	void a3demo_loadShaders(a3_DemoState *demoState);
 	void a3demo_loadTextures(a3_DemoState *demoState);
 	void a3demo_loadFramebuffers(a3_DemoState *demoState);
+	void a3demo_loadAnimation(a3_DemoState *demoState);
 	void a3demo_refresh(a3_DemoState *demoState);
 
 	// unloading
@@ -498,11 +537,13 @@ extern "C"
 	void a3demo_unloadShaders(a3_DemoState *demoState);
 	void a3demo_unloadTextures(a3_DemoState *demoState);
 	void a3demo_unloadFramebuffers(a3_DemoState *demoState);
+	void a3demo_unloadAnimation(a3_DemoState *demoState);
 	void a3demo_validateUnload(const a3_DemoState *demoState);
 
 	// other utils & setup
 	void a3demo_setDefaultGraphicsState();
 	void a3demo_initScene(a3_DemoState *demoState);
+	void a3demo_initSceneRefresh(a3_DemoState *demoState);
 
 
 //-----------------------------------------------------------------------------
