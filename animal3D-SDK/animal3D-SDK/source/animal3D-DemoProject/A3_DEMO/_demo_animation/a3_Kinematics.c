@@ -41,6 +41,21 @@ extern inline a3i32 a3kinematicsSolveForwardPartial(const a3_HierarchyState *hie
 	{
 		// ****TO-DO: implement forward kinematics algorithm
 
+		a3ui32 i, end = firstIndex + nodeCount;
+		for (i = firstIndex; i < end; i++)
+		{
+			// blah blah
+			//else
+			hierarchyState->objectSpace->transform[i] = hierarchyState->localSpace->transform[i];
+
+			// if node is root (no parent)
+			// node's world transformation is node's local transform
+
+			// else
+			// nodes world transform = parent's world transform * node's local transform
+			// for each child
+			// solverecursiveFK (child)
+		}
 	}
 	return -1;
 }

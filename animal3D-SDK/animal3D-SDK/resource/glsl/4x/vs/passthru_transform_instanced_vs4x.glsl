@@ -25,11 +25,15 @@
 
 #version 410
 
-#define MAX_INSTANCES 128
+#define MAX_INSTANCES 1024 //128
 
 layout (location = 0) in vec4 aPosition;
 
+uniform ubTransformMVP{
+	mat4 uMVP[MAX_INSTANCES];
+};
+
 void main()
 {
-	gl_Position = aPosition;
+	gl_Position = uMVP[gl_InstanceID] * aPosition;
 }

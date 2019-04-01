@@ -25,11 +25,19 @@
 
 #version 410
 
-#define MAX_INSTANCES 128
+#define MAX_INSTANCES 1024 //128
 
 layout (location = 0) in vec4 aPosition;
+layout(location = 3) in vec4 aColor;
+
+uniform ubTransformMVP{
+	mat4 uMVP[MAX_INSTANCES];
+};
+
+out vec4 vPassColor;
 
 void main()
 {
-	gl_Position = aPosition;
+	gl_Position = uMVP[gl_InstanceID] * aPosition;
+	vPassColor = aColor;
 }
