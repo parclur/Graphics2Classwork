@@ -1,3 +1,4 @@
+//Edited by Zach Phillips and Claire Yeash with permission from the author
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -17,14 +18,14 @@
 /*
 	animal3D SDK: Minimal 3D Animation Framework
 	By Daniel S. Buckstein
-	
+
 	passInstanceID_vs4x.glsl
 	Outputs raw position attribute and pass instance ID;
 */
 
 #version 410
 
-layout (location = 0) in vec4 aPosition;
+layout(location = 0) in vec4 aPosition;
 
 flat out int vPassInstanceID;
 

@@ -37,10 +37,43 @@
 
 #define max_morphTarget 5
 
-layout (location = 0)	in vec4 aPosition;
+// (1)
+layout (location = 0)	in vec4 aPosition[max_morphTarget];
+layout (location = 5)	in vec4 aNormal[max_morphTarget];
+layout (location = 10)	in vec4 aTangent[max_morphTarget];
+// (8)
+layout (location = 15)	in vec4 aTexcoord;
+
+uniform mat4 uMV, uP; // (2)
+
+// (4)
+uniform ivec4 uIndex;
+uniform float uTime; 
+
+#define i0 uIndex[0]
+#define i1 uIndex[1]
+#define iNext uIndex[2]
+#define iPrev uIndex[3]
+
+// Catmull-Rom Interpolation
+float t;
+//mat4 controlParameterT = mat4(1, t, pow(t, 2), pow(t, 3));
+//mat4 MCR = mat4(1 / 2(0, 2, 0, 0,
+//	-1, 0, 1, 0,
+//	2, -5, 4, -1,
+//	-1, 3, -3, 1));
 
 void main()
 {
+	//vec4 position = aPosition[uIndex[0]];
+	//vec4 position = mix(aPosition[uIndex[0]], aPosition[uIndex[1]], uTime); // pro-tip it is ugly, challenge: mix function is LERP - give catmull rom and curbic hermite, challenge 2: complete the shader (normal, tangent, bitangent, tangent basis), challenge 3: make all of the shapes morph
+
+	vec4 catmullRom = vec4(0.5f * ((((-1 * t) + (2 * pow(t, 2)) - pow(t, 3)) * iPrev) +
+								((2 - (5 * pow(t, 2)) + (3 * pow(t, 3))) * i0) +
+								((t + (4 * pow(t,2)) - (3 * pow(t, 3))) * i1) +
+								(((-1 * pow(t,2)) + pow(t, 3)) * iNext)));
+
 	// DUMMY OUTPUT: directly assign input position to output position
-	gl_Position = aPosition;
+	//gl_Position = uP * uMV * position;
+	gl_Position = uP * uMV * catmullRom;
 }

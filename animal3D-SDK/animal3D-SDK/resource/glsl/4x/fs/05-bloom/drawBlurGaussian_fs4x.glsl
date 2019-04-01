@@ -1,3 +1,5 @@
+//This file was modified by Claire Yeash and Zach Phillips with permission of the author.
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -33,8 +35,13 @@ in vec2 vPassTexcoord;
 
 uniform sampler2D uImage0;
 
+uniform vec2 uPixelSz; // (1) a3DemoProgram.h
+
 layout (location = 0) out vec4 rtFragColor;
 
+const int sizeOfBlurArray = 5;
+float blurFilter[sizeOfBlurArray] = float[] ( 2.0, 4.0, 6.0, 4.0, 2.0 ); // ( + + 0 - -)
+//start position -3 (-7 -1 / 2)
 
 // Gaussian blur with 1D kernel about given axis
 //	weights are selected by rows in Pascal's triangle
@@ -43,20 +50,40 @@ layout (location = 0) out vec4 rtFragColor;
 //		2^2 = 4:		1	2	1
 //		2^3 = 8:		1	3	3	1
 //		2^4 = 16:		1	4	6	4	1
+// Dan's function
+/*
 vec4 calcGaussianBlur1D_4(in sampler2D image, in vec2 center, in vec2 axis)	// (2)
 {
-	// dummy: sample image at center
-	return texture(image, center);
-}
+	vec4 color = vec4(0.0);
 
+	color += texture(image, center + axis*2.0);
+	color += texture(image, center + axis) * 4.0;
+	color += texture(image, center) * 6.0;
+	color += texture(image, center - axis) * 4.0;
+	color += texture(image, center - axis*2.0);
+
+	return color / 16;
+
+	// dummy: sample image at center
+	//return texture(image, center);
+}
+*/
+
+// Gaussian Blur
+vec4 calcGaussianBlur1D_4(in sampler2D image, in vec2 center, in vec2 axis)	// (2)
+{
+	vec4 color = vec4(0.0);
+
+	for (int i = 0; i < sizeOfBlurArray; i++)
+	{
+		// every other i is a negative, decreasing the amount of movement
+		color += texture(image, center + (axis (-1 * (i % 2))) * blurFilter[i];
+	}
+
+	return color / 16;
+}
 
 void main()
 {
-	// DUMMY OUTPUT: all fragments are LIME
-//	rtFragColor = vec4(0.0, 1.0, 0.5, 1.0);
-
-	// DEBUGGING
-	vec4 sample0 = texture(uImage0, vPassTexcoord);
-//	rtFragColor = vec4(vPassTexcoord, 0.0, 1.0);
-	rtFragColor = 1.0 - sample0;
+	rtFragColor = calcGaussianBlur1D_4(uImage0, vPassTexcoord, uPixelSz);
 }

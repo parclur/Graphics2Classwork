@@ -1,3 +1,5 @@
+// This file was modified by Claire Yeash and Zach Phillips with permission of the author
+
 /*
 	Copyright 2011-2019 Daniel S. Buckstein
 
@@ -35,8 +37,26 @@
 
 layout (location = 0) in vec4 aPosition;
 
+// (1) found in load shaders line 368
+#define max_lights 1024
+uniform ubTransformMVP{
+	mat4 uMVP[max_lights];
+};
+uniform ubTransformMVPB{
+	mat4 uMVPB[max_lights];
+};
+
+// (2)
+out vec4 vPassBiasClipCoord;
+flat out int vPassInstanceID; // (2)
+
 void main()
 {
 	// DUMMY OUTPUT: directly assign input position to output position
-	gl_Position = aPosition;
+	//gl_Position = aPosition;
+
+	int i = gl_InstanceID;
+	vPassInstanceID = i; // (4)
+	vPassBiasClipCoord = uMVPB[i] * aPosition; // (3,4) // perspective divide to get screen space
+	gl_Position = uMVP[i] * aPosition; // (3,4)
 }
