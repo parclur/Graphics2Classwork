@@ -41,20 +41,38 @@ extern inline a3i32 a3kinematicsSolveForwardPartial(const a3_HierarchyState *hie
 	{
 		// ****TO-DO: implement forward kinematics algorithm
 
+		/*
+		// From Header file
+		// general forward kinematics: 
+		// given local transforms for hierarchy nodes, calculate object-space: 
+		//		if not root, 
+		//			object-space node = object-space parent * local-space node
+		//		else
+		//			object-space node = local-space node
+
+		// forward kinematics solver given an initialized hierarchy state
+		inline a3i32 a3kinematicsSolveForward(const a3_HierarchyState *hierarchyState);
+
+		// forward kinematics solver starting at a specified joint
+		inline a3i32 a3kinematicsSolveForwardPartial(const a3_HierarchyState *hierarchyState, const a3ui32 firstIndex, const a3ui32 nodeCount);
+		*/
+
+
 		a3ui32 i, end = firstIndex + nodeCount;
 		for (i = firstIndex; i < end; i++)
 		{
-			// blah blah
-			//else
-			hierarchyState->objectSpace->transform[i] = hierarchyState->localSpace->transform[i];
-
-			// if node is root (no parent)
-			// node's world transformation is node's local transform
-
+			a3real4 output;
+			// if not root
+				// object-space node = object-space parent * local-space node
+			// A3: Calculate matrix product.
+			//	param m_out: product of input matrices
+			//	param mL: input left matrix
+			//	param mR: input right matrix
+			//	return: m_out
+			hierarchyState->objectSpace->transform[i] = a3real4x4Product(output.m, hierarchyState->objectSpace->transform[i].m, hierarchyState->localSpace->transform[i].m);
 			// else
-			// nodes world transform = parent's world transform * node's local transform
-			// for each child
-			// solverecursiveFK (child)
+				//object-space node = local-space node
+			hierarchyState->objectSpace->transform[i] = hierarchyState->localSpace->transform[i];
 		}
 	}
 	return -1;
