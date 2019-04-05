@@ -57,22 +57,19 @@ extern inline a3i32 a3kinematicsSolveForwardPartial(const a3_HierarchyState *hie
 		inline a3i32 a3kinematicsSolveForwardPartial(const a3_HierarchyState *hierarchyState, const a3ui32 firstIndex, const a3ui32 nodeCount);
 		*/
 
-
 		a3ui32 i, end = firstIndex + nodeCount;
 		for (i = firstIndex; i < end; i++)
 		{
-			a3real4 output;
-			// if not root
-				// object-space node = object-space parent * local-space node
-			// A3: Calculate matrix product.
-			//	param m_out: product of input matrices
-			//	param mL: input left matrix
-			//	param mR: input right matrix
-			//	return: m_out
-			hierarchyState->objectSpace->transform[i] = a3real4x4Product(output.m, hierarchyState->objectSpace->transform[i].m, hierarchyState->localSpace->transform[i].m);
-			// else
-				//object-space node = local-space node
-			hierarchyState->objectSpace->transform[i] = hierarchyState->localSpace->transform[i];
+			if (i - 1 == -1)
+			{
+		
+				hierarchyState->objectSpace->transform[i] = hierarchyState->localSpace->transform[i];
+			}
+			else
+			{
+				//Get the parent of the node with: hierarchyState->poseGroup->hierarchy->nodes[i].parentIndex
+				a3real4x4Product(hierarchyState->objectSpace->transform[i].m, hierarchyState->objectSpace->transform[hierarchyState->poseGroup->hierarchy->nodes[i].parentIndex].m, hierarchyState->localSpace->transform[i].m);
+			}
 		}
 	}
 	return -1;

@@ -1310,6 +1310,8 @@ void a3demo_loadAnimation(a3_DemoState *demoState)
 
 	// define "bind pose" or the initial transformation 
 	//	description for each joint (not a literal transform)
+	//demoState->rootFirstPoseVec3
+	
 	p = 0;
 	j = a3hierarchyGetNodeIndex(hierarchy, "skel:root");
 	hierarchyNodePose = hierarchyPoseGroup->pose[p].nodePose + j;
