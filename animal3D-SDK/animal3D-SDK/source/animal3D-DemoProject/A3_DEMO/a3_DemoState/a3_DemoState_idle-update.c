@@ -453,8 +453,29 @@ void a3demo_update_skeletal(a3_DemoState *demoState, a3f64 dt)
 		currentHierarchyState->localPose, currentHierarchy->numNodes, 0);
 	a3kinematicsSolveForward(demoState->hierarchyState_skel);
 //	a3hierarchyStateUpdateObjectBindToCurrent(currentHierarchyState, ???);
-	a3hierarchyStateUpdateObjectBindToCurrent
 
+	// general counters
+	a3ui32 p;
+
+	// object pointers
+	a3_HierarchyNodePose *hierarchyNodePose;
+	
+	// If the user is not editing joints, then the animation plays
+	if (!demoState->editingJoint)
+	{
+		j = currentHierarchy->nodes[i].parentIndex;
+		p = 0;
+
+		//for (i = 1; i < currentHierarchy->numNodes; i++)
+		//{
+			//j = a3hierarchyGetNodeIndex(currentHierarchyState, "skel:root");
+			hierarchyNodePose = currentHierarchyPoseGroup->pose[p].nodePose + j;
+			a3hierarchyNodePoseSetTranslation(hierarchyNodePose, 0.0f, 0.0, +3.6f); //demoState->timer->totalTime //(a3f32)dt
+
+			// will be used to lerp between key poses with a time parameter
+			//a3lerpFunc((0.0f, 0.0, +3.6f), (0.0f, 0.0, 0.0f), 0.5f);
+		//}
+	}
 
 	// update buffers: 
 	//	-> calculate and store bone transforms

@@ -315,7 +315,7 @@ extern "C"
 			struct 
 			{
 				//must have values return a const a3f32
-				a3vec3 rootFirstPoseVec3;
+				//a3vec3 rootFirstPoseVec3;
 				a3vec3 rootSecondPoseVec3;
 				a3vec3 rootThirdPoseVec3;
 
@@ -332,6 +332,7 @@ extern "C"
 				a3vec3 spine_upperThirdPoseVec3;
 			};
 		};
+
 
 		/*
 		j = a3hierarchyGetNodeIndex(hierarchy, "skel:root");

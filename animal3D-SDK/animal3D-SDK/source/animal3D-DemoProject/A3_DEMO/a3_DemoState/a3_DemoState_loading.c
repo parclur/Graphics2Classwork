@@ -1307,10 +1307,6 @@ void a3demo_loadAnimation(a3_DemoState *demoState)
 	hierarchyPoseGroup = demoState->hierarchyPoseGroup_skel + demoState->editSkeletonIndex;
 	a3hierarchyPoseGroupCreate(hierarchyPoseGroup, hierarchy, 1);
 	hierarchyPoseFlag = demoState->hierarchyPoseFlag_skel[demoState->editSkeletonIndex];
-
-	// define "bind pose" or the initial transformation 
-	//	description for each joint (not a literal transform)
-	//demoState->rootFirstPoseVec3
 	
 	p = 0;
 	j = a3hierarchyGetNodeIndex(hierarchy, "skel:root");

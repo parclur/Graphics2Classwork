@@ -111,19 +111,19 @@ extern "C"
 		const a3_HierarchyPoseGroup *poseGroup;
 
 		// local poses
-		a3_HierarchyPose localPose[1];
+		a3_HierarchyPose localPose[64];
 
 		// local transformations (relative to parent's space)
-		a3_HierarchyTransform localSpace[1];
+		a3_HierarchyTransform localSpace[64];
 
 		// object transformations (relative to root's parent's space)
-		a3_HierarchyTransform objectSpace[1];
+		a3_HierarchyTransform objectSpace[64];
 
 		// inverse object transformations (root relative to this)
-		a3_HierarchyTransform objectSpaceInverse[1];
+		a3_HierarchyTransform objectSpaceInverse[64];
 
 		// skinning transformations (bind pose to current object space)
-		a3_HierarchyTransform objectSpaceBindToCurrent[1];
+		a3_HierarchyTransform objectSpaceBindToCurrent[64];
 	};
 	
 
