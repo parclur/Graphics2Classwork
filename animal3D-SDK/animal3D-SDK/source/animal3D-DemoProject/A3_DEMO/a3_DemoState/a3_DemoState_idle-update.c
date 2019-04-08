@@ -470,7 +470,10 @@ void a3demo_update_skeletal(a3_DemoState *demoState, a3f64 dt)
 		{
 			//j = a3hierarchyGetNodeIndex(currentHierarchyState, "skel:root");
 			hierarchyNodePose = currentHierarchyPoseGroup->pose[p].nodePose;// +j;
-			a3hierarchyNodePoseSetTranslation(hierarchyNodePose, 0.0f, 0.0, +3.6f); //demoState->timer->totalTime //(a3f32)dt
+			//a3hierarchyNodePoseSetTranslation(hierarchyNodePose, 0.0f, 0.0, +3.6f); //demoState->timer->totalTime //(a3f32)dt
+
+			//play animation
+			//a3demo_update_curve(demoState, 1);
 
 			// will be used to lerp between key poses with a time parameter
 			//a3lerpFunc(currentHierarchyPoseGroup->pose[p].nodePose[i].translation, (0.0f, 0.0, 0.0f), 0.5f);

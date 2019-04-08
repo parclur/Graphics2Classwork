@@ -684,6 +684,10 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 	case 'm':
 		demoState->updateAnimation = 1 - demoState->updateAnimation;
 		break;
+
+	case '-':
+		demoState->editingJoint = 1 - demoState->editingJoint;
+		break;
 	}
 
 
