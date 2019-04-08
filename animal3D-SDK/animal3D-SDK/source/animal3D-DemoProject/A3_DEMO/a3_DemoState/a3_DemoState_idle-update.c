@@ -472,6 +472,13 @@ void a3demo_update_skeletal(a3_DemoState *demoState, a3f64 dt)
 			hierarchyNodePose = currentHierarchyPoseGroup->pose[p].nodePose;// +j;
 			//a3hierarchyNodePoseSetTranslation(hierarchyNodePose, 0.0f, 0.0, +3.6f); //demoState->timer->totalTime //(a3f32)dt
 
+			a3real n0 = (0.0f, 0.0, 0.0f);
+			a3real n1 = (1.0f, 0.0, 0.0f);
+			a3lerpFunc(n0, n1, (a3f32)dt);//demoState->timer->totalTime);
+			//a3lerpFunc((0.0f, 0.0, 0.0f), (1.0f, 0.0, 0.0f), (a3f32)demoState->timer->totalTime);
+			a3hierarchyNodePoseSetTranslation(hierarchyNodePose, a3lerpFunc(n0, n1, (a3f32)dt), a3lerpFunc(n0, n1, (a3f32)dt), a3lerpFunc(n0, n1, (a3f32)dt));// +7.2f);// *(a3f32)demoState->timer->totalTime);
+			//a3hierarchyNodePoseSetTranslation(hierarchyNodePose, 0.0f, 0.0, a3asind((a3f32)demoState->timer->totalTime));// +7.2f);// *(a3f32)demoState->timer->totalTime);
+
 			//play animation
 			//a3demo_update_curve(demoState, 1);
 
