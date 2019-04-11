@@ -1093,25 +1093,27 @@ void a3demo_render_main(const a3_DemoState *demoState,
 		// set up post-processing pass
 		passIndex = demoStateRenderPass_bloom_bright_2;
 
-		// select post-processing program
-		//	(if you have uniforms to send, send 'em!)
-		currentDemoProgram = demoState->prog_drawBrightPass;
-		a3shaderProgramActivate(currentDemoProgram->program);
+		BloomBrightPass(demoState->prog_drawBrightPass, demoState->fbo_dbl_nodepth_2 + 0, demoState->fbo_dbl_nodepth + 1); //currentDemoProgram, writeDFBO, readDFBO
 
-		// activate post-processing framebuffer
-		writeDFBO = demoState->fbo_dbl_nodepth_2 + 0;
-		a3framebufferDoubleActivate(writeDFBO);
-
-		// bind textures required for active post effect
-		//	(e.g. output from previous pass, check which "notebook" has it)
-		readDFBO = demoState->fbo_dbl_nodepth + 1;
-		a3framebufferDoubleBindColorTexture(readDFBO, a3tex_unit00, 0);
-
-		// draw FSQ
-		a3vertexDrawableRenderActive();
-
-		// end pass: double buffer swap
-		a3framebufferDoubleSwap((a3_FramebufferDouble *)writeDFBO);
+		//// select post-processing program
+		////	(if you have uniforms to send, send 'em!)
+		//currentDemoProgram = demoState->prog_drawBrightPass;
+		//a3shaderProgramActivate(currentDemoProgram->program);
+		//
+		//// activate post-processing framebuffer
+		//writeDFBO = demoState->fbo_dbl_nodepth_2 + 0;
+		//a3framebufferDoubleActivate(writeDFBO);
+		//
+		//// bind textures required for active post effect
+		////	(e.g. output from previous pass, check which "notebook" has it)
+		//readDFBO = demoState->fbo_dbl_nodepth + 1;
+		//a3framebufferDoubleBindColorTexture(readDFBO, a3tex_unit00, 0);
+		//
+		//// draw FSQ
+		//a3vertexDrawableRenderActive();
+		//
+		//// end pass: double buffer swap
+		//a3framebufferDoubleSwap((a3_FramebufferDouble *)writeDFBO);
 
 
 		// set up next pass
@@ -1832,5 +1834,27 @@ void a3demo_render(const a3_DemoState *demoState)
 	}
 }
 
+void BloomBrightPass(const a3_DemoState *demoState)
+{
+	// select post-processing program
+	//	(if you have uniforms to send, send 'em!)
+	//currentDemoProgram = demoState->prog_drawBrightPass;
+	a3shaderProgramActivate(demoState->prog_drawBrightPass->program);
+
+	// activate post-processing framebuffer
+	//writeDFBO = demoState->fbo_dbl_nodepth_2 + 0;
+	a3framebufferDoubleActivate(demoState->fbo_dbl_nodepth_2 + 0);
+
+	// bind textures required for active post effect
+	//	(e.g. output from previous pass, check which "notebook" has it)
+	//readDFBO = demoState->fbo_dbl_nodepth + 1;
+	a3framebufferDoubleBindColorTexture(demoState->fbo_dbl_nodepth + 1, a3tex_unit00, 0);
+
+	// draw FSQ
+	a3vertexDrawableRenderActive();
+
+	// end pass: double buffer swap
+	//a3framebufferDoubleSwap((a3_FramebufferDouble *)writeDFBO);
+}
 
 //-----------------------------------------------------------------------------
