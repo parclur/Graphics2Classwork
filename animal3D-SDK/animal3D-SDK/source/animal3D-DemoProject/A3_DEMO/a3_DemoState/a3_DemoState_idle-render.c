@@ -1093,7 +1093,7 @@ void a3demo_render_main(const a3_DemoState *demoState,
 		// set up post-processing pass
 		passIndex = demoStateRenderPass_bloom_bright_2;
 
-		BloomBrightPass(demoState->prog_drawBrightPass, demoState->fbo_dbl_nodepth_2 + 0, demoState->fbo_dbl_nodepth + 1); //currentDemoProgram, writeDFBO, readDFBO
+		BloomBrightPass(demoState->prog_drawBrightPass, demoState->fbo_dbl_nodepth_2 + 0, demoState->fbo_dbl_nodepth + 1); //currentDemoProgram (const a3_DemoStateShaderProgram *currentDemoProgram;), writeDFBO, readDFBO (	const a3_Framebuffer *writeFBO, *readFBO; const a3_FramebufferDouble *writeDFBO, *readDFBO;)
 
 		//// select post-processing program
 		////	(if you have uniforms to send, send 'em!)
@@ -1834,7 +1834,7 @@ void a3demo_render(const a3_DemoState *demoState)
 	}
 }
 
-void BloomBrightPass(const a3_DemoState *demoState)
+void BloomBrightPass(const a3_DemoState *demoState, const a3_DemoStateShaderProgram *currentDemoProgram, const a3_FramebufferDouble *writeDFBO, const a3_FramebufferDouble *readDFBO)
 {
 	// select post-processing program
 	//	(if you have uniforms to send, send 'em!)
