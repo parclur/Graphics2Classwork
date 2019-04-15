@@ -32,13 +32,60 @@
 in mat4 vPassTangentBasis;
 in vec4 vPassTexcoord;
 
+// point light structure here
+// uniform block for lights here
+// light count
+
+uniform sampler2D uTex_dm, uTex_sm, uTex_nm, uTex_hm;
+
 layout (location = 0) out vec4 rtFragColor;
 layout (location = 1) out vec4 rtNormal;
 
 void main()
 {
 	// DUMMY OUTPUT: all fragments are FADED BLUE
-	rtFragColor = vec4(0.5, 0.5, 1.0, 1.0);
+	// rtFragColor = vec4(0.5, 0.5, 1.0, 1.0);
+	
+	mat4 tangentBasis = mat4(
+		normalize(vPassTangentBasis[0]),
+		normalize(vPassTangentBasis[1]),
+		normalize(vPassTangentBasis[2]),
+		vec4(0.0));
+
+	vec4 viewPos_unit = normalize(vec4(vPassTangentBasis[3].xyz, 0.0));
+
+	vec3 rayDir_tan;
+	rayDir_tan.x = dot(tangentBasis[0], viewPos_unit);
+	rayDir_tan.y = dot(tangentBasis[1], viewPos_unit);
+	rayDir_tan.z = dot(tangentBasis[2], viewPos_unit);
+
+	vec3 c_orig = vec3(vPassTexcoord.xy, 1.0);
+	vec3 c_far = c_orig - rayDir_tan / rayDir_tan.z;
+
+	vec2 texcoord = c_far.xy;
+
+	// rtFragColor = viewPos_unit;
+	// rtFragColor.rgb = rayDir_tan;
+	// rtFragColor.a = 1.0;
+	// return;
+
+	vec4 sample_dm = texture(uTex_dm, texcoord);
+	vec4 sample_sm = texture(uTex_sm, texcoord);
+	vec4 sample_nm = texture(uTex_nm, texcoord) *2.0 - 1.0;
+
+	//rtFragColor = sample_dm;
+
+	//vec4 fragNrm_unit = tangentBasis[2];
+	vec4 fragNrm_unit = tangentBasis * sample_nm;
+	vec4 lightVec = vec4(0.0, 0.0, 1.0, 0.0);
+
+	float kd = dot(fragNrm_unit, lightVec);
+	kd = max(kd, 0.0);
+
+	//rtFragColor = fragNrm_unit;
+	//rtFragColor.a = 1.0;
+	rtFragColor = vec4(kd, kd, kd, 1.0);
+	//rtFragColor = sample_nm;
 
 	// DUMMY OUTPUT: standard normal blue
 	rtNormal = vec4(0.5, 0.5, 1.0, 1.0);
