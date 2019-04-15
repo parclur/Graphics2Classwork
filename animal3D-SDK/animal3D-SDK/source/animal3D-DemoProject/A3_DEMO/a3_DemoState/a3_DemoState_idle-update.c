@@ -112,8 +112,8 @@ void a3demo_update_main(a3_DemoState *demoState, a3f64 dt)
 
 	// light pointers
 	a3_DemoPointLight *pointLight;
-	a3mat4 *lightMVPptr, *lightMVPBptr;
-	a3ui32 tmpLightCount, tmpBlockLightCount;
+//	a3mat4 *lightMVPptr, *lightMVPBptr;
+//	a3ui32 tmpLightCount, tmpBlockLightCount;
 
 
 	// do simple animation
@@ -177,6 +177,12 @@ void a3demo_update_main(a3_DemoState *demoState, a3f64 dt)
 		a3real4Real4x4Product(pointLight->viewPos.v, cameraObject->modelMatInv.m, pointLight->worldPos.v);
 	}
 
+	// send point light data
+	pointLight = demoState->forwardPointLight;
+	a3bufferFill(demoState->ubo_pointLight, 0, demoState->forwardLightCount * sizeof(a3_DemoPointLight), pointLight, 0);
+	demoState->ubo_pointLight->used[0] = 0;
+
+/*
 	for (i = 0, pointLight = demoState->deferredPointLight + i,
 		lightMVPptr = demoState->deferredLightMVP + i,
 		lightMVPBptr = demoState->deferredLightMVPB + i;
@@ -226,7 +232,7 @@ void a3demo_update_main(a3_DemoState *demoState, a3f64 dt)
 	{
 		demoState->deferredLightBlockCount = 0;
 	}
-
+*/
 
 	// correct rotations as needed
 	if (useVerticalY)
@@ -253,7 +259,7 @@ void a3demo_update_main(a3_DemoState *demoState, a3f64 dt)
 	a3demo_applyScale_internal(demoState->torusObject, scaleMat.m);
 	a3demo_applyScale_internal(demoState->teapotObject, scaleMat.m);
 
-
+/*
 	// simple animation controller
 	if (demoState->targetCount && demoState->updateAnimation)
 	{
@@ -273,9 +279,10 @@ void a3demo_update_main(a3_DemoState *demoState, a3f64 dt)
 		// in any case calculate interpolation param
 		demoState->targetParam = demoState->targetTime * demoState->targetDurationInv;
 	}
+*/
 }
 
-
+/*
 // update for curve drawing
 void a3demo_update_curve(a3_DemoState *demoState, a3f64 dt)
 {
@@ -320,21 +327,21 @@ void a3demo_update_curve(a3_DemoState *demoState, a3f64 dt)
 		// interpolate object position
 		// ****TO-DO: choose interpolation algorithm from below
 		currentSceneObject = demoState->curveFollowObject;
-	/*
+	
 		// lerp
-		a3real3Lerp(currentSceneObject->position.v,
-			demoState->curveWaypoint[demoState->curveSegmentIndex + 0].v,
-			demoState->curveWaypoint[demoState->curveSegmentIndex + 1].v,
-			demoState->curveSegmentParam);
+	//	a3real3Lerp(currentSceneObject->position.v,
+	//		demoState->curveWaypoint[demoState->curveSegmentIndex + 0].v,
+	//		demoState->curveWaypoint[demoState->curveSegmentIndex + 1].v,
+	//		demoState->curveSegmentParam);
 		
 		// Catmull-Rom
-		a3real3CatmullRom(currentSceneObject->position.v,
-			demoState->curveWaypoint[a3maximum(0, (a3i32)demoState->curveSegmentIndex - 1)].v,
-			demoState->curveWaypoint[demoState->curveSegmentIndex + 0].v,
-			demoState->curveWaypoint[demoState->curveSegmentIndex + 1].v,
-			demoState->curveWaypoint[a3minimum(demoState->curveSegmentIndex + 2, demoState->curveWaypointCount - 1)].v,
-			demoState->curveSegmentParam);
-	*/	
+	//	a3real3CatmullRom(currentSceneObject->position.v,
+	//		demoState->curveWaypoint[a3maximum(0, (a3i32)demoState->curveSegmentIndex - 1)].v,
+	//		demoState->curveWaypoint[demoState->curveSegmentIndex + 0].v,
+	//		demoState->curveWaypoint[demoState->curveSegmentIndex + 1].v,
+	//		demoState->curveWaypoint[a3minimum(demoState->curveSegmentIndex + 2, demoState->curveWaypointCount - 1)].v,
+	//		demoState->curveSegmentParam);
+		
 		// cubic Hermite
 		a3real3HermiteControl(currentSceneObject->position.v,
 			demoState->curveWaypoint[demoState->curveSegmentIndex + 0].v,
@@ -351,8 +358,8 @@ void a3demo_update_curve(a3_DemoState *demoState, a3f64 dt)
 	demoState->ubo_curveWaypoint->used[0] = 0;
 	demoState->ubo_curveHandle->used[0] = 0;
 }
-
-
+*/
+/*
 // update for skeletal animation
 void a3demo_update_skeletal(a3_DemoState *demoState, a3f64 dt)
 {
@@ -454,41 +461,6 @@ void a3demo_update_skeletal(a3_DemoState *demoState, a3f64 dt)
 	a3kinematicsSolveForward(demoState->hierarchyState_skel);
 //	a3hierarchyStateUpdateObjectBindToCurrent(currentHierarchyState, ???);
 
-	// general counters
-	a3ui32 p;
-
-	// object pointers
-	a3_HierarchyNodePose *hierarchyNodePose;
-	
-	// If the user is not editing joints, then the animation plays
-	if (!demoState->editingJoint)
-	{
-		j = currentHierarchy->nodes[i].parentIndex;
-		p = 0;
-
-		for (i = 1; i < currentHierarchy->numNodes; i++)
-		{
-			//j = a3hierarchyGetNodeIndex(currentHierarchyState, "skel:root");
-			hierarchyNodePose = currentHierarchyPoseGroup->pose[p].nodePose;// +j;
-			//a3hierarchyNodePoseSetTranslation(hierarchyNodePose, 0.0f, 0.0, +3.6f); //demoState->timer->totalTime //(a3f32)dt
-
-			a3real3 n0 = { 0.0f, 0.0, 0.0f };
-			a3real3 n1 = { 1.0f, 0.0, 0.0f };
-
-			a3real3 output;
-
-			a3real3Lerp(output, n0, n1, (a3real)dt); //demoState->timer->totalTime);
-
-			//a3hierarchyNodePoseSetTranslation(hierarchyNodePose, output, output, output, (a3f32)dt);// +7.2f);// *(a3f32)demoState->timer->totalTime);
-			//a3hierarchyNodePoseSetTranslation(hierarchyNodePose, 0.0f, 0.0, a3asind((a3f32)demoState->timer->totalTime));// +7.2f);// *(a3f32)demoState->timer->totalTime);
-
-			//play animation
-			//a3demo_update_curve(demoState, 1);
-
-			// will be used to lerp between key poses with a time parameter
-			//a3lerpFunc(currentHierarchyPoseGroup->pose[p].nodePose[i].translation, (0.0f, 0.0, 0.0f), 0.5f);
-		}
-	}
 
 	// update buffers: 
 	//	-> calculate and store bone transforms
@@ -544,7 +516,155 @@ void a3demo_update_skeletal(a3_DemoState *demoState, a3f64 dt)
 		demoState->ubo_transformBindPoseToCurrentPose_joint->used[0] = 0;
 	}
 }
+*/
 
+// update for ray-tracing
+void a3demo_update_raytrace(a3_DemoState *demoState, a3f64 dt)
+{
+	a3ui32 i;
+
+	const a3f32 dr = demoState->updateAnimation ? (a3f32)dt * 15.0f : 0.0f;
+
+	const a3i32 useVerticalY = demoState->verticalAxis;
+
+	// model transformations (if needed)
+	const a3mat4 convertY2Z = {
+		+1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, +1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, +1.0f,
+	};
+	const a3mat4 convertZ2Y = {
+		+1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, -1.0f, 0.0f,
+		0.0f, +1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, +1.0f,
+	};
+	const a3mat4 convertZ2X = {
+		0.0f, 0.0f, -1.0f, 0.0f,
+		0.0f, +1.0f, 0.0f, 0.0f,
+		+1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, +1.0f,
+	};
+
+
+	// bias matrix
+	const a3mat4 bias = {
+		0.5f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.5f, 0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f,
+	};
+
+
+	// tmp matrix for scale
+	a3mat4 scaleMat = a3identityMat4;
+
+	// active camera
+	a3_DemoCamera *camera = demoState->camera + demoState->activeCamera;
+	a3_DemoSceneObject *cameraObject = camera->sceneObject;
+	a3_DemoSceneObject *currentSceneObject;
+
+	// light pointers
+	a3_DemoPointLight *pointLight;
+//	a3mat4 *lightMVPptr, *lightMVPBptr;
+//	a3ui32 tmpLightCount, tmpBlockLightCount;
+
+
+	// do simple animation
+	if (useVerticalY)
+	{
+		for (i = 0, currentSceneObject = demoState->sphereObject;
+			i < 4; ++i, ++currentSceneObject)
+		{
+			currentSceneObject->euler.y += dr;
+			currentSceneObject->euler.y = a3trigValid_sind(currentSceneObject->euler.y);
+		}
+	}
+	else
+	{
+		for (i = 0, currentSceneObject = demoState->sphereObject;
+			i < 4; ++i, ++currentSceneObject)
+		{
+			currentSceneObject->euler.z += dr;
+			currentSceneObject->euler.z = a3trigValid_sind(currentSceneObject->euler.z);
+		}
+	}
+
+
+	// update scene objects
+	for (i = 0; i < demoStateMaxCount_sceneObject; ++i)
+		a3demo_updateSceneObject(demoState->sceneObject + i, 0);
+	for (i = 0; i < demoStateMaxCount_cameraObject; ++i)
+		a3demo_updateSceneObject(demoState->cameraObject + i, 1);
+	for (i = 0; i < demoStateMaxCount_lightObject; ++i)
+		a3demo_updateSceneObject(demoState->lightObject + i, 1);
+
+	// update cameras/projectors
+	for (i = 0; i < demoStateMaxCount_projector; ++i)
+		a3demo_updateCameraViewProjection(demoState->camera + i);
+
+
+	// apply corrections if required
+	// grid
+	demoState->gridTransform = useVerticalY ? convertZ2Y : a3identityMat4;
+
+	// skybox position
+	demoState->skyboxObject->modelMat.v3 = camera->sceneObject->modelMat.v3;
+
+
+	// grid lines highlight
+	// if Y axis is up, give it a greenish hue
+	// if Z axis is up, a bit of blue
+	demoState->gridColor = a3wVec4;
+	if (useVerticalY)
+		demoState->gridColor.g = 0.25f;
+	else
+		demoState->gridColor.b = 0.25f;
+
+
+	// update lights
+	for (i = 0, pointLight = demoState->forwardPointLight + i;
+		i < demoState->forwardLightCount;
+		++i, ++pointLight)
+	{
+		// convert to view space and retrieve view position
+		a3real4Real4x4Product(pointLight->viewPos.v, cameraObject->modelMatInv.m, pointLight->worldPos.v);
+	}
+
+	// send point light data
+	pointLight = demoState->forwardPointLight;
+	a3bufferFill(demoState->ubo_pointLight, 0, demoState->forwardLightCount * sizeof(a3_DemoPointLight), pointLight, 0);
+	demoState->ubo_pointLight->used[0] = 0;
+
+
+	// correct rotations as needed
+	if (useVerticalY)
+	{
+		// plane's axis is Z
+		a3real4x4ConcatL(demoState->planeObject->modelMat.m, convertZ2Y.m);
+
+		// sphere's axis is Z
+		a3real4x4ConcatL(demoState->sphereObject->modelMat.m, convertZ2Y.m);
+	}
+	else
+	{
+		// need to rotate skybox if Z-up
+		a3real4x4ConcatL(demoState->skyboxObject->modelMat.m, convertY2Z.m);
+
+		// teapot's axis is Y
+		a3real4x4ConcatL(demoState->teapotObject->modelMat.m, convertY2Z.m);
+	}
+
+
+	// apply scales
+	a3demo_applyScale_internal(demoState->raytraceBoxObject, scaleMat.m);
+
+
+	// ****TO-DO: 
+	// upload ray-trace shape data to UBO
+
+}
 
 //-----------------------------------------------------------------------------
 // UPDATE
@@ -559,13 +679,22 @@ void a3demo_update(a3_DemoState *demoState, a3f64 dt)
 		break;
 
 		// curve drawing
-	case demoStateMode_curves:
-		a3demo_update_curve(demoState, dt);
-		break;
+//	case demoStateMode_curves:
+//		a3demo_update_curve(demoState, dt);
+//		break;
 
 		// skeletal
-	case demoStateMode_skeletal:
-		a3demo_update_skeletal(demoState, dt);
+//	case demoStateMode_skeletal:
+//		a3demo_update_skeletal(demoState, dt);
+//		break;
+
+		// planets
+	case demoStateMode_planet:
+		break;
+
+		// raytrace
+	case demoStateMode_raytrace:
+		a3demo_update_raytrace(demoState, dt);
 		break;
 	}
 }

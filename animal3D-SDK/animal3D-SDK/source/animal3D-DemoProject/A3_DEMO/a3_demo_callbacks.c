@@ -75,7 +75,7 @@ inline void a3demoCB_keyCharPress_main(a3_DemoState *demoState, a3i32 asciiKey,
 			demoSubMode > demoStateRenderPass_composite &&
 			demoSubMode < demoStateRenderPass_bloom_blend)
 			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_bloom_blend;
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
+		if (//demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
 			demoSubMode > demoStateRenderPass_scene &&
 			demoSubMode < demoStateRenderPass_composite)
 			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
@@ -85,7 +85,7 @@ inline void a3demoCB_keyCharPress_main(a3_DemoState *demoState, a3i32 asciiKey,
 			demoSubMode > demoStateRenderPass_composite &&
 			demoSubMode < demoStateRenderPass_bloom_blend)
 			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
+		if (//demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
 			demoSubMode > demoStateRenderPass_scene &&
 			demoSubMode < demoStateRenderPass_composite)
 			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_scene;
@@ -135,28 +135,28 @@ inline void a3demoCB_keyCharPress_main(a3_DemoState *demoState, a3i32 asciiKey,
 
 		// toggle single light only or decrease light count
 	case 'l':
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
-		{
+	//	if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+	//	{
 			demoState->singleForwardLight = 1 - demoState->singleForwardLight;
 			demoState->forwardLightCount = demoState->singleForwardLight ? 1 : demoStateMaxCount_lightObject;
-		}
-		else if (demoState->deferredLightCount > 0)
-			demoState->deferredLightCount -= 4;
+	//	}
+	//	else if (demoState->deferredLightCount > 0)
+	//		demoState->deferredLightCount -= 4;
 		break;
 
 		// increase light count
 	case 'L':
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
-		{
-		}
-		else if (demoState->deferredLightCount < demoStateMaxCount_lightVolume)
-			demoState->deferredLightCount += 4;
+	//	if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+	//	{
+	//	}
+	//	else if (demoState->deferredLightCount < demoStateMaxCount_lightVolume)
+	//		demoState->deferredLightCount += 4;
 		break;
 
 		// pipeline mode
 	case 'p':
 		demoState->lightingPipelineMode = (demoState->lightingPipelineMode + 1) % 3;
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
+		if (//demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting &&
 			demoSubMode > demoStateRenderPass_scene &&
 			demoSubMode < demoStateRenderPass_composite)
 			demoState->demoSubMode[demoState->demoMode] = demoStateRenderPass_composite;
@@ -179,25 +179,25 @@ inline void a3demoCB_keyCharHold_main(a3_DemoState *demoState, a3i32 asciiKey)
 	{
 		// decrease light count
 	case 'l':
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
-		{
-		}
-		else if (demoState->deferredLightCount > 0)
-			demoState->deferredLightCount -= 4;
+	//	if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+	//	{
+	//	}
+	//	else if (demoState->deferredLightCount > 0)
+	//		demoState->deferredLightCount -= 4;
 		break;
 
 		// increase light count
 	case 'L':
-		if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
-		{
-		}
-		else if (demoState->deferredLightCount < demoStateMaxCount_lightVolume)
-			demoState->deferredLightCount += 4;
+	//	if (demoState->lightingPipelineMode != demoStatePipelineMode_deferredLighting)
+	//	{
+	//	}
+	//	else if (demoState->deferredLightCount < demoStateMaxCount_lightVolume)
+	//		demoState->deferredLightCount += 4;
 		break;
 	}
 }
 
-
+/*
 inline void a3demoCB_keyCharHold_skeletal(a3_DemoState *demoState, a3i32 asciiKey)
 {
 	// individual DOF editing
@@ -298,7 +298,7 @@ inline void a3demoCB_keyCharPress_skeletal(a3_DemoState *demoState, a3i32 asciiK
 	// call editing control
 	a3demoCB_keyCharHold_skeletal(demoState, asciiKey);
 }
-
+*/
 
 //-----------------------------------------------------------------------------
 // callback prototypes
@@ -684,10 +684,6 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 	case 'm':
 		demoState->updateAnimation = 1 - demoState->updateAnimation;
 		break;
-
-	case '-':
-		demoState->editingJoint = 1 - demoState->editingJoint;
-		break;
 	}
 
 
@@ -695,19 +691,23 @@ A3DYLIBSYMBOL void a3demoCB_keyCharPress(a3_DemoState *demoState, a3i32 asciiKey
 	switch (demoState->demoMode)
 	{
 		// main render pipeline
+		// planets
+		// raytrace
 	case demoStateMode_main:
+	case demoStateMode_planet:
+	case demoStateMode_raytrace:
 		a3demoCB_keyCharPress_main(demoState, asciiKey,
 			demoSubMode, demoOutput, demoSubModeCount, demoOutputCount);
 		break;
 
 		// curve drawing
-	case demoStateMode_curves:
-		break;
+//	case demoStateMode_curves:
+//		break;
 
 		// skeletal
-	case demoStateMode_skeletal:
-		a3demoCB_keyCharPress_skeletal(demoState, asciiKey);
-		break;
+//	case demoStateMode_skeletal:
+//		a3demoCB_keyCharPress_skeletal(demoState, asciiKey);
+//		break;
 	}
 }
 
@@ -722,18 +722,22 @@ A3DYLIBSYMBOL void a3demoCB_keyCharHold(a3_DemoState *demoState, a3i32 asciiKey)
 	switch (demoState->demoMode)
 	{
 		// main render pipeline
+		// planets
+		// raytrace
 	case demoStateMode_main:
+	case demoStateMode_planet:
+	case demoStateMode_raytrace:
 		a3demoCB_keyCharHold_main(demoState, asciiKey);
 		break;
 
 		// curve drawing
-	case demoStateMode_curves:
-		break;
+//	case demoStateMode_curves:
+//		break;
 
 		// skeletal
-	case demoStateMode_skeletal:
-		a3demoCB_keyCharHold_skeletal(demoState, asciiKey);
-		break;
+//	case demoStateMode_skeletal:
+//		a3demoCB_keyCharHold_skeletal(demoState, asciiKey);
+//		break;
 	}
 }
 
@@ -745,8 +749,9 @@ A3DYLIBSYMBOL void a3demoCB_mouseClick(a3_DemoState *demoState, a3i32 button, a3
 	a3mouseSetPosition(demoState->mouse, cursorX, cursorY);
 
 	// curve waypoint placement
-	switch (demoState->demoMode)
-	{
+//	switch (demoState->demoMode)
+//	{
+	/*
 	case demoStateMode_curves:
 		if (button == a3mouse_left)
 		{
@@ -771,7 +776,8 @@ A3DYLIBSYMBOL void a3demoCB_mouseClick(a3_DemoState *demoState, a3i32 button, a3
 				--demoState->curveWaypointCount;
 		}
 		break;
-	}
+	*/
+//	}
 }
 
 // mouse button is double-clicked
@@ -802,8 +808,10 @@ A3DYLIBSYMBOL void a3demoCB_mouseWheel(a3_DemoState *demoState, a3i32 delta, a3i
 
 	switch (demoState->demoMode)
 	{
+		// main render pipeline
+		// skeletal
 	case demoStateMode_main:
-	case demoStateMode_skeletal:
+//	case demoStateMode_skeletal:
 		// can use this to change zoom
 		// zoom should be faster farther away
 		camera = demoState->camera + demoState->activeCamera;
@@ -821,8 +829,9 @@ A3DYLIBSYMBOL void a3demoCB_mouseMove(a3_DemoState *demoState, a3i32 cursorX, a3
 	a3mouseSetPosition(demoState->mouse, cursorX, cursorY);
 
 	// curve waypoint placement
-	switch (demoState->demoMode)
-	{
+//	switch (demoState->demoMode)
+//	{
+	/*
 	case demoStateMode_curves:
 		// if left is down, placing waypoint
 		if (demoState->mouse->btn.btn[a3mouse_left])
@@ -837,7 +846,8 @@ A3DYLIBSYMBOL void a3demoCB_mouseMove(a3_DemoState *demoState, a3i32 cursorX, a3
 			demoState->curveHandle[demoState->curveWaypointCount - 1] = pos;
 		}
 		break;
-	}
+	*/
+//	}
 }
 
 // mouse leaves window

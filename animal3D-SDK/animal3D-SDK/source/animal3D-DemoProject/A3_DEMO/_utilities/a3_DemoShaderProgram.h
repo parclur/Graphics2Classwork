@@ -111,6 +111,7 @@ extern "C"
 
 				a3i32
 					// common general uniforms
+					uRange,						// ranges
 					uIndex,						// indices
 					uTime;						// time
 			};
@@ -139,6 +140,10 @@ extern "C"
 				// skeletal uniform blocks
 				a3i32
 					ubTransformBindPoseToCurrentPose;
+
+				// ray-tracing uniform blocks
+				a3i32
+					ubShapeData;
 			};
 		};
 	};

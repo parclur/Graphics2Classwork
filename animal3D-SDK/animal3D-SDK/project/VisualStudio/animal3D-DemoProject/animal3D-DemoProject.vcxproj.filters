@@ -103,6 +103,12 @@
     <Filter Include="Resource Files\A3_DEMO\glsl\4x\vs\09-skeletal">
       <UniqueIdentifier>{a85ed227-582e-45c7-a27b-00822e24031a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\fs\10-raytrace">
+      <UniqueIdentifier>{64a01bd3-3a51-459e-af77-83e7522dd77e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\A3_DEMO\glsl\4x\vs\10-raytrace">
+      <UniqueIdentifier>{0b44a999-dc6d-478b-b8cd-dd39a4ae83be}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_src_win\main_dll.c">
@@ -282,6 +288,30 @@
     </None>
     <None Include="..\..\..\resource\glsl\4x\vs\09-skeletal\passTangentBasis_transform_skin_vs4x.glsl">
       <Filter>Resource Files\A3_DEMO\glsl\4x\vs\09-skeletal</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\vs\10-raytrace\passTangentBasis_transform_atlas_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\10-raytrace</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\10-raytrace\drawPhongMulti_tangentBasis_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\10-raytrace</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\10-raytrace\drawPhongMulti_tangentBasis_nm_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\10-raytrace</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\10-raytrace\drawPhongMulti_tangentBasis_nm_pom_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\10-raytrace</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\10-raytrace\drawPhongMulti_tangentBasis_nm_pom_shadow_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\10-raytrace</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\10-raytrace\drawRayTraceShapes_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\10-raytrace</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\10-raytrace\drawPlanet_stylized_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\10-raytrace</Filter>
+    </None>
+    <None Include="..\..\..\resource\glsl\4x\vs\10-raytrace\passEyeSpaceCoord_transform_vs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\vs\10-raytrace</Filter>
     </None>
   </ItemGroup>
 </Project>

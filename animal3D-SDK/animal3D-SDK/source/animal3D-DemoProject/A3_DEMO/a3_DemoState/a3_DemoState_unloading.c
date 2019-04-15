@@ -103,9 +103,9 @@ void a3demo_unloadFramebuffers(a3_DemoState *demoState)
 void a3demo_unloadAnimation(a3_DemoState *demoState)
 {
 	// release skeleton and related assets
-	a3hierarchyRelease(demoState->hierarchy_skel);
-	a3hierarchyStateRelease(demoState->hierarchyState_skel);
-	a3hierarchyPoseGroupRelease(demoState->hierarchyPoseGroup_skel);
+//	a3hierarchyRelease(demoState->hierarchy_skel);
+//	a3hierarchyStateRelease(demoState->hierarchyState_skel);
+//	a3hierarchyPoseGroupRelease(demoState->hierarchyPoseGroup_skel);
 }
 
 
