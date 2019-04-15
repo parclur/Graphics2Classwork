@@ -121,8 +121,8 @@ void a3demo_initScene(a3_DemoState *demoState)
 
 
 	// demo modes
-	demoState->demoModeCount = 3;
-	demoState->demoMode = 2;
+	demoState->demoModeCount = 2;
+	demoState->demoMode = 0;
 
 	// demo mode A: deferred + bloom
 	//	 1) scene
@@ -152,13 +152,21 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->demoOutputCount[0][0] = 5;
 	demoState->demoOutputCount[0][1] = 2;
 
+	// demo mode B: planets
+	demoState->demoSubMode[1] = 1;
+	demoState->demoOutputCount[1][0] = 3;
+
+	// demo mode C: raytrace
+	demoState->demoSubMode[2] = 1;
+	demoState->demoOutputCount[2][0] = 3;
+
 	// demo mode B: curve drawing
-	demoState->demoSubModeCount[1] = 1;
-	demoState->demoOutputCount[1][0] = 2;
+//	demoState->demoSubModeCount[1] = 1;
+//	demoState->demoOutputCount[1][0] = 2;
 
 	// demo mode C: skeletal
-	demoState->demoSubModeCount[2] = 1;
-	demoState->demoOutputCount[2][0] = 2;
+//	demoState->demoSubModeCount[2] = 1;
+//	demoState->demoOutputCount[2][0] = 2;
 
 
 	// initialize other objects and settings
@@ -178,13 +186,13 @@ void a3demo_initScene(a3_DemoState *demoState)
 
 
 	// shading mode
-	demoState->forwardShadingMode = demoStateForwardPipelineMode_Phong_morph;
-	demoState->forwardShadingModeCount = 7;
+	demoState->forwardShadingMode = demoStateForwardPipelineMode_PhongMulti;
+	demoState->forwardShadingModeCount = 4;
 
 
 	// lights
 	demoState->forwardLightCount = demoState->singleForwardLight ? 1 : demoStateMaxCount_lightObject;
-	demoState->deferredLightCount = demoStateMaxCount_lightVolumePerBlock / 32;
+//	demoState->deferredLightCount = demoStateMaxCount_lightVolumePerBlock / 32;
 
 	// first light is hard-coded (starts at camera)
 	pointLight = demoState->forwardPointLight;
@@ -232,36 +240,36 @@ void a3demo_initScene(a3_DemoState *demoState)
 	}
 
 	// deferred lights
-	for (i = 0, pointLight = demoState->deferredPointLight + i;
-		i < demoStateMaxCount_lightVolume;
-		++i, ++pointLight)
-	{
-		// set to zero vector
-		pointLight->worldPos = a3wVec4;
-
-		// random positions
-		pointLight->worldPos.x = a3randomRange(-6.0f, +6.0f);
-		if (demoState->verticalAxis)
-		{
-			pointLight->worldPos.z = -a3randomRange(-6.0f, +6.0f);
-			pointLight->worldPos.y = -a3randomRange(-2.0f, +4.0f);
-		}
-		else
-		{
-			pointLight->worldPos.y = a3randomRange(-6.0f, +6.0f);
-			pointLight->worldPos.z = a3randomRange(-2.0f, +4.0f);
-		}
-
-		// random colors
-		pointLight->color.r = a3randomNormalized();
-		pointLight->color.g = a3randomNormalized();
-		pointLight->color.b = a3randomNormalized();
-		pointLight->color.a = a3realOne;
-
-		// random radius: they should be small!
-		pointLight->radius = a3randomRange(0.25f, 0.50f);
-		pointLight->radiusInvSq = a3recip(pointLight->radius * pointLight->radius);
-	}
+//	for (i = 0, pointLight = demoState->deferredPointLight + i;
+//		i < demoStateMaxCount_lightVolume;
+//		++i, ++pointLight)
+//	{
+//		// set to zero vector
+//		pointLight->worldPos = a3wVec4;
+//
+//		// random positions
+//		pointLight->worldPos.x = a3randomRange(-6.0f, +6.0f);
+//		if (demoState->verticalAxis)
+//		{
+//			pointLight->worldPos.z = -a3randomRange(-6.0f, +6.0f);
+//			pointLight->worldPos.y = -a3randomRange(-2.0f, +4.0f);
+//		}
+//		else
+//		{
+//			pointLight->worldPos.y = a3randomRange(-6.0f, +6.0f);
+//			pointLight->worldPos.z = a3randomRange(-2.0f, +4.0f);
+//		}
+//
+//		// random colors
+//		pointLight->color.r = a3randomNormalized();
+//		pointLight->color.g = a3randomNormalized();
+//		pointLight->color.b = a3randomNormalized();
+//		pointLight->color.a = a3realOne;
+//
+//		// random radius: they should be small!
+//		pointLight->radius = a3randomRange(0.25f, 0.50f);
+//		pointLight->radiusInvSq = a3recip(pointLight->radius * pointLight->radius);
+//	}
 
 
 	// position scene objects
@@ -272,6 +280,9 @@ void a3demo_initScene(a3_DemoState *demoState)
 	demoState->sphereObject->scaleMode = 1;		// uniform
 	demoState->cylinderObject->scaleMode = 2;	// non-uniform
 	demoState->torusObject->scaleMode = 1;		// uniform
+
+	demoState->raytraceBoxObject->scale.x = 0.1f;
+	demoState->raytraceBoxObject->scaleMode = 1;
 
 	demoState->sphereObject->position.x = +6.0f;
 	demoState->torusObject->position.x = -6.0f;
@@ -296,34 +307,34 @@ void a3demo_initScene(a3_DemoState *demoState)
 
 
 	// animation stuff
-	demoState->curveSegmentDuration = a3realTwo;
-	demoState->curveSegmentDurationInv = a3recip(demoState->curveSegmentDuration);
-	demoState->curveSegmentTime = demoState->curveSegmentParam = a3realZero;
-	demoState->curveSegmentIndex = 0;
+//	demoState->curveSegmentDuration = a3realTwo;
+//	demoState->curveSegmentDurationInv = a3recip(demoState->curveSegmentDuration);
+//	demoState->curveSegmentTime = demoState->curveSegmentParam = a3realZero;
+//	demoState->curveSegmentIndex = 0;
 
 	// morph targets
-	demoState->targetDuration = a3realOneHalf;
-	demoState->targetDurationInv = a3recip(demoState->targetDuration);
-	demoState->targetTime = demoState->targetParam = a3realZero;
-	demoState->targetCount = demoStateMaxCount_morphTargetPerModel;
-	demoState->targetIndex = 0;
-	demoState->targetIndexNext = (demoState->targetIndex + 1) % demoState->targetCount;
-	demoState->targetIndexNextNext = (demoState->targetIndexNext + 1) % demoState->targetCount;
-	demoState->targetIndexPrev = (demoState->targetIndex + demoState->targetCount - 1) % demoState->targetCount;
+//	demoState->targetDuration = a3realOneHalf;
+//	demoState->targetDurationInv = a3recip(demoState->targetDuration);
+//	demoState->targetTime = demoState->targetParam = a3realZero;
+//	demoState->targetCount = demoStateMaxCount_morphTargetPerModel;
+//	demoState->targetIndex = 0;
+//	demoState->targetIndexNext = (demoState->targetIndex + 1) % demoState->targetCount;
+//	demoState->targetIndexNextNext = (demoState->targetIndexNext + 1) % demoState->targetCount;
+//	demoState->targetIndexPrev = (demoState->targetIndex + demoState->targetCount - 1) % demoState->targetCount;
 
 
 	// skeleton
-	if (demoState->verticalAxis)
-	{
-		demoState->skeletonObject->position.z = -4.0f;
-		demoState->skeletonObject->euler.x = -90.0f;
-		demoState->skeletonObject->euler.z = +180.0f;
-	}
-	else
-	{
-		demoState->skeletonObject->position.y = +4.0f;
-		demoState->skeletonObject->euler.z = +180.0f;
-	}
+//	if (demoState->verticalAxis)
+//	{
+//		demoState->skeletonObject->position.z = -4.0f;
+//		demoState->skeletonObject->euler.x = -90.0f;
+//		demoState->skeletonObject->euler.z = +180.0f;
+//	}
+//	else
+//	{
+//		demoState->skeletonObject->position.y = +4.0f;
+//		demoState->skeletonObject->euler.z = +180.0f;
+//	}
 }
 
 // refresh non-asset scene objects (e.g. re-link pointers)

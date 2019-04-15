@@ -64,7 +64,7 @@ extern "C"
 	//	more than enough memory to hold extra objects
 	enum a3_DemoStateObjectMaxCounts
 	{
-		demoStateMaxCount_sceneObject = 8,
+		demoStateMaxCount_sceneObject = 16,
 		demoStateMaxCount_cameraObject = 2,
 		demoStateMaxCount_lightObject = 4,
 		demoStateMaxCount_projector = 3,
@@ -77,17 +77,17 @@ extern "C"
 		demoStateMaxCount_drawDataBuffer = 1,
 		demoStateMaxCount_vertexArray = 8,
 		demoStateMaxCount_drawable = 16,
-		demoStateMaxCount_shaderProgram = 32,
+		demoStateMaxCount_shaderProgram = 64,
 
-		demoStateMaxCount_texture = 16,
+		demoStateMaxCount_texture = 32,
 		demoStateMaxCount_framebuffer = 4,
 		demoStateMaxCount_framebufferDouble = 8,
 
 		demoStateMaxCount_uniformBuffer = 8 + 3 * demoStateMaxCount_lightVolumeBlock,
 
 		// misc
-		demoStateMaxCount_curveWaypoint = 32,
-		demoStateMaxCount_morphTargetPerModel = 5,
+	//	demoStateMaxCount_curveWaypoint = 32,
+	//	demoStateMaxCount_morphTargetPerModel = 5,
 	};
 
 	// additional counters for demo modes
@@ -102,8 +102,10 @@ extern "C"
 	enum a3_DemoStateModeNames
 	{
 		demoStateMode_main,
-		demoStateMode_curves,
-		demoStateMode_skeletal,
+		demoStateMode_raytrace,
+		demoStateMode_planet,
+	//	demoStateMode_curves,
+	//	demoStateMode_skeletal,
 	};
 
 	
@@ -141,20 +143,24 @@ extern "C"
 	enum a3_DemoStatePipelineModeNames
 	{
 		demoStatePipelineMode_forward,
-		demoStatePipelineMode_deferredShading,
-		demoStatePipelineMode_deferredLighting,
+	//	demoStatePipelineMode_deferredShading,
+	//	demoStatePipelineMode_deferredLighting,
 	};
 
 	// forward pipeline modes
 	enum a3_DemoStateForwardPipelineModeNames
 	{
-		demoStateForwardPipelineMode_Phong,
-		demoStateForwardPipelineMode_Phong_projective,
-		demoStateForwardPipelineMode_Phong_shadowmap,
-		demoStateForwardPipelineMode_Phong_shadowmap_projective,
-		demoStateForwardPipelineMode_Phong_manip,
-		demoStateForwardPipelineMode_Phong_morph,
-		demoStateForwardPipelineMode_nonphoto,
+		demoStateForwardPipelineMode_PhongMulti,
+		demoStateForwardPipelineMode_PhongMulti_nm,
+		demoStateForwardPipelineMode_PhongMulti_nm_pom,
+		demoStateForwardPipelineMode_PhongMulti_nm_pom_shadow,
+	//	demoStateForwardPipelineMode_Phong,
+	//	demoStateForwardPipelineMode_Phong_projective,
+	//	demoStateForwardPipelineMode_Phong_shadowmap,
+	//	demoStateForwardPipelineMode_Phong_shadowmap_projective,
+	//	demoStateForwardPipelineMode_Phong_manip,
+	//	demoStateForwardPipelineMode_Phong_morph,
+	//	demoStateForwardPipelineMode_nonphoto,
 	};
 
 
@@ -229,50 +235,50 @@ extern "C"
 
 		// lights
 		a3_DemoPointLight forwardPointLight[demoStateMaxCount_lightObject];
-		a3_DemoPointLight deferredPointLight[demoStateMaxCount_lightVolume];
-		a3mat4 deferredLightMVP[demoStateMaxCount_lightVolume];
-		a3mat4 deferredLightMVPB[demoStateMaxCount_lightVolume];
+	//	a3_DemoPointLight deferredPointLight[demoStateMaxCount_lightVolume];
+	//	a3mat4 deferredLightMVP[demoStateMaxCount_lightVolume];
+	//	a3mat4 deferredLightMVPB[demoStateMaxCount_lightVolume];
 		a3ui32 forwardLightCount;
-		a3ui32 deferredLightCount, deferredLightBlockCount, deferredLightCountPerBlock[demoStateMaxCount_lightVolumeBlock];
+	//	a3ui32 deferredLightCount, deferredLightBlockCount, deferredLightCountPerBlock[demoStateMaxCount_lightVolumeBlock];
 
 		// texture atlas transforms
-		union {
-			a3mat4 atlasTransform[4];
-			struct {
-				a3mat4 atlas_stone[1], atlas_earth[1], atlas_mars[1], atlas_checker[1];
-			};
-		};
+	//	union {
+	//		a3mat4 atlasTransform[4];
+	//		struct {
+	//			a3mat4 atlas_stone[1], atlas_earth[1], atlas_mars[1], atlas_checker[1];
+	//		};
+	//	};
 
 
 		// animation stuff
-		a3vec4 curveWaypoint[demoStateMaxCount_curveWaypoint], curveHandle[demoStateMaxCount_curveWaypoint];
-		a3ui32 curveWaypointCount;
-		a3ui32 curveSegmentIndex;
-		a3real curveSegmentDuration, curveSegmentDurationInv;
-		a3real curveSegmentTime, curveSegmentParam;
+	//	a3vec4 curveWaypoint[demoStateMaxCount_curveWaypoint], curveHandle[demoStateMaxCount_curveWaypoint];
+	//	a3ui32 curveWaypointCount;
+	//	a3ui32 curveSegmentIndex;
+	//	a3real curveSegmentDuration, curveSegmentDurationInv;
+	//	a3real curveSegmentTime, curveSegmentParam;
 
 		// morph targets
-		a3ui32 targetCount;
-		union {
-			a3ui32 targetIndexList[4];
-			struct {
-				a3ui32 targetIndex, targetIndexNext, targetIndexNextNext, targetIndexPrev;
-			};
-		};
-		a3real targetDuration, targetDurationInv;
-		a3real targetTime, targetParam;
+	//	a3ui32 targetCount;
+	//	union {
+	//		a3ui32 targetIndexList[4];
+	//		struct {
+	//			a3ui32 targetIndex, targetIndexNext, targetIndexNextNext, targetIndexPrev;
+	//		};
+	//	};
+	//	a3real targetDuration, targetDurationInv;
+	//	a3real targetTime, targetParam;
 
 
 		// skeletal objects
-		a3_Hierarchy hierarchy_skel[1];
-		a3_HierarchyState hierarchyState_skel[1];
-		a3_HierarchyPoseGroup hierarchyPoseGroup_skel[1];
-		a3_HierarchyPoseFlag hierarchyPoseFlag_skel[1][128];
+	//	a3_Hierarchy hierarchy_skel[1];
+	//	a3_HierarchyState hierarchyState_skel[1];
+	//	a3_HierarchyPoseGroup hierarchyPoseGroup_skel[1];
+	//	a3_HierarchyPoseFlag hierarchyPoseFlag_skel[1][128];
 
 		// skeletal controls
-		a3ui32 editSkeletonIndex;
-		a3ui32 editJointIndex;
-		a3boolean editingJoint;
+	//	a3ui32 editSkeletonIndex;
+	//	a3ui32 editJointIndex;
+	//	a3boolean editingJoint;
 
 
 		//---------------------------------------------------------------------
@@ -295,12 +301,22 @@ extern "C"
 					teapotObject[1];
 
 				// curve-drawing objects
-				a3_DemoSceneObject
-					curveFollowObject[1];
+			//	a3_DemoSceneObject
+			//		curveFollowObject[1];
 
 				// skeletal objects
+			//	a3_DemoSceneObject
+			//		skeletonObject[1];
+
+				// planet objects
 				a3_DemoSceneObject
-					skeletonObject[1];
+					earthObject[1],
+					marsObject[1],
+					sunObject[1];
+
+				// raytrace objects
+				a3_DemoSceneObject
+					raytraceBoxObject[1];
 			};
 		};
 		union {
@@ -436,6 +452,13 @@ extern "C"
 				a3_DemoStateShaderProgram
 					prog_drawPhongMulti_skin[1],				// Phong shading on a skinned object
 					prog_drawTangentBasis_skin[1];				// tangent basis for skinned object
+				a3_DemoStateShaderProgram
+					prog_drawPhongMulti_tangentBasis[1],
+					prog_drawPhongMulti_tangentBasis_nm[1],
+					prog_drawPhongMulti_tangentBasis_nm_pom[1],
+					prog_drawPhongMulti_tangentBasis_nm_pom_shadow[1],
+					prog_drawPlanet_stylized[1],
+					prog_drawRayTraceShapes[1];
 			};
 		};
 
@@ -449,11 +472,21 @@ extern "C"
 					tex_skybox_water[1],
 					tex_atlas_dm[1],
 					tex_atlas_sm[1],
-					tex_stone_dm[1],
+					tex_atlas_nm[1],
+					tex_atlas_hm[1],
 					tex_earth_dm[1],
 					tex_earth_sm[1],
+					tex_earth_nm[1],
+					tex_earth_hm[1],
+					tex_earth_cm[1],
+					tex_earth_lm[1],
 					tex_mars_dm[1],
 					tex_mars_sm[1],
+					tex_mars_nm[1],
+					tex_mars_hm[1],
+					tex_stone_dm[1],
+					tex_stone_nm[1],
+					tex_stone_hm[1],
 					tex_ramp_dm[1],
 					tex_ramp_sm[1],
 					tex_checker[1];
@@ -503,6 +536,10 @@ extern "C"
 					ubo_transformLMVP_bone[1],
 					ubo_transformLMVP_joint[1],
 					ubo_transformBindPoseToCurrentPose_joint[1];
+
+				// ray-tracing uniform buffers
+				a3_UniformBuffer
+					ubo_shapeData[1];
 			};
 		};
 

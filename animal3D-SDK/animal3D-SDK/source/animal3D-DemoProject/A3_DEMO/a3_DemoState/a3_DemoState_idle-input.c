@@ -114,15 +114,19 @@ void a3demo_input(a3_DemoState *demoState, a3f64 dt)
 	switch (demoState->demoMode)
 	{
 		// main render pipeline
+		// planets
+		// raytrace
 		// skeletal
 	case demoStateMode_main:
-	case demoStateMode_skeletal:
+	case demoStateMode_planet:
+	case demoStateMode_raytrace:
+//	case demoStateMode_skeletal:
 		a3demo_input_main(demoState, dt);
 		break;
 
 		// curve drawing
-	case demoStateMode_curves:
-		break;
+//	case demoStateMode_curves:
+//		break;
 	}
 }
 
